@@ -14,7 +14,7 @@ no entry for the compilation/anthology itself, this script reports the
 group but does not auto-resolve it — that's a judgment call (see
 docs/RESULTS.md, "Bite Size Halloween" / "Late Night Horror").
 
-  TMDB_API_KEY=... python3 08_collapse_compilations.py --in data/sample_output/vision_title_check.csv
+  TMDB_API_KEY=... python3 09_collapse_compilations.py --in data/sample_output/vision_title_check.csv
 """
 from __future__ import annotations
 

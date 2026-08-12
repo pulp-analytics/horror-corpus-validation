@@ -9,10 +9,10 @@ test:
 	python3 -m pytest tests/ -v
 
 validate-sample:
-	python3 scripts/09_validate_corpus.py --limit 100
+	python3 scripts/10_validate_corpus.py --limit 100
 
 validate-full:
-	python3 scripts/09_validate_corpus.py --skip-enumerate --limit 0
+	python3 scripts/10_validate_corpus.py --skip-enumerate --limit 0
 	@echo "Point --in at your own full-corpus CSV via the individual scripts for a non-sample run."
 
 clean:

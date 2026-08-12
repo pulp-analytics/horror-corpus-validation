@@ -32,15 +32,16 @@ our corpus.
 ## Pipeline order
 
 ```
-01_tmdb_enumerate    → raw candidate ids
-02_match_imdb        → alternate titles (IMDb + TMDB)
-03_bedrock_ocr       → what a vision-LLM actually reads on the poster
-04_comprehend_language → language of that text
-05_translate_titles  → re-score non-English text against the catalog title
-06_dedupe_tmdb_metadata → same title+year+overview, different id?
-07_dedupe_poster_md5 → same exact poster image file used for two ids?
-08_collapse_compilations → same poster shared across several ids?
-09_validate_corpus   → orchestrates 1-8, writes the final validated CSV
+01_tmdb_enumerate       → raw candidate ids
+02_verify_poster_exists → does this row even have a reachable poster?
+03_match_imdb           → alternate titles (IMDb + TMDB)
+04_bedrock_ocr          → what a vision-LLM actually reads on the poster
+05_comprehend_language  → language of that text
+06_translate_titles     → re-score non-English text against the catalog title
+07_dedupe_tmdb_metadata → same title+year+overview, different id?
+08_dedupe_poster_md5    → same exact poster image file used for two ids?
+09_collapse_compilations → same poster shared across several ids?
+10_validate_corpus      → orchestrates 1-9, writes the final validated CSV
 ```
 
 Quick start: see the root [README.md](../README.md).

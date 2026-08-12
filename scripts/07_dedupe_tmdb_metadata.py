@@ -11,7 +11,7 @@ of 72 candidate groups turned out to be one-sided — one of the two ids no
 longer existed in TMDB at all (404), so there was no real duplicate, just a
 stale reference. See docs/RESULTS.md.
 
-  TMDB_API_KEY=... python3 06_dedupe_tmdb_metadata.py --in data/sample_input/sample_100_ids.csv
+  TMDB_API_KEY=... python3 07_dedupe_tmdb_metadata.py --in data/sample_input/sample_100_ids.csv
 """
 from __future__ import annotations
 

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Orchestrates scripts 01-08 end to end and produces the three deliverables:
+"""Orchestrates scripts 01-09 end to end and produces the three deliverables:
 data/sample_output/validated_corpus.csv, excluded_ids.csv, qa_report.json.
 
-  TMDB_API_KEY=... AWS_PROFILE=your-profile python3 09_validate_corpus.py --limit 100
+  TMDB_API_KEY=... AWS_PROFILE=your-profile python3 10_validate_corpus.py --limit 100
 """
 from __future__ import annotations
 
@@ -41,13 +41,14 @@ def main():
     if not args.skip_enumerate:
         run_step("01_tmdb_enumerate.py", ["--limit", str(args.limit), "--out", ids_path])
 
-    run_step("02_match_imdb.py", ["--in", ids_path, *(["--akas", args.akas] if args.akas else [])])
-    run_step("03_bedrock_ocr.py", ["--in", ids_path])
-    run_step("04_comprehend_language.py", ["--in", "data/sample_output/vision_title_check.csv"])
-    run_step("05_translate_titles.py", ["--in", "data/sample_output/language_detection.csv", "--titles", ids_path])
-    run_step("06_dedupe_tmdb_metadata.py", ["--in", ids_path])
-    run_step("07_dedupe_poster_md5.py", ["--in", ids_path])
-    run_step("08_collapse_compilations.py", ["--in", "data/sample_output/vision_title_check.csv"])
+    run_step("02_verify_poster_exists.py", ["--in", ids_path])
+    run_step("03_match_imdb.py", ["--in", ids_path, *(["--akas", args.akas] if args.akas else [])])
+    run_step("04_bedrock_ocr.py", ["--in", ids_path])
+    run_step("05_comprehend_language.py", ["--in", "data/sample_output/vision_title_check.csv"])
+    run_step("06_translate_titles.py", ["--in", "data/sample_output/language_detection.csv", "--titles", ids_path])
+    run_step("07_dedupe_tmdb_metadata.py", ["--in", ids_path])
+    run_step("08_dedupe_poster_md5.py", ["--in", ids_path])
+    run_step("09_collapse_compilations.py", ["--in", "data/sample_output/vision_title_check.csv"])
 
     # -- assemble final outputs --
     with open(ids_path, newline="", encoding="utf-8") as f:
@@ -55,11 +56,18 @@ def main():
 
     excluded: dict[str, str] = {}
 
+    ver_path = Path("data/sample_output/poster_verification.csv")
+    if ver_path.exists():
+        with ver_path.open(newline="", encoding="utf-8") as f:
+            for r in csv.DictReader(f):
+                if r["verified"] != "1":
+                    excluded[r["id"]] = f"no_verifiable_poster:{r['reason']}"
+
     dup_path = Path("data/sample_output/duplicate_resolution.csv")
     if dup_path.exists():
         with dup_path.open(newline="", encoding="utf-8") as f:
             for r in csv.DictReader(f):
-                if r["keep"] != "1":
+                if r["keep"] != "1" and r["id"] not in excluded:
                     excluded[r["id"]] = f"tmdb_duplicate:{r['resolution']}"
 
     md5_path = Path("data/sample_output/poster_md5_duplicates.csv")
@@ -73,7 +81,7 @@ def main():
     if comp_path.exists():
         with comp_path.open(newline="", encoding="utf-8") as f:
             for r in csv.DictReader(f):
-                if r["resolution"] == "compilation_entry_found" and r["segment_id"] != r["canonical_id"]:
+                if r["resolution"] == "compilation_entry_found" and r["segment_id"] != r["canonical_id"] and r["segment_id"] not in excluded:
                     excluded[r["segment_id"]] = f"collapsed_into_compilation:{r['canonical_title']}"
 
     validated = [row for mid, row in catalog.items() if mid not in excluded]

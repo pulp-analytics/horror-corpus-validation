@@ -34,7 +34,7 @@ There is no infrastructure to shut down after a run (no EC2, no
 provisioned throughput) — see `horror-analysis-infrastructure` for the
 separate repo covering larger batch/EC2 runs and cost-safety tooling.
 
-## Optional: IMDb dataset for `02_match_imdb.py`
+## Optional: IMDb dataset for `03_match_imdb.py`
 
 The IMDb non-commercial datasets (not an AWS resource) add a second,
 independent source of alternate titles beyond TMDB's own

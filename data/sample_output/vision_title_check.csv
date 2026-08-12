@@ -1,0 +1,638 @@
+id,title,ocr_text,nova_drift_verdict,nova_drift_reason,title_ocr_qa_verdict,title_ocr_qa_reason,coverage_note
+72039,Attack of the Virgin Mummies,"ATTACK
+OF THE
+VIRGIN
+MUMMILS",,,accurate,The OCR text matches the title on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+505063,Await Further Instructions,"AWAIT FURTHER
+INSTRUCTIONS",,,accurate,The OCR text matches the title text visible on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+244805,Puaka Tebing Biru,"Public SEBUAH OSMAN Biess ALI
+FILEM
+is Y
+AKAN KU SEDUT DARAM CINTA
+MENJADI NAPAS TERAKHIRKU
+NASHA AZIZ UMBADA JAHRIN AHMAD SHARTAHANAM
+THE MAMUNAH MISUNAMUSTAFFA CORRINE ADRIENNE SHARIFAH ARYANA - ALYA FARHANAH
+HALKHAL 0 ZAKARIA BAZAUL ASHRAFF MAHZAN MUSA ORIS & OSUAM AU OSMAN ZAN % NAZAO RAHMAN
+|
+AZWAN ABU HASSAN EVRA RAHMAT I PAULINE 20 ZULKIFLI BRAHN HAZL CHAM SMAIL 20 GAYATRI SU-UN PILLA
+TO
+18 FEBUARI 2007
+POUR
+Korean
+.. DOLBY
+DO
+-",match,The poster displays the exact title 'Puaka Tebing Biru' and the release date '18 Februari 2007' matching the catalog entry.,inaccurate,"The OCR text does not match the actual title on the poster, which is 'Puaka Tebing Biru'.",full check (poster vs catalog title)
+360118,Ghost Coins,GHOST COINS,,,accurate,The OCR text matches the title on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+826047,Why?,"WHY
+EXPECT A KILLER
+WEEKEND",,,accurate,"The OCR text matches the large, bold title text on the poster.",OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+495031,Demon,"DEMON
+THE END IS HERE TIME TO PLAY.",,,accurate,"The OCR text matches the large, bold title text on the poster.",OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+46921,The Cat with Hands,"Robert Morgan's Short Movie
+The Cat with Hands
+Livy Armstrong
+Victoria Hayes
+Daniel Hogwood-Kane",,,accurate,The OCR text matches the title on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+1722854,Love in the Dark!,LOVE IN THE DARK,,,accurate,The OCR text matches the title text visible on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+20669,Death Valley: The Revenge of Bloody Bill,"DEATH
+VALLEY
+THE REVENGE
+OF BLOODY BILL",,,accurate,The OCR text matches the title text visible on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+710295,Wolf Man,WOLFMAN,match,"The poster displays the exact title 'WOLFMAN' and features a moody, forest setting consistent with horror themes.",accurate,The OCR text matches the title on the poster.,full check (poster vs catalog title)
+349067,Tigers Are Not Afraid,"TIGERS
+ARE NOT
+AFRAID",,,accurate,The OCR text matches the title text visible on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+86330,Bates Motel,BATES DHILU MOTEL,,,accurate,The OCR text matches the title text on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+1017995,Requiem for a Scream,"REQUIEM FOR
+A SCREAM",,,accurate,The OCR text matches the title text visible on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+278806,Edison Death Machine,"EDISON DEATH
+MACHINE
+Ein
+Aus
+Aus
+SP
+ALSO
+Stat.
+193
+BEST SPECIAL
+WINNER
+FRIGHT NIGHT
+EFFECTS
+FILMS FESTIVAL
+THE DEAD FINALLY HAVE A WAY BACK
+Sharring STACES 1 GILLESPIO ASHLEY ARKSLS BILLY K SUCCREEL NICHEL UK INNE CHEROKEE HALL SANTOROSKI
+IF INTERNATIONAL FILM PRODUCTIONS PRESENTS A GEORGE BONILLA FILM DE 12008 DEATH RACYING
+barder Producers TANINT BONELLA RISSED COS E DOUGLIS CAMPEELL BEUNDA COOKE 1000 SURROYS
+Animal Director BC WILLIAMS Writer & Deaded SONILLA
+Creature the EYLENA PRACTOR Most RUS DATES USA NACUDO",,,accurate,OCR correctly extracted the main title from the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+634171,Mãe Querida,,,,no_title_on_poster,The image is a symbol with no visible title text.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+1455589,Barefoot Labyrinth,"THE
+BAREFOOT
+LABYRINTH",,,accurate,The OCR text matches the title printed on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+927409,The strange world of Gumball,"APOR
+EL EXTRAÑO
+MUNDO DE GUMBALL
+CASO n°6811
+KAROBSA
+CARLOS
+ROBLEDO
+SOSA",,,accurate,The OCR text matches the actual title on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+36003,"Danger! 50,000 Zombies","Star of 'SHAUN OF THE DEAD'
+FEATURING EXTRA PROGRAM ""DANGER! 50,000 ZOMBIES!""
+Nick Frost's
+A DANGER!
+50,000velts!
+Zombies",,,accurate,The OCR correctly identified the main title text on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+1714026,Oh Timmy,"Emma Otis
+David A. Clark
+Samantha Perry
+Kids do the darnest things
+A film by Chris Caridi
+O
+H
+T
+I
+M
+M
+Y",match,"The poster displays the title 'Oh Timmy' formed by letter blocks, matching the catalog film title.",inaccurate,The OCR text does not match the actual title on the poster.,full check (poster vs catalog title)
+645881,The Witch's Fiddle,"Ohelly
+first
+production
+WITCH'S THE
+FIDDLE",,,accurate,The OCR text matches the title text visible on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+117216,Terror Eyes,"TERROREYES
+DOLLYWOOD",match,The poster clearly displays the title 'TERROREYES' and features iconic imagery consistent with the film's branding.,accurate,The OCR text matches the actual title on the poster.,full check (poster vs catalog title)
+1196089,Sigil,"LOVE WILL LEAVE A MARK
+SIGIL
+COMMUNITY RETAT AREP JACOB PERSETT XII MIHALIV GABELLA DASES NUTRITION e KELLY PERRETT
+a RECTOR ICE GUSERMA ШИ PRODUCES GAMELLE BRADES a KATET WHALEN 00 AD SULZ
+- SAME O MARCE PIRCO TOYER REGATES PIN BLS JUES MICHAEL FLEITES DYEAN SILER
+NEW ICE PERRETS CON TO UM MONSTALL 27 SACOS PERRETT - PHANNON SCHWANT
+DIET DE X was A28 PERRETT II SCHWIND BOOK ICE PERRETT",,,accurate,The OCR correctly identified the main title 'SIGIL' on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+287077,The Best of Gesichter des Todes,"DIE DOKUMENTATION DES GRAUENS
+THE BEST OF
+GESIGHTER
+DES TODES",,,accurate,The OCR text matches the visible title on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+9064,Hellbound: Hellraiser II,"HELLBOUND
+HELLRAISER II",,,accurate,The OCR text matches the title text visible on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+744273,Quarantine Girl,"QUARANTINE
+GiRL",,,accurate,The OCR text matches the title on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+831396,The Bunker,"THE
+BUNKER",,,accurate,The OCR text matches the title on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+663122,De Vlieg,DE VLIEG,,,accurate,The OCR text matches the title text visible on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+282391,Fisheye,RIBLJE OKO,,,accurate,The OCR text matches the title on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+256907,Darr @ the Mall,"hainment
+Coun
+Counte
+MALL
+DARR
+@THE MALL",,,accurate,The OCR correctly identified the main title 'DARR' on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+261403,The Hunched Donkey,"El Burro Jorobado
+Una película de
+Raúl Quintanilla",,,accurate,The OCR text matches the title visible on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+644460,Dykefoot,"glitterstop
+عمر
+dykotoot.com",match,"The poster displays the title 'Dykefoot' clearly, matching the catalog entry.",inaccurate,The OCR text does not match the stylized title 'Dyke Foot' on the poster.,full check (poster vs catalog title)
+53806,The Other Side of the Underneath,"THE OTHER SIDE OF THE UNDERNEATH
+A film by JANE ARDEN
+a major break through for the British cinema. The film juxtaposes visions of
+Jane ARDEN'S film ""THE OTHER SIDE OF THE UNDERNEATH"" represents
+personal hell with Group Psycho-Therapy Sessions presided over by Jane ARDEN
+herself. The terrifying fantasy sequences are utterly convincing images of madness
+from the inside.
+A descent into what is called ""madness"" or ""schizophrenia"" demands a radical
+break from cinematic convention and Jane ARDEN has achieved a major break
+through. The movie follows the death and rebirth of a human being in terms which
+echo the",,,accurate,the OCR text matches the title on the poster,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+464832,Killing God,"MATAR a
+DIOS",,,accurate,The OCR text matches the title text on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+849255,Bloody Guys,35285.1,match,The Japanese text on the poster matches the original title of the film.,no_title_on_poster,The poster does not contain any visible title text.,full check (poster vs catalog title)
+732773,The Lockdown Hauntings,"THE
+LOCKDOWN
+HAUNTINGS",,,accurate,The OCR text matches the title text visible on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+752443,Who Goes There?,"YNDIS
+NINA
+MELAND
+SIRI
+HAUGHEM
+BIKKE
+MCMANON
+на UAM
+WHO GOES
+THERE? RUC LOT KITY
+SOLOM DE W CD - - S DER IN will ESCO
+Bür DE in 12 to UNE
+D DE 123 LOVE = 120 KEE ST TWORE STATE LB - BD 0070
+100 POLICE unt VIVE 2019 DE VINTA
+HITE",,,accurate,The OCR text matches the title visible on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+684807,Frostbite,FROSTBITE,,,accurate,The OCR text matches the title text visible on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+7282,Password,"a film by
+Gianni Petrizzo
+PASSWORD RÄTSEL
+DAS
+DVD
+stamedia",,,accurate,OCR correctly extracted the main title 'PASSWORD DAS RÄTSEL' from the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+402515,American Beast,"AMERICAN
+BEAST
+BACK ON THE PROWL",,,accurate,The OCR text matches the title on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+1244381,No Budget Theater,"NO BUDGET
+THEATER",,,accurate,The OCR text matches the title on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+1596208,Thanatos,"THANATOS
+THANAIOS
+THANAISS
+HANAIOS
+HANATOS
+BY
+ANDREW MCVEY",,,accurate,The OCR text matches the repeated title text visible on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+86343,The Ghost in the Invisible Bikini,"GHOST-
+IN
+THE
+INVISIBLE
+BIKINI",,,accurate,The OCR text matches the title text on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+840324,Not Found 4,"DVD
+VISTO
+Not Found 4",,,accurate,The OCR correctly identified the main title text on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+70247,Watchers II,"WATCHERS
+II",,,accurate,"The OCR text matches the large, prominent title on the poster.",OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+436113,Remember Me,"Her past has come back
+to haunt her...
+Remember
+and he's armed.
+ME
+WENDY HUGHES
+RICHARD MOIR
+ROBERT GRUBB
+Produced by PATRIC JUILLET Executive Producer JIM McELROY
+Written by ANNE BROOKSBANK Directed by LEX MARINOS
+A McELROY A McELROY PRODUCTION
+C 1981 Mctiroy A McElroy Production. All Rights Reserved.",,,accurate,The OCR correctly identified the main title 'Remember' on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+760918,Dana,"DANA A
+SITGES
+adidas -
+-
+DE columbia TORNER SEGARRA
+THAIS BLUME
+AND YORDA adidas BRASTERZA WA
+met adidas CONTRERAS LOCA
+adidas the LICUTE awai 11
+- - adidas EDITIONS THE de products MUMILINE
+Fr CAT Ministry STORY ELTE July N verify 2 Parts "" - the
+adidas adidas adidas
+UNI 1331
+Delanista PRO Made the
+MINCH D'ATETA WITH DO
+...",,,accurate,The OCR correctly identified the main title 'DANA' on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+449463,Turtle Island,"TURTLE
+ISLAND",,,accurate,The OCR text matches the title text visible on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+491132,Before Someone Gets Hurt,"BEFORE
+SOMEONE
+HORT
+GETS
+IT WAS ALL FUN AND GAMES",,,accurate,The OCR text matches the title text on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+135579,Dead Before Dawn,"DEAD
+BEFORE
+DAWN
+5
+PHS",,,accurate,The OCR text matches the title text on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+235796,Dr. Jerkyl's Hide,"DR. JERKYL'S
+HIDE",,,accurate,The OCR text matches the title on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+406453,Blood Orgy At Beaver Lake,"13=:
+AT
+BEAVER
+LAKES",,,inaccurate,The OCR text is garbled and does not match the actual title on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+980478,Metamorphosis,"NATASHA KRISHNAN
+GIL MCKINNEY
+METAMORPHOSIS
+A FILM BY ALEX SMOOT
+THE SMOOT СО PRESENTS IN ASSOCIATION WITH MATADOR PRODUCTIONS THE ALEX SMOOT STARRING NATASHA KRISHNAN & GIL MCKINNEY CATTA STEPHANIE HOLBROOK
+IAN HATTON , JAY SHAPIRO ERP JOEY GUNN JASON KRANGEL NICK GOLDFARB & ALEX SMOOT - EXECUTIVE SARAH MIL STEAD",,,accurate,the OCR text matches the title on the poster,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+659313,Kisah Seram Hostel,"KISAH SERAM
+HOSTEL",,,accurate,The OCR text matches the title text on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+726239,Dead,,,,accurate,"The OCR text matches the large, visible title on the poster.",OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+850060,Dead Till Death,"DEADTILDENT
+I I
+Death
+Liquid
+Liqui
+GO",match,The poster features the exact title 'DEADTILDDEATH' and a horror-themed visual style consistent with the catalog film.,inaccurate,OCR misread the title as 'DEADTILDENT' instead of 'DEADTILDEATH'.,full check (poster vs catalog title)
+283437,A Curtição do Avacalho,"CANIBAL FILMES EM ASSOCIAÇÃO COM BULHORGIA PRODUÇÕES
+apresen tam
+UM EXERCICIO DE ESTILO DE PETTER BAIESTORF
+A
+CURTICAO
+DO
+AVACALHO
+Estrelado pela ninfeta
+Kika,
+a nova
+sensação
+das
+produçoes
+independentes.
+As mensagens subliminares não estão aqui por acaso.",,,accurate,The OCR text matches the main title on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+1216210,eVil Sublet,"-
+)
+FEARFEST
+a
+-
+jENNiFER LEIGH
+HOUSTON
+SALLY
+STRUTHERS
+eVIL
+""SCARY SEXY RIDE""
+A
+SUBLET
+NY 18 por
+DE DE en
+-
+-
+THE
+-
+EN
+-",,,accurate,The OCR correctly identified the main title 'EVIL SUBLET' on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+772295,Makhaliss,"Peace has many faces.
+KIII YAMAMOTO
+MAKHALISS
+que USA STRAM II KIA - rin SHINE'S SUM 100m TO DESI MINIST BRITA DIE DEPELLA ES DES DE TOKA
+KIGHT BRASIL 40 TARANTER 9980 TARANICO -State RESTRICTIONS ROA un - MICHELING MICTIONS
+PRODUCTIONS.com
+- UN son MATIM ASANI ISANI EXIT THE EXTRE - SUIMA KING MINI BACKS ARAL
+ESA HOY HARRES SACHE KIN TECKET ""III DISCON DO KIDA "" SAMPLE
+: TEMM
+I
+www.makarisu.com
+- HOT",,,accurate,The OCR correctly identified the main title 'MAKHALISS' on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+751497,Living Arrangements,"WOLFIE FRODUCTIONS PRESENTS
+LIVING.
+ARRANCEMENTS
+VOJE PRODUCTION
+Tube DE KOREEN ALEXANDRA GLAT BURCHARD 22 RAZ HAZGUETEN
+SET - 20%
+JUNCORSTAR LOCAL EGU
+TOG DRY CRESING UNE ESO 24 LIGRE дос . ESTADO DINGER
+- DE ESO SUN",,,inaccurate,The OCR text is garbled and does not match the actual title on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+797781,CraZy A$$ B!tche$,"CraZy
+Satchel Williams
+Ellen R. Brown
+Sam Bonner
+Anastacia Diaz
+Deuandra T. Brown
+Mireya S. Brown
+Janice Bonner
+ASS
+""A Fun Crazy Action Thriller""
+B!tche$
+Productions
+Indie Wise
+Director/Producer: Deuandra T. Brown Executive Producer Ellen R. Brown
+Starring: Deuandra T Brown, Mireya S. Brown, Ellen R Brown, Sam Bonner,
+Janice Bonner, Satchel Williams Anastacia Diaz, Music by: Deuandra
+VFX/Editor: Deuandra T Brown Detaron Productions 2018 ©
+R
+Official Website: https://detaron.wixsite.com/crazyassbitches
+SAG-AFTRA",,,accurate,The OCR text matches the title text visible on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+739587,The Angler,"CORY
+DANGERFIELD
+A NEBEKER Twin FILM
+THE ANGLER
+DIRECTED WRITTEN EDITED BY
+MAXIM & LUCY NEBEKER
+OVERCRANMEDPICTURES ROCES CORYDANGERFELD*THE ANGLER""
+adidas POR OSCAR JIMMEZ
+OVERCRANKEDPICTURES",,,accurate,The OCR correctly identified the main title of the movie as 'THE ANGLER'.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+85197,Honeymoon Horror,"HONEYMOON
+HOAROR
+'Til death do us part.",,,inaccurate,The OCR misread 'HORROR' as 'HOAROR'.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+87858,Ratline,RATLINE,,,accurate,The OCR text matches the title text visible on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+524736,Kuntilanak,"SING FUMT
+SING
+MELIBARA
+KUNTILANAK REAAL MANTOVANI
+- -
+HISH
+EINE
+- IN ith ... - DES THE
+adidas
+- TOTAL -
+..
+-
+adidas
+TOM
+..
+MITHIN -
+-
+HFF
+H
+-
+THE
+adidas DE MOTO
+-
+-
+TIPETO -
+JOES
+THE adidas
+100 TOUR
+-
+...
+-
+BY
+STATE
+-
+LEBARAN 2018
+BOX",,,accurate,The OCR text matches the title text visible on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+1024747,Mukbang,"VOLCAW
+ACM
+ACCENTIONE
+-OFFICIAL-",match,"The poster prominently displays the title 'MUKBANG' in large, stylized text, matching the catalog entry.",inaccurate,the OCR text does not match the actual title on the poster,full check (poster vs catalog title)
+1583838,Alter,ALTER,,,accurate,"The OCR text matches the large, bold text visible on the poster.",OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+792149,Dead Again,"DEAD
+AGAIN
+POLICE
+LOCKDOWN
+WON'T
+SAVE YOU",,,accurate,The OCR text matches the title on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+255674,The Visitant,"FWC PICTURES, LLC
+presents
+The Visitant
+BASED ON ACTUAL EVENTS
+They said their love
+would last forever...
+BUT BEYOND
+THE GRAVE?",,,accurate,"The OCR text matches the large, prominent title on the poster.",OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+1258568,Terror,"TERROR
+A SHORT FILM",,,accurate,The OCR text matches the title text on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+847197,Hunting Terror,HUNTING TERROR,,,accurate,The OCR text matches the title text on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+147232,Always From Darkness,"Always
+From
+Darkness",,,accurate,The OCR text matches the title text visible on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+497830,60 Seconds to Die,"60
+05
+SECONDS TO DIE",,,accurate,The OCR text matches the title text visible on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+579437,The Outer Boroughs,"THE
+OUTER BOROUGHS",,,accurate,The OCR text matches the title text visible on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+110345,Dead Sushi,"A FILM BY NOBORU IGUCHI
+DEAd
+SUSHi
+The Sushi
+Bites Back!",,,accurate,The OCR text matches the title on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+149630,Flesh Feast,"MORBID
+HORROR
+IN VIVID
+COLOR
+FLESH
+FEAST",,,accurate,"The OCR text matches the large, prominent title on the poster.",OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+794234,The Bunker Game,THE BUNKER GAME,,,accurate,The OCR text matches the title text visible on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+537715,Sweet Dreams,"THEY'RE HUNGRY
+SMEETS DREAMS
+COHORTE AUTOMNE 2015
+NAD PRESENTS ""SWEET DREAMS"" STORY BY CHARLES-ETIENNE D'AMOURS STARRING JACOB D'AMOURS
+PRODUCER EXECUTIVE DOMINIC MERCIER EFFECTS BY SPECIAL
+COHORTE AUTOMNE 2015
+MUSIC BY PHILIPPE SAVOIE-LEMAY
+NAD",,,inaccurate,OCR misread the title as 'SMEETS DREAMS' instead of 'SWEET DREAMS'.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+966572,Inseto,"OFFICIAL SELECTION
+HELL DE
+Festival Paranaense
+Festival Boitatá
+JANEIRO
+ALEXANDRE ACCORSI
+Cinema de Horror
+Itinerante de
+FESTIVAL INTERNACIONAL CINEMA
+TERROR DO RUS DE JANEIRO
+2022
+VITOR FRAGA
+2022
+OFFICIAL
+FAN
+SELEÇÃO OFICIAL
+IV
+FANTASPOA
+SELECTION
+INSETO
+TAS
+NÓIÁ
+2021
+SELECÃO OFICIAL
+T
+Cuarta
+Alagnainha
+2027
+3FEESTCINE
+ITAÚNA
+Kalakari
+FILME HORROR
+2° MANAUS
+FANTÁSTICO
+SELEÇÃO OFICIAL
+OFFICIAL SELECTION
+2021
+2022
+OFFICIAL SELECTION
+n
+Student
+World Impact
+Film Festival
+GLOBAL
+LIFT-OFF
+NETWORK
+SESSIONS
+2 0 2
+SELECTION
+1
+OFFICIAL SELECTION
+Premieres
+The Paus
+Festival
+2022
+ROTEIRO E DIREÇÃO: NÍCOLAS LOBATO PRODUÇÃO: LAURA MOGLIA DIREÇÃO DE FOTOGRAFIA: FRANCESCO FOCHESATO
+DIREÇÃO DE ARTE: NICOLAS",,,accurate,The OCR correctly identified the main title 'INSETO' on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+105004,The Magic Sword of Watari,"Deco FILMS
+WATARIA SCOPE
+CONTRE
+LES7 MONSTRES
+TEGEN
+DE 7 MONSTERS
+COLOR",,,,,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+739123,Tales from the Hood 3,"TALES
+HOOD 3
+FROM
+THE",,,accurate,The OCR text matches the title on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+970512,9 Ways to Hell,"9
+WAYS
+TO
+HELL
+666",,,accurate,The OCR text matches the title text visible on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+533210,Odyssey of Death,"DARKSIDE RELEASING PRESENTS
+A NEW ODYSSEY OF VIOLENCE AND EROTICISM
+ODISSEA
+DELLA
+MORTE
+OF THE OTADI
+FROM
+AWARD*WINNING
+DIRECTOR
+VINCE D'AMATO
+ELEGANT PERVERSION MEETS THE PERVERSION FOR ELEGANCE
+RELEASING NIKE BOVOD GALLO ERICO
+40 WT ABDUSSATI 42 MICKEY EVIL - NICELL RANCED TARET ""TVNCE an MICKEYENE de DE MICSHOTS
+""NINCE TARAT THUT GARNE VINCE FINET TENCE TIRET
+SARRING MINISA COMAGATA EISE CRADOL eu E NOCULA D NOTE LARISSA NIKET MICHELIA BARG PRITER 11121 ALEXANDER UNI LOVET
+doncide",,,accurate,The OCR text matches the title visible on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+602547,The Chasing World 2,"""WAZEE""
+48
+1) 7 IL
+i)
+2 N
+VET.
+6848 ...
+ROXO плая GREE ФИЯ ROK- SCONT ABR
+- - - ... I - - - -
+Matorn
+- - -
+.....
+- ....
+-
+www.talgooro.net",match,"The poster displays the exact title ""リアル鬼ごっこ２"" and features the expected visual style of the series.",inaccurate,The OCR text does not match the actual title text on the poster.,full check (poster vs catalog title)
+1428191,The Weeknd - Red Terror,"THE WEEKND
+A FILM BY EDDIE ALCAZAR",,,inaccurate,OCR failed to detect the actual title text on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+931896,Hoshi Shin'ichi Mystery Special,"II
+E
++1 ر a
+1001
+-
+!
+!
+A15 FF FBC 9~",match,"Poster displays the exact title ""星新一ミステリーSP"" matching the catalog entry.",,,full check (poster vs catalog title)
+1242578,Objects In Mirror Are Closer Than They Appear,"Обурстя IN Are MIRROR CLOSER THAN THEY APPEAR
+И",,,accurate,The OCR text matches the title text visible on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+216203,Pieces of Talent,"PIECES
+TALENT
+OF",,,accurate,The OCR text matches the title on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+29505,Expendable,"TIME CHANGES EVERYTHING...
+AND DAVID'S IS RUNNING OUT.
+EXPENDABLE
+A MARK BARANOWSKI FILM
+STARBING
+RYL MORGAN MARK BARANOWSKI
+RACHELLE WILLIAMS AND BRINKE STEVENS",,,accurate,The OCR correctly identified the main title of the film as 'EXPENDABLE'.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+681457,The Carnivores,"ARNIVOP
+THE
+RES",,,inaccurate,OCR misread the title as 'ARNIVOP' and 'RES' instead of 'CARNIVORES'.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+776294,The House and The White String,"THE
+HOUSE
+AND THE
+WH TE
+STR NG",,,inaccurate,"The OCR text is garbled, missing letters and spaces, and does not match the actual title on the poster.",OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+1617087,Don't Answer,"DON
+JINS
+WER",,,accurate,The OCR text matches the actual title on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+681185,Pride,PRIDE,,,accurate,The word 'PRIDE' is clearly visible on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+1064178,Hunt Club,"HUNT
+CLUB",,,accurate,"The OCR text matches the large, bold title on the poster.",OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+954787,The Blue Hour,"UN CORTOMETRAJE DE
+JEREMIAS SEGOVIA
+LA
+HORA
+AZ
+UL
+UNA PRODUCCION DE FOGON FILMS CON LUCIA BLASCO JUAN DIEGO EIREA ""LA HORA AZUL""
+JEFA DE PRODUCCION LETICIA BARREIRO DIRECCION DE FOTOGRAFIA ALEJANDRO ROCCHI MONTAJE MAURO SARSER
+MUSICA JAVIER ORMAN SONIDO ANDRES COSTA COLOR ELISA BARBOSA POST LUCAS CARRIER
+DIRECCION, GUION, PRODUCCION JEREMIAS SEGOVIA",,,accurate,the OCR text matches the title on the poster,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+1009049,Omegle,"WANNA SEE
+A
+MAGIC TRICK?",mismatch,The poster does not contain any reference to the film 'Omegle'.,accurate,The OCR text matches the text visible on the poster.,full check (poster vs catalog title)
+1743173,Omegle,"SYDNEY MCCARTHY
+ARIS LE BEAU
+WANNA SEE
+A
+MAGIC TRICK?
+omegle
+ACM
+AN ALEX MAGAÑA FILM
+-EMOK-",,,accurate,The title 'omegle' is clearly visible on the poster.,OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+469666,Edwin Parker,"GH
+para
+SHEETA
+GORE",mismatch,The poster features a different title and stylized horror imagery unrelated to 'Edwin Parker'.,accurate,The OCR text matches the title text on the poster.,full check (poster vs catalog title)
+321713,Grudge,"**********
+!
+XHOL!
+49%
+!
+CINEMASCOPE
+- 10
+owo
+SPEA CRA
+[ДН
++X
+!
+and
+!
+<4
+E!!
+!
+ARINGE
+: ARE DAP u
+0 IRIS
+a",mismatch,The poster is in a different language and does not match the catalog film details.,accurate,The large character 'X' is clearly visible and matches the OCR result.,full check (poster vs catalog title)
+732231,Castle Ghosts of England,"THREE DISC BOX SET
+Discovery
+Castle Ghosts
+CHANNEL
+OF ENGLAND + SCOTLAND + WALES + IRELAND
+d
+INTRODUCED BY ROBERT HARDY DVD
+VIDEO
+DELTA",,,accurate,"The OCR text matches the large, prominent title on the poster.",OCR-accuracy check only (not in the smaller poster-vs-title drift sample)
+732232,Castle Ghosts of Ireland,"THREE DISC BOX SET
+Discovery
+Castle Ghosts
+CHANNEL
+OF ENGLAND + SCOTLAND + WALES + IRELAND
+d
+INTRODUCED BY ROBERT HARDY DVD
+VIDEO
+DELTA",,,accurate,"The OCR text matches the large, prominent title on the poster.",OCR-accuracy check only (not in the smaller poster-vs-title drift sample)

@@ -47,14 +47,15 @@ rejects and why.
 ```
 scripts/
   01_tmdb_enumerate.py       Pull genre=27 horror candidates from TMDB
-  02_match_imdb.py           Alternate titles: TMDB API + optional IMDb AKAs
-  03_bedrock_ocr.py          Vision-LLM (Nova Pro) reads the poster directly
-  04_comprehend_language.py  Language of the poster's visible text
-  05_translate_titles.py     Re-score non-English text after translation
-  06_dedupe_tmdb_metadata.py Same title+year+overview, different id?
-  07_dedupe_poster_md5.py    Same exact poster image file used twice?
-  08_collapse_compilations.py Same poster shared across multiple ids?
-  09_validate_corpus.py      Orchestrates 1-8, writes final outputs
+  02_verify_poster_exists.py Does this row have a reachable poster at all?
+  03_match_imdb.py           Alternate titles: TMDB API + optional IMDb AKAs
+  04_bedrock_ocr.py          Vision-LLM (Nova Pro) reads the poster directly
+  05_comprehend_language.py  Language of the poster's visible text
+  06_translate_titles.py     Re-score non-English text after translation
+  07_dedupe_tmdb_metadata.py Same title+year+overview, different id?
+  08_dedupe_poster_md5.py    Same exact poster image file used twice?
+  09_collapse_compilations.py Same poster shared across multiple ids?
+  10_validate_corpus.py      Orchestrates 1-9, writes final outputs
   utils/                     Shared AWS clients, constants, text matching
 
 data/

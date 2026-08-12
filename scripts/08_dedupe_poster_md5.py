@@ -14,7 +14,7 @@ the rest were stubbed with a placeholder.
 Where two or more ids share an MD5, keeps whichever has the most complete
 metadata (vote_count) and flags the rest.
 
-  python3 07_dedupe_poster_md5.py --in data/sample_input/sample_100_ids.csv
+  python3 08_dedupe_poster_md5.py --in data/sample_input/sample_100_ids.csv
 """
 from __future__ import annotations
 

@@ -8,7 +8,7 @@ a "different title on the poster" was actually a legitimate foreign/reissue
 title rather than a wrong poster — see docs/RESULTS.md.
 
   export AWS_PROFILE=your-bedrock-profile
-  python3 03_bedrock_ocr.py --in data/sample_input/sample_100_ids.csv
+  python3 04_bedrock_ocr.py --in data/sample_input/sample_100_ids.csv
 """
 from __future__ import annotations
 

@@ -9,7 +9,7 @@ of disagreements were the expected "foreign film, English-market poster"
 pattern, not errors.
 
   export AWS_PROFILE=your-comprehend-profile
-  python3 04_comprehend_language.py --in data/sample_output/vision_title_check.csv
+  python3 05_comprehend_language.py --in data/sample_output/vision_title_check.csv
 """
 from __future__ import annotations
 

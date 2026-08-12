@@ -26,7 +26,7 @@ are simplified, portable versions of.
 
 \* MD5 dedup ran earlier in the project, as part of initial corpus filtering
 rather than this specific review pass — included here because it's the same
-kind of check ([07_dedupe_poster_md5.py](../scripts/07_dedupe_poster_md5.py))
+kind of check ([08_dedupe_poster_md5.py](../scripts/08_dedupe_poster_md5.py))
 and belongs in the same accounting.
 
 ## Duplicate detection funnel
@@ -69,6 +69,28 @@ film's *own* catalog title, not only against external alternate-title
 databases. A meaningful share of "mismatch" verdicts were the vision model
 expressing doubt about genre fit for an obscure title it didn't recognize —
 the title text on the poster was correct all along.
+
+## Sample run (`data/sample_output/`), gate ordering in practice
+
+The 100-id sample in this repo includes 6 real ids chosen specifically to
+demonstrate each rejection category, plus 94 random ones. Running the full
+gate sequence against them is a good illustration of why gate order
+matters: **"Castle Ghosts of England/Ireland"** (a real MD5-duplicate pair —
+see above) both turned out to *also* have an empty `poster_path` in the
+primary metadata, so gate 2 excludes both before gate 8 (MD5 dedup) ever
+gets to run on them. Gate 8's own output
+(`poster_md5_duplicates.csv`) still shows it correctly detected the
+duplicate — it just never became the *final* reason in `excluded_ids.csv`,
+because an earlier gate already caught the same row for an unrelated cause.
+This is expected, not a bug: whichever gate runs first should win, since
+that mirrors what a real sequential pipeline (one that drops excluded rows
+between gates, rather than running gates independently over the same input
+like this demo does) would actually do.
+
+Final tally for the 100-id sample: **95 validated, 5 excluded** — Edwin
+Parker, Castle Ghosts of England, Castle Ghosts of Ireland, and Grudge (all
+`no_verifiable_poster`), plus Omegle's cropped-poster duplicate id
+(`tmdb_duplicate`).
 
 ## Compilation cases, case by case
 

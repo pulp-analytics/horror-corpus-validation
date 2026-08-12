@@ -11,7 +11,7 @@ not a real gap in the logic. Re-run with the same thresholds to fill gaps
 without re-processing everything (idempotent by design).
 
   export AWS_PROFILE=your-translate-profile
-  python3 05_translate_titles.py --in data/sample_output/language_detection.csv
+  python3 06_translate_titles.py --in data/sample_output/language_detection.csv
 """
 from __future__ import annotations
 

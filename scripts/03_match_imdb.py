@@ -10,8 +10,8 @@ foreign/reissue title" (see docs/RESULTS.md for the concrete case: a poster
 reading "World of the Living Dead" that turned out to be a real AKA of the
 catalog title, not a mismatch).
 
-  TMDB_API_KEY=... python3 02_match_imdb.py --in data/sample_output/tmdb_horror_ids.csv
-  python3 02_match_imdb.py --akas /path/to/title.akas.tsv.gz --in ...
+  TMDB_API_KEY=... python3 03_match_imdb.py --in data/sample_output/tmdb_horror_ids.csv
+  python3 03_match_imdb.py --akas /path/to/title.akas.tsv.gz --in ...
 """
 from __future__ import annotations
 
