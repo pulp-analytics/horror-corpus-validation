@@ -1,15 +1,76 @@
 # horror-corpus-validation
 
-Data quality and validation tooling for a large-scale horror movie poster corpus
-(145k+ titles sourced from TMDB, spanning horror + adjacent genres).
+Data quality and validation tooling for a large-scale movie poster corpus
+(built and run against 69,789 horror titles sourced from TMDB, part of a
+145k-title multi-genre project). Catches three real problems that don't show
+up in aggregate stats: **duplicate catalog entries**, **compilation/anthology
+posters misattributed to individual films**, and **poster/title mismatches**
+— using vision-LLM cross-checks (Amazon Nova Pro) against OCR and
+alternate-title databases (IMDb, TMDB) to tell real errors apart from false
+positives.
 
-Covers: duplicate TMDB entry detection, compilation/anthology poster collapsing,
-dead-id verification, poster/title mismatch review using vision-LLM cross-checks
-(Nova, Claude) against IMDb and TMDB alternative titles.
+Part of the [Pulp Analytics](https://github.com/pulp-analytics) horror
+poster analysis project ("The Anatomy of Fear"). Real results from the full
+run: [docs/RESULTS.md](docs/RESULTS.md).
 
-Part of the [Pulp Analytics](https://github.com/pulp-analytics) horror poster
-analysis project ("The Anatomy of Fear").
+## Quick start
+
+```bash
+git clone https://github.com/pulp-analytics/horror-corpus-validation
+cd horror-corpus-validation
+make setup
+source .venv/bin/activate
+cp .env.example .env   # fill in TMDB_API_KEY and AWS_PROFILE
+make test              # pure-function unit tests, no API calls
+make validate-sample   # runs the full pipeline on 100 sample TMDB ids
+```
+
+`make validate-sample` writes three files to `data/sample_output/`:
+- `validated_corpus.csv` — the clean rows
+- `excluded_ids.csv` — everything removed, with a reason per row
+- `qa_report.json` — summary counts
+
+## Why this exists
+
+A wrong poster still produces *a* color palette, *a* face detection result,
+*a* CLIP embedding — the pipeline runs fine and the corpus looks complete.
+The problem only shows up when you check what's actually in the image
+against what the catalog says it is. See
+[docs/PHASE_1_OVERVIEW.md](docs/PHASE_1_OVERVIEW.md) for the full rationale
+and [docs/VALIDATION_LOGIC.md](docs/VALIDATION_LOGIC.md) for the exact
+decision rules (in what order to check things, and why).
+
+## Structure
+
+```
+scripts/
+  01_tmdb_enumerate.py       Pull genre=27 horror candidates from TMDB
+  02_match_imdb.py           Alternate titles: TMDB API + optional IMDb AKAs
+  03_bedrock_ocr.py          Vision-LLM (Nova Pro) reads the poster directly
+  04_comprehend_language.py  Language of the poster's visible text
+  05_translate_titles.py     Re-score non-English text after translation
+  06_dedupe_tmdb_metadata.py Same title+year+overview, different id?
+  07_collapse_compilations.py Same poster shared across multiple ids?
+  08_validate_corpus.py      Orchestrates 1-7, writes final outputs
+  utils/                     Shared AWS clients, constants, text matching
+
+data/
+  sample_input/sample_100_ids.csv   Real 100-id sample, runnable as-is
+  sample_output/                    Written by the scripts
+  decision_matrix.csv               Real exclusion decisions from the full run
+
+docs/         Full writeups — overview, decision logic, AWS setup, results
+tests/        Unit tests for the pure matching logic (no network calls)
+```
+
+## Requirements
+
+- Python 3.10+
+- A [TMDB API key](https://www.themoviedb.org/settings/api) (free)
+- AWS account with Bedrock (Nova Pro), Comprehend, and Translate access —
+  see [docs/AWS_SETUP.md](docs/AWS_SETUP.md)
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT — see [LICENSE](LICENSE). Contributions welcome — see
+[CONTRIBUTING.md](CONTRIBUTING.md).

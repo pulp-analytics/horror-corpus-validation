@@ -1,0 +1,83 @@
+id,title,category,reason,kept_id
+476625,After Hours,tmdb_duplicate,tmdb_duplicate_entry_no_imdb_id,1469440
+1571217,Blackmail,tmdb_duplicate,tmdb_duplicate_entry_no_imdb_id,1505291
+1353245,Bodysnatch,tmdb_duplicate,tmdb_duplicate_entry_no_imdb_id,529446
+1223324,I Really Don't Want to Hear it! Horror Stories from the Mountains,tmdb_duplicate,tmdb_duplicate_entry_no_imdb_id,1117191
+1528029,In the Deathroom,tmdb_duplicate,tmdb_duplicate_entry_no_imdb_id,1527967
+1009049,Omegle,tmdb_duplicate,tmdb_duplicate_entry_cropped_poster,1743173
+1294440,Run!,tmdb_duplicate,tmdb_duplicate_entry_no_imdb_id,413607
+1287755,Shattered,tmdb_duplicate,tmdb_duplicate_entry_no_imdb_id,1498215
+848931,The Blue Whale,tmdb_duplicate,tmdb_duplicate_entry_no_imdb_id,1058435
+1563430,Gerakol,tmdb_duplicate,tmdb_duplicate_entry_no_crew_data,1563369
+704359,Guilt,tmdb_duplicate,tmdb_duplicate_entry_no_crew_data,704372
+1591276,Pizza Party Massacre,tmdb_duplicate,tmdb_duplicate_entry_no_trailer,1700166
+1702322,Pizza Party Massacre,tmdb_duplicate,tmdb_duplicate_entry_identical_to_kept,1700166
+1558218,Scream a Little Dream,tmdb_duplicate,tmdb_duplicate_entry_no_imdb_id,1570123
+1389599,In Memoriam,tmdb_duplicate,tmdb_duplicate_entry_different_cut_no_horror_genre,1204913
+1445431,The Battle For Survival,tmdb_duplicate,tmdb_duplicate_entry_arbitrary,1439901
+671308,Demon,tmdb_duplicate,tmdb_duplicate_entry_lower_popularity_coinflip,671309
+5161,Blood of the Undead: The Unwanted,compilation_collapse,collapsed_into_compilation_sheets_of_gore,934611
+469662,Gone But Not Forgotten,compilation_collapse,collapsed_into_compilation_sheets_of_gore,934611
+469663,Gotta Quarter?,compilation_collapse,collapsed_into_compilation_sheets_of_gore,934611
+469665,Sanguinary Desires,compilation_collapse,collapsed_into_compilation_sheets_of_gore,934611
+469666,Edwin Parker,compilation_collapse,collapsed_into_compilation_sheets_of_gore,934611
+749611,Blood of the Undead: The Final Chapter,compilation_collapse,collapsed_into_compilation_sheets_of_gore,934611
+179344,Bitten,compilation_collapse,collapsed_into_compilation_ultimate_zombie_feast,801464
+179358,KidZ,compilation_collapse,collapsed_into_compilation_ultimate_zombie_feast,801464
+1701739,William and Mary,compilation_collapse,collapsed_into_series_late_night_horror,1701750
+1701743,The Triumph of Death,compilation_collapse,collapsed_into_series_late_night_horror,1701750
+1701746,The Bells of Hell,compilation_collapse,collapsed_into_series_late_night_horror,1701750
+94161,Dracula,dead_tmdb_id,tmdb_movie_404,
+273060,The Evil Dead Inbred Rednecks,dead_tmdb_id,tmdb_movie_404,
+299768,Carmilla,dead_tmdb_id,tmdb_movie_404,
+462987,666: Salem Calling,dead_tmdb_id,tmdb_movie_404,
+467151,Child's Play,dead_tmdb_id,tmdb_movie_404,
+473647,Sandkings,dead_tmdb_id,tmdb_movie_404,
+477982,In Possession,dead_tmdb_id,tmdb_movie_404,
+490870,The Idol,dead_tmdb_id,tmdb_movie_404,
+526146,Intruders,dead_tmdb_id,tmdb_movie_404,
+550718,Leviathan: The Story of Hellbound: Hellraiser II,dead_tmdb_id,tmdb_movie_404,
+601107,Dr. Ling's Torture Greenhouse,dead_tmdb_id,tmdb_movie_404,
+639571,Skin and Bones,dead_tmdb_id,tmdb_movie_404,
+647354,Midday Demons,dead_tmdb_id,tmdb_movie_404,
+655058,The House on Devil's Road,dead_tmdb_id,tmdb_movie_404,
+671730,The Turn of the Screw,dead_tmdb_id,tmdb_movie_404,
+679870,Dreams of Darkness,dead_tmdb_id,tmdb_movie_404,
+687661,New Year's Day,dead_tmdb_id,tmdb_movie_404,
+688005,Community,dead_tmdb_id,tmdb_movie_404,
+729975,Porkin' Across America,dead_tmdb_id,tmdb_movie_404,
+752291,CROWN OF THE ARCHONS,dead_tmdb_id,tmdb_movie_404,
+772948,The Clock,dead_tmdb_id,tmdb_movie_404,
+773327,La Playa,dead_tmdb_id,tmdb_movie_404,
+783208,The Ultimate Dilemma Part 2,dead_tmdb_id,tmdb_movie_404,
+791038,The Island of Dr. Moreau,dead_tmdb_id,tmdb_movie_404,
+793385,Tennis Court,dead_tmdb_id,tmdb_movie_404,
+869915,His Name Was Jason,dead_tmdb_id,tmdb_movie_404,
+881597,Ritual The Series,dead_tmdb_id,tmdb_movie_404,
+894733,The Tragedy Of Doctor Jekyll And Mister Hyde,dead_tmdb_id,tmdb_movie_404,
+911229,"It's Me, Billy",dead_tmdb_id,tmdb_movie_404,
+928313,The Strange Case of Dr. Jekyll and Mr. Hyde,dead_tmdb_id,tmdb_movie_404,
+928317,The Eyes of the Panther,dead_tmdb_id,tmdb_movie_404,
+954600,Another!,dead_tmdb_id,tmdb_movie_404,
+959307,The Woods: Man's Natural Enemy,dead_tmdb_id,tmdb_movie_404,
+989253,Sacrificial Lambs,dead_tmdb_id,tmdb_movie_404,
+991182,Night of the Living Dead: 30th Anniversary Edition,dead_tmdb_id,tmdb_movie_404,
+991953,Devil's Fairground,dead_tmdb_id,tmdb_movie_404,
+996327,Blood & Makeup: The Last Laugh of Blah Blah the Clown,dead_tmdb_id,tmdb_movie_404,
+1000589,And the Wall Came Tumbling Down,dead_tmdb_id,tmdb_movie_404,
+1012824,The Corvini Inheritance,dead_tmdb_id,tmdb_movie_404,
+1012826,Paint Me a Murder,dead_tmdb_id,tmdb_movie_404,
+1012840,The Sweet Scent of Death,dead_tmdb_id,tmdb_movie_404,
+1012847,Black Carrion,dead_tmdb_id,tmdb_movie_404,
+1012853,The Late Nancy Irving,dead_tmdb_id,tmdb_movie_404,
+1012859,A Distant Scream,dead_tmdb_id,tmdb_movie_404,
+1012953,Last Video and Testament,dead_tmdb_id,tmdb_movie_404,
+1015721,The Spirit Box,dead_tmdb_id,tmdb_movie_404,
+1024207,this is my world,dead_tmdb_id,tmdb_movie_404,
+1032890,Welcome to the Occult Forest,dead_tmdb_id,tmdb_movie_404,
+34659,Broken,dead_tmdb_id,tmdb_movie_id_no_longer_exists,
+783208,The Ultimate Dilemma Part 2,dead_tmdb_id,tmdb_movie_id_no_longer_exists,
+863443,How to make brownies,dead_tmdb_id,tmdb_movie_id_no_longer_exists,
+927848,Natural Occurrence,dead_tmdb_id,tmdb_movie_id_no_longer_exists,
+978915,A Look Back,dead_tmdb_id,tmdb_movie_id_no_longer_exists,
+978916,Real Sleep,dead_tmdb_id,tmdb_movie_id_no_longer_exists,
