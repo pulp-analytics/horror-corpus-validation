@@ -12,6 +12,8 @@ ids already in --out on re-run, so that gap shouldn't recur).
 
   export AWS_PROFILE=your-translate-profile
   python3 06_translate_titles.py --in data/sample_output/language_detection.csv
+
+Resumable: re-running with the same --out skips ids already processed.
 """
 from __future__ import annotations
 

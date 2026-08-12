@@ -12,6 +12,11 @@ catalog title, not a mismatch).
 
   TMDB_API_KEY=... python3 03_match_imdb.py --in data/sample_output/tmdb_horror_ids.csv
   python3 03_match_imdb.py --akas /path/to/title.akas.tsv.gz --in ...
+
+Resumable: --out is a JSON object keyed by id, loaded first if it already
+exists, so an interrupted run only re-fetches TMDB alt titles for ids not
+already in it (the IMDb AKAs pass is a single local scan, cheap enough to
+always redo in full).
 """
 from __future__ import annotations
 
@@ -70,11 +75,24 @@ def main():
     with open(args.in_path, newline="", encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
 
-    tmdb_alts: dict[str, list[str]] = {}
-    for i, row in enumerate(rows, 1):
+    out_path = Path(args.out)
+    existing: dict[str, dict] = {}
+    if out_path.exists():
+        existing = json.loads(out_path.read_text(encoding="utf-8"))
+
+    tmdb_alts: dict[str, list[str]] = {mid: v["alt_titles_tmdb"] for mid, v in existing.items()}
+    todo = [row for row in rows if row["id"] not in tmdb_alts]
+    if tmdb_alts:
+        log.info(f"resuming: {len(tmdb_alts)} already fetched, {len(todo)} remaining")
+
+    for i, row in enumerate(todo, 1):
         tmdb_alts[row["id"]] = fetch_tmdb_alts(session, api_key, row["id"])
         if i % 25 == 0:
-            log.info(f"TMDB alt titles {i}/{len(rows)}")
+            log.info(f"TMDB alt titles {i}/{len(todo)}")
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+            out_path.write_text(json.dumps(
+                {mid: {"alt_titles_tmdb": tmdb_alts.get(mid, []), "alt_titles_imdb": existing.get(mid, {}).get("alt_titles_imdb", [])}
+                 for mid in tmdb_alts}, indent=2), encoding="utf-8")
         time.sleep(0.1)
     log.info(f"TMDB alt titles: {sum(1 for v in tmdb_alts.values() if v)}/{len(rows)} with >=1 alt")
 
@@ -91,8 +109,9 @@ def main():
             log.info(f"IMDb AKAs: {sum(1 for v in imdb_alts.values() if v)}/{len(tconsts)} with >=1 AKA")
     else:
         log.info("no --akas file given, skipping IMDb cross-check (TMDB alt titles only)")
+        # keep whatever IMDb AKAs an earlier run already found, if any
+        imdb_alts = {mid: v.get("alt_titles_imdb", []) for mid, v in existing.items()}
 
-    out_path = Path(args.out)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     combined = {
         row["id"]: {"alt_titles_tmdb": tmdb_alts.get(row["id"], []), "alt_titles_imdb": imdb_alts.get(row["id"], [])}

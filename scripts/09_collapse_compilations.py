@@ -15,6 +15,10 @@ group but does not auto-resolve it — that's a judgment call (see
 docs/RESULTS.md, "Bite Size Halloween" / "Late Night Horror").
 
   TMDB_API_KEY=... python3 09_collapse_compilations.py --in data/sample_output/vision_title_check.csv
+
+Resumable: the TMDB search per shared-poster group is cached in --cache
+(poster_path -> canonical_id/title/resolution), appended to on each run, so
+an interrupted run doesn't re-search TMDB for groups it already resolved.
 """
 from __future__ import annotations
 
@@ -30,6 +34,7 @@ import requests
 sys.path.insert(0, str(Path(__file__).parent))
 from utils.aws_config import get_tmdb_key
 from utils.logging_setup import get_logger
+from utils.resumable import load_done_ids, open_for_append
 from utils.text_match import title_overlap_score
 
 log = get_logger("collapse_compilations")
@@ -50,6 +55,8 @@ def main():
     ap.add_argument("--poster-col", default="poster_path")
     ap.add_argument("--text-col", default="text_you_read")
     ap.add_argument("--out", default="data/sample_output/compilation_groups.csv")
+    ap.add_argument("--cache", default="data/sample_output/.compilation_search_cache.csv",
+                     help="poster_path->canonical id/title/resolution cache, resumed across runs")
     args = ap.parse_args()
 
     api_key = get_tmdb_key()
@@ -67,24 +74,43 @@ def main():
     shared = {p: items for p, items in by_poster.items() if len(items) > 1}
     log.info(f"posters shared by 2+ catalog ids: {len(shared)} groups, {sum(len(v) for v in shared.values())} ids")
 
+    cache_path = Path(args.cache)
+    cache_fields = ["poster_path", "shared_text", "canonical_id", "canonical_title", "resolution"]
+    done = load_done_ids(cache_path, id_col="poster_path")
+    todo = {p: items for p, items in shared.items() if p not in done}
+    if done:
+        log.info(f"resuming: {len(done)} group(s) already searched, {len(todo)} remaining")
+
+    cf, cw = open_for_append(cache_path, cache_fields)
+    try:
+        for poster, items in todo.items():
+            query_text = items[0].get(args.text_col, "")
+            candidates = search_movie(session, api_key, query_text)
+            time.sleep(0.1)
+
+            canonical_id, canonical_title, resolution = "", "", "no_compilation_entry_found"
+            if len(candidates) == 1:
+                c = candidates[0]
+                if title_overlap_score(query_text, c.get("title", "")) > 0:
+                    canonical_id, canonical_title = str(c["id"]), c.get("title", "")
+                    resolution = "compilation_entry_found"
+
+            cw.writerow({"poster_path": poster, "shared_text": query_text, "canonical_id": canonical_id,
+                         "canonical_title": canonical_title, "resolution": resolution})
+    finally:
+        cf.close()
+
+    with cache_path.open(newline="", encoding="utf-8") as f:
+        cache = {r["poster_path"]: r for r in csv.DictReader(f)}
+
     out_rows = []
     for poster, items in shared.items():
-        query_text = items[0].get(args.text_col, "")
-        candidates = search_movie(session, api_key, query_text)
-        time.sleep(0.1)
-
-        canonical_id, canonical_title, resolution = "", "", "no_compilation_entry_found"
-        if len(candidates) == 1:
-            c = candidates[0]
-            if title_overlap_score(query_text, c.get("title", "")) > 0:
-                canonical_id, canonical_title = str(c["id"]), c.get("title", "")
-                resolution = "compilation_entry_found"
-
+        c = cache.get(poster, {})
         for r in items:
             out_rows.append({
                 "poster_path": poster, "segment_id": r["id"], "segment_title": r.get("title", ""),
-                "shared_text": query_text, "canonical_id": canonical_id,
-                "canonical_title": canonical_title, "resolution": resolution,
+                "shared_text": c.get("shared_text", ""), "canonical_id": c.get("canonical_id", ""),
+                "canonical_title": c.get("canonical_title", ""), "resolution": c.get("resolution", "no_compilation_entry_found"),
             })
 
     out_path = Path(args.out)
