@@ -10,6 +10,19 @@ results -- e.g. running --genre 878 after the default horror run produces
 vision_title_check_genre878.csv alongside vision_title_check.csv, not on
 top of it.
 
+Fully programmatic: nothing here is left for a human to decide. Two cases
+used to require manual review; both are now auto-excluded if the tools we
+already ran can't resolve them --
+  - a 04_bedrock_ocr.py "mismatch" verdict is kept only if the poster's OCR'd
+    text (raw, or translated by 06) overlaps a candidate title -- the
+    catalog title itself, or an alt title from 03_fetch_alt_titles.py --
+    above ALT_TITLE_OVERLAP_THRESHOLD; otherwise excluded as
+    unresolved_title_mismatch. ("no_title_on_poster" verdicts are NOT
+    touched by this -- a title-less poster isn't evidence of anything wrong.)
+  - a 09_collapse_compilations.py group with no rescuable canonical TMDB
+    entry is excluded as unresolved_shared_poster, instead of being left
+    unresolved.
+
   TMDB_API_KEY=... AWS_PROFILE=your-profile python3 10_validate_corpus.py --limit 100
   python3 10_validate_corpus.py --genre 878 --limit 100
 """
@@ -24,8 +37,9 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
-from utils.constants import TMDB_HORROR_GENRE_ID
+from utils.constants import ALT_TITLE_OVERLAP_THRESHOLD, TMDB_HORROR_GENRE_ID
 from utils.logging_setup import get_logger
+from utils.text_match import best_overlap
 
 log = get_logger("validate_corpus")
 SCRIPTS_DIR = Path(__file__).parent
@@ -118,9 +132,45 @@ def main():
     comp_path = out("compilation_groups")
     if Path(comp_path).exists():
         with open(comp_path, newline="", encoding="utf-8") as f:
+            comp_rows = list(csv.DictReader(f))
+        for r in comp_rows:
+            if r["resolution"] == "compilation_entry_found" and r["segment_id"] != r["canonical_id"] and r["segment_id"] not in excluded:
+                excluded[r["segment_id"]] = f"collapsed_into_compilation:{r['canonical_title']}"
+        for r in comp_rows:
+            # no rescuable canonical TMDB entry for this shared poster -- can't
+            # confirm it's right, so it doesn't get left as a manual judgment call
+            if r["resolution"] == "no_compilation_entry_found" and r["segment_id"] not in excluded:
+                excluded[r["segment_id"]] = "unresolved_shared_poster:no_compilation_entry_found"
+
+    # unresolved title mismatches: a 04 "mismatch" verdict is only kept if the
+    # poster's OCR'd text (raw or translated) overlaps the catalog title or one
+    # of 03's alt titles above threshold -- otherwise we can't confirm the
+    # poster is right, so it's excluded rather than left for manual review.
+    # ("no_title_on_poster" verdicts are untouched -- absence of text isn't
+    # evidence of a wrong poster.)
+    alt_titles: dict[str, dict] = {}
+    alt_path = Path(out("alt_titles", "json"))
+    if alt_path.exists():
+        alt_titles = json.loads(alt_path.read_text(encoding="utf-8"))
+
+    translated: dict[str, str] = {}
+    trans_path = out("translated_titles")
+    if Path(trans_path).exists():
+        with open(trans_path, newline="", encoding="utf-8") as f:
+            translated = {r["id"]: r.get("translated", "") for r in csv.DictReader(f)}
+
+    if Path(vision_path).exists():
+        with open(vision_path, newline="", encoding="utf-8") as f:
             for r in csv.DictReader(f):
-                if r["resolution"] == "compilation_entry_found" and r["segment_id"] != r["canonical_id"] and r["segment_id"] not in excluded:
-                    excluded[r["segment_id"]] = f"collapsed_into_compilation:{r['canonical_title']}"
+                mid = r["id"]
+                if r.get("verdict") != "mismatch" or mid in excluded:
+                    continue
+                alts = alt_titles.get(mid, {})
+                candidates = [catalog.get(mid, {}).get("title", ""),
+                              *alts.get("alt_titles_tmdb", []), *alts.get("alt_titles_imdb", [])]
+                texts = [r.get("text_you_read", ""), translated.get(mid, "")]
+                if best_overlap(texts, candidates) <= ALT_TITLE_OVERLAP_THRESHOLD:
+                    excluded[mid] = f"unresolved_title_mismatch:{r.get('reason', '')[:80]}"
 
     validated = [row for mid, row in catalog.items() if mid not in excluded]
 

@@ -4,6 +4,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 
+from utils.constants import ALT_TITLE_OVERLAP_THRESHOLD  # noqa: E402
 from utils.text_match import best_overlap, strip_accents, title_overlap_score  # noqa: E402
 
 
@@ -43,3 +44,24 @@ def test_best_overlap_empty_inputs():
     assert best_overlap([], ["Black Ops"]) == 0.0
     assert best_overlap(["some text"], []) == 0.0
     assert best_overlap([""], [""]) == 0.0
+
+
+# 10_validate_corpus.py auto-excludes an unresolved 04 "mismatch" verdict
+# when best_overlap(poster texts, [catalog title, *alt titles]) doesn't clear
+# ALT_TITLE_OVERLAP_THRESHOLD. These pin the real cases that decision covers.
+
+def test_mismatch_resolved_by_alt_title():
+    # real case: poster read "World of the Living Dead", a genuine AKA
+    score = best_overlap(["World of the Living Dead"], ["Zombie Creeping Flesh", "World of the Living Dead"])
+    assert score > ALT_TITLE_OVERLAP_THRESHOLD
+
+
+def test_mismatch_resolved_by_translation():
+    # real case: poster text needed accent-stripping after translation to line up
+    score = best_overlap(["Isoaiti helvetista"], ["Isoäiti helvetistä"])
+    assert score > ALT_TITLE_OVERLAP_THRESHOLD
+
+
+def test_mismatch_stays_unresolved_without_matching_evidence():
+    score = best_overlap(["Totally Unrelated Poster Text"], ["Catalog Movie Title"])
+    assert score <= ALT_TITLE_OVERLAP_THRESHOLD
