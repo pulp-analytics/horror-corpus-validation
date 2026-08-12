@@ -2,9 +2,12 @@
 import sys
 from pathlib import Path
 
+import pytest
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 
 from utils.constants import ALT_TITLE_OVERLAP_THRESHOLD  # noqa: E402
+from utils.resumable import shard_rows  # noqa: E402
 from utils.text_match import best_overlap, strip_accents, title_overlap_score  # noqa: E402
 
 
@@ -65,3 +68,26 @@ def test_mismatch_resolved_by_translation():
 def test_mismatch_stays_unresolved_without_matching_evidence():
     score = best_overlap(["Totally Unrelated Poster Text"], ["Catalog Movie Title"])
     assert score <= ALT_TITLE_OVERLAP_THRESHOLD
+
+
+# shard_rows -- used by 02/03/04/05/06 for AWS Batch array-job sharding
+# (horror-analysis-infrastructure). Every shard together must reconstruct
+# the original rows exactly once each, with no overlap and no gaps.
+
+def test_shard_rows_no_sharding_by_default():
+    rows = [{"id": str(i)} for i in range(10)]
+    assert shard_rows(rows, 0, 1) == rows
+
+
+def test_shard_rows_partition_is_exhaustive_and_disjoint():
+    rows = [{"id": str(i)} for i in range(23)]  # not evenly divisible by 4
+    shard_count = 4
+    shards = [shard_rows(rows, i, shard_count) for i in range(shard_count)]
+    seen_ids = [r["id"] for shard in shards for r in shard]
+    assert sorted(seen_ids, key=int) == [r["id"] for r in rows]
+    assert len(seen_ids) == len(rows)  # no duplicates across shards
+
+
+def test_shard_rows_rejects_out_of_range_index():
+    with pytest.raises(ValueError):
+        shard_rows([{"id": "1"}], shard_index=4, shard_count=4)

@@ -14,7 +14,15 @@ Resumable: if --out already exists (e.g. an earlier run was interrupted),
 already-verified ids are skipped and new results are appended -- re-running
 after a crash doesn't re-spend API calls on rows you already have.
 
+Shardable: --shard-index/--shard-count split --in's rows by position, so N
+copies of this script can run in parallel (e.g. an AWS Batch array job)
+each covering a disjoint slice -- every id here is checked independently,
+so there's no cross-row state that sharding could break. Each shard needs
+its own --out (they're separate files to merge afterward, not something
+safe to have N processes append to concurrently).
+
   TMDB_API_KEY=... python3 02_verify_poster_exists.py --in data/sample_output/tmdb_horror_ids.csv
+  python3 02_verify_poster_exists.py --shard-index 0 --shard-count 4 --out .../shard_0.csv
 """
 from __future__ import annotations
 
@@ -28,7 +36,7 @@ import requests
 
 sys.path.insert(0, str(Path(__file__).parent))
 from utils.logging_setup import get_logger
-from utils.resumable import load_done_ids, open_for_append
+from utils.resumable import load_done_ids, open_for_append, shard_rows
 
 log = get_logger("verify_poster_exists")
 TMDB_IMG = "https://image.tmdb.org/t/p/w92"  # small size -- we only need the status code
@@ -43,12 +51,15 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--in", dest="in_path", default="data/sample_input/sample_100_ids.csv")
     ap.add_argument("--out", default="data/sample_output/poster_verification.csv")
+    ap.add_argument("--shard-index", type=int, default=0)
+    ap.add_argument("--shard-count", type=int, default=1, help="split --in across N parallel shards (default 1: no sharding)")
     args = ap.parse_args()
 
     session = requests.Session()
 
     with open(args.in_path, newline="", encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
+    rows = shard_rows(rows, args.shard_index, args.shard_count)
 
     out_path = Path(args.out)
     fields = ["id", "title", "poster_path", "verified", "reason"]

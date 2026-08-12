@@ -29,6 +29,12 @@ on the TMDB image URL) is skipped here too, instead of wasting a download
 attempt on a poster we already know is unreachable. If --verified doesn't
 exist (e.g. you're running this script standalone), falls back to just
 checking poster_path is non-empty.
+
+Shardable: --shard-index/--shard-count split --in's rows by position, for
+running N copies of this script in parallel (e.g. an AWS Batch array job)
+each covering a disjoint slice -- the highest-value script to shard, since
+it's a Bedrock call per row and the slowest/most numerous step in the full
+corpus. Each shard needs its own --out to merge afterward.
 """
 from __future__ import annotations
 
@@ -46,7 +52,7 @@ from PIL import Image
 sys.path.insert(0, str(Path(__file__).parent))
 from utils.aws_config import get_client
 from utils.logging_setup import get_logger
-from utils.resumable import open_for_append
+from utils.resumable import open_for_append, shard_rows
 
 log = get_logger("bedrock_ocr")
 DEFAULT_MODEL_ID = "us.amazon.nova-pro-v1:0"
@@ -140,6 +146,8 @@ def main():
     ap.add_argument("--delay", type=float, default=0.3)
     ap.add_argument("--retry-errors", action="store_true",
                      help="on resume, redo ids that errored last time instead of skipping them")
+    ap.add_argument("--shard-index", type=int, default=0)
+    ap.add_argument("--shard-count", type=int, default=1, help="split --in across N parallel shards (default 1: no sharding)")
     args = ap.parse_args()
 
     bedrock = get_client("bedrock-runtime")
@@ -148,6 +156,7 @@ def main():
 
     with open(args.in_path, newline="", encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
+    rows = shard_rows(rows, args.shard_index, args.shard_count)
 
     verified_ids = load_verified_ids(Path(args.verified)) if args.verified else None
     if verified_ids is not None:

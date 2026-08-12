@@ -12,6 +12,11 @@ pattern, not errors.
   python3 05_comprehend_language.py --in data/sample_output/vision_title_check.csv
 
 Resumable: re-running with the same --out skips ids already processed.
+
+Shardable: --shard-index/--shard-count split --in's rows by position, for
+running N copies of this script in parallel (e.g. an AWS Batch array job)
+each covering a disjoint slice. Each shard needs its own --out to merge
+afterward.
 """
 from __future__ import annotations
 
@@ -24,7 +29,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 from utils.aws_config import get_client
 from utils.logging_setup import get_logger
-from utils.resumable import load_done_ids, open_for_append
+from utils.resumable import load_done_ids, open_for_append, shard_rows
 
 log = get_logger("comprehend_language")
 
@@ -45,12 +50,15 @@ def main():
     ap.add_argument("--in", dest="in_path", default="data/sample_output/vision_title_check.csv")
     ap.add_argument("--text-col", default="text_you_read")
     ap.add_argument("--out", default="data/sample_output/language_detection.csv")
+    ap.add_argument("--shard-index", type=int, default=0)
+    ap.add_argument("--shard-count", type=int, default=1, help="split --in across N parallel shards (default 1: no sharding)")
     args = ap.parse_args()
 
     comprehend = get_client("comprehend")
 
     with open(args.in_path, newline="", encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
+    rows = shard_rows(rows, args.shard_index, args.shard_count)
 
     out_path = Path(args.out)
     fields = ["id", "text", "lang_code", "lang_score"]

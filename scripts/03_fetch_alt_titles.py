@@ -25,6 +25,12 @@ Resumable: --out is a JSON object keyed by id, loaded first if it already
 exists, so an interrupted run only re-fetches TMDB alt titles for ids not
 already in it (the IMDb AKAs pass is a single local scan, cheap enough to
 always redo in full).
+
+Shardable: --shard-index/--shard-count split --in's rows by position, for
+running N copies of this script in parallel (e.g. an AWS Batch array job)
+each covering a disjoint slice. Each shard needs its own --out -- these are
+JSON objects, not append-only files, so merging N shards afterward means
+merging N dicts (union of keys), not concatenating files.
 """
 from __future__ import annotations
 
@@ -41,6 +47,7 @@ import requests
 sys.path.insert(0, str(Path(__file__).parent))
 from utils.aws_config import get_tmdb_key
 from utils.logging_setup import get_logger
+from utils.resumable import shard_rows
 
 log = get_logger("fetch_alt_titles")
 ALT_URL = "https://api.themoviedb.org/3/movie/{id}/alternative_titles"
@@ -83,6 +90,8 @@ def main():
     ap.add_argument("--out", default="data/sample_output/alt_titles.json")
     ap.add_argument("--akas", type=Path, default=None, help="path to IMDb title.akas.tsv.gz (optional)")
     ap.add_argument("--imdb-id-col", default="imdb_id", help="column with tt... ids, if present")
+    ap.add_argument("--shard-index", type=int, default=0)
+    ap.add_argument("--shard-count", type=int, default=1, help="split --in across N parallel shards (default 1: no sharding)")
     args = ap.parse_args()
 
     api_key = get_tmdb_key()
@@ -90,6 +99,7 @@ def main():
 
     with open(args.in_path, newline="", encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
+    rows = shard_rows(rows, args.shard_index, args.shard_count)
 
     out_path = Path(args.out)
     existing: dict[str, dict] = {}

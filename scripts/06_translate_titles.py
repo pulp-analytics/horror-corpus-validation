@@ -14,6 +14,11 @@ ids already in --out on re-run, so that gap shouldn't recur).
   python3 06_translate_titles.py --in data/sample_output/language_detection.csv
 
 Resumable: re-running with the same --out skips ids already processed.
+
+Shardable: --shard-index/--shard-count split --in's rows by position, for
+running N copies of this script in parallel (e.g. an AWS Batch array job)
+each covering a disjoint slice. Each shard needs its own --out to merge
+afterward.
 """
 from __future__ import annotations
 
@@ -27,7 +32,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from utils.aws_config import get_client
 from utils.constants import TRANSLATE_BELOW, TRANSLATE_MIN_CHARS
 from utils.logging_setup import get_logger
-from utils.resumable import load_done_ids, open_for_append
+from utils.resumable import load_done_ids, open_for_append, shard_rows
 from utils.text_match import title_overlap_score
 
 log = get_logger("translate_titles")
@@ -43,12 +48,15 @@ def main():
     ap.add_argument("--in", dest="in_path", default="data/sample_output/language_detection.csv")
     ap.add_argument("--titles", default="data/sample_input/sample_100_ids.csv", help="csv with id,title for the overlap check")
     ap.add_argument("--out", default="data/sample_output/translated_titles.csv")
+    ap.add_argument("--shard-index", type=int, default=0)
+    ap.add_argument("--shard-count", type=int, default=1, help="split --in across N parallel shards (default 1: no sharding)")
     args = ap.parse_args()
 
     translate = get_client("translate")
 
     with open(args.in_path, newline="", encoding="utf-8") as f:
-        lang_rows = {r["id"]: r for r in csv.DictReader(f)}
+        lang_rows_list = shard_rows(list(csv.DictReader(f)), args.shard_index, args.shard_count)
+    lang_rows = {r["id"]: r for r in lang_rows_list}
     with open(args.titles, newline="", encoding="utf-8") as f:
         titles = {r["id"]: r.get("title", "") for r in csv.DictReader(f)}
 
