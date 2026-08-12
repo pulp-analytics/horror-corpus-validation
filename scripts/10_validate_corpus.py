@@ -77,7 +77,7 @@ def main():
         ])
 
     run_step("02_verify_poster_exists.py", ["--in", ids_path, "--out", ver_path])
-    run_step("03_match_imdb.py", ["--in", ids_path, "--out", out("alt_titles", "json"),
+    run_step("03_fetch_alt_titles.py", ["--in", ids_path, "--out", out("alt_titles", "json"),
                                    *(["--akas", args.akas] if args.akas else [])])
     run_step("04_bedrock_ocr.py", ["--in", ids_path, "--out", vision_path, "--verified", ver_path])
     run_step("05_comprehend_language.py", ["--in", vision_path, "--out", lang_path])

@@ -5,13 +5,15 @@ IMDb's title.akas.tsv.gz if you have it locally (see docs/AWS_SETUP.md —
 IMDb non-commercial datasets, not an AWS resource, but documented there
 alongside the other one-time setup steps).
 
-This is what let us tell a real "wrong poster" apart from "right poster,
-foreign/reissue title" (see docs/RESULTS.md for the concrete case: a poster
-reading "World of the Living Dead" that turned out to be a real AKA of the
-catalog title, not a mismatch).
+This script only collects candidates -- it does not itself decide whether a
+poster's visible title matches one of them. That comparison happens when
+reviewing 04_bedrock_ocr.py's mismatch verdicts against this output (see
+docs/RESULTS.md for the concrete case: a poster reading "World of the Living
+Dead" that turned out to be a real AKA of the catalog title, not a mismatch,
+once checked against what this script fetched).
 
-  TMDB_API_KEY=... python3 03_match_imdb.py --in data/sample_output/tmdb_horror_ids.csv
-  python3 03_match_imdb.py --akas /path/to/title.akas.tsv.gz --in ...
+  TMDB_API_KEY=... python3 03_fetch_alt_titles.py --in data/sample_output/tmdb_horror_ids.csv
+  python3 03_fetch_alt_titles.py --akas /path/to/title.akas.tsv.gz --in ...
 
 Resumable: --out is a JSON object keyed by id, loaded first if it already
 exists, so an interrupted run only re-fetches TMDB alt titles for ids not
@@ -34,7 +36,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from utils.aws_config import get_tmdb_key
 from utils.logging_setup import get_logger
 
-log = get_logger("match_imdb")
+log = get_logger("fetch_alt_titles")
 ALT_URL = "https://api.themoviedb.org/3/movie/{id}/alternative_titles"
 
 

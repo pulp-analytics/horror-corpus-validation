@@ -65,7 +65,7 @@ detection, a pre-flight account check) lives in the sibling
 specifically because it's easy to point a batch job at the wrong AWS
 account by accident.
 
-## Optional: IMDb dataset for `03_match_imdb.py`
+## Optional: IMDb dataset for `03_fetch_alt_titles.py`
 
 The IMDb non-commercial datasets (not an AWS resource) add a second,
 independent source of alternate titles beyond TMDB's own

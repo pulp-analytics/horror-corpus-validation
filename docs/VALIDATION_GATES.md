@@ -22,7 +22,7 @@ know what image, if any, a prior process actually looked at. Easy to
 overlook because it's the least interesting-sounding check — worth running
 first, before spending any vision-LLM budget.
 
-## Gate 3 — `03_match_imdb.py`
+## Gate 3 — `03_fetch_alt_titles.py`
 
 **Input**: candidate rows. **Output**: alternate titles per id (doesn't
 remove rows). This gate doesn't reject anything by itself — it produces the

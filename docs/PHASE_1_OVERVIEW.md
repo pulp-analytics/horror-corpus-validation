@@ -34,7 +34,7 @@ our corpus.
 ```
 01_tmdb_enumerate       → raw candidate ids
 02_verify_poster_exists → does this row even have a reachable poster?
-03_match_imdb           → alternate titles (IMDb + TMDB)
+03_fetch_alt_titles     → alternate titles (TMDB + optional IMDb) -- used to review 04's mismatches, not a match itself
 04_bedrock_ocr          → what a vision-LLM actually reads on the poster
 05_comprehend_language  → language of that text
 06_translate_titles     → re-score non-English text against the catalog title

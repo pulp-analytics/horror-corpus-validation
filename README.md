@@ -48,7 +48,7 @@ rejects and why.
 scripts/
   01_tmdb_enumerate.py       Pull candidates from TMDB (--genre, default 27=Horror)
   02_verify_poster_exists.py Does this row have a reachable poster at all?
-  03_match_imdb.py           Alternate titles: TMDB API + optional IMDb AKAs
+  03_fetch_alt_titles.py     Alternate titles: TMDB API + optional IMDb AKAs
   04_bedrock_ocr.py          Vision-LLM (Nova Pro) reads the poster directly
   05_comprehend_language.py  Language of the poster's visible text
   06_translate_titles.py     Re-score non-English text after translation
