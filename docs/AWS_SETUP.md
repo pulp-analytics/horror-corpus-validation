@@ -28,11 +28,39 @@
 ## Cost note
 
 These are all pay-per-request services with no idle cost — a 100-row
-sample run costs well under $1. Nova Pro vision calls are the largest
-single cost per call; Comprehend/Translate are negligible at this scale.
-There is no infrastructure to shut down after a run (no EC2, no
-provisioned throughput) — see `horror-analysis-infrastructure` for the
-separate repo covering larger batch/EC2 runs and cost-safety tooling.
+sample run (on your own laptop, no AWS compute needed) costs well under $1.
+Nova Pro vision calls are the largest single cost per call; Comprehend/
+Translate are negligible at this scale. See "Running at scale" below for
+what a full-corpus run actually needs.
+
+## Running at scale
+
+The 100-id sample runs fine on a laptop. For a full corpus (tens of
+thousands of titles), the bottleneck is API call volume, not compute — none
+of these steps need a GPU or heavy CPU. What actually ran the full
+69,789-title horror corpus for this project:
+
+**Services**: TMDB API (candidate enumeration, poster verification,
+alternate titles), Amazon Bedrock — Nova Pro (vision title check), Amazon
+Comprehend (language detection), Amazon Translate, Amazon EC2 (just to host
+the long-running script — no GPU instance type needed).
+
+**Pattern**: a single small EC2 instance (`t3.small` / `c5.large` is
+plenty) running the scripts under `nohup`/`screen` so a dropped SSH
+connection doesn't kill an hours-long run. For a corpus large enough that
+sequential API calls become the bottleneck, shard by id range across a
+handful of small instances in parallel (same shape as the sharded EC2 jobs
+in the sibling `horror-metrics-pipeline` repo — the sharding there is for
+GPU throughput; here it's purely to parallelize API calls within TMDB/
+Bedrock rate limits). Either way, `instance-initiated-shutdown-behavior
+terminate` plus a `shutdown -h now` at the end of the script means each
+instance bills only for its own runtime and cleans itself up.
+
+Cost-safety tooling for running this unattended (budget alerts, anomaly
+detection, a pre-flight account check) lives in the sibling
+`horror-analysis-infrastructure` repo, not here — that repo exists
+specifically because it's easy to point a batch job at the wrong AWS
+account by accident.
 
 ## Optional: IMDb dataset for `03_match_imdb.py`
 
