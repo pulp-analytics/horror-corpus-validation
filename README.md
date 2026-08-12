@@ -37,8 +37,10 @@ A wrong poster still produces *a* color palette, *a* face detection result,
 The problem only shows up when you check what's actually in the image
 against what the catalog says it is. See
 [docs/PHASE_1_OVERVIEW.md](docs/PHASE_1_OVERVIEW.md) for the full rationale
-and [docs/VALIDATION_LOGIC.md](docs/VALIDATION_LOGIC.md) for the exact
-decision rules (in what order to check things, and why).
+[docs/VALIDATION_LOGIC.md](docs/VALIDATION_LOGIC.md) for the exact decision
+rules (in what order to check things, and why), and
+[docs/VALIDATION_GATES.md](docs/VALIDATION_GATES.md) for what each script
+rejects and why.
 
 ## Structure
 
