@@ -1,5 +1,7 @@
 {
+  "genre": 27,
   "total_input": 100,
   "excluded": 5,
-  "validated": 95
+  "validated": 95,
+  "elapsed_seconds": 0.0
 }

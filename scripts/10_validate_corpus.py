@@ -25,6 +25,13 @@ already ran can't resolve them --
 
   TMDB_API_KEY=... AWS_PROFILE=your-profile python3 10_validate_corpus.py --limit 100
   python3 10_validate_corpus.py --genre 878 --limit 100
+
+--assemble-only skips running 01-09 and jumps straight to reading their
+outputs and writing the three deliverables. For running each script as its
+own step in an external orchestrator (e.g. AWS Step Functions driving
+Fargate tasks -- see the sibling horror-analysis-infrastructure repo), that
+orchestrator runs 01-09 itself; this script's only job at that point is the
+assembly logic, which is exactly what --assemble-only gives you.
 """
 from __future__ import annotations
 
@@ -64,6 +71,10 @@ def main():
                           "for the default horror genre, sample_100_ids_genre<id>.csv otherwise)")
     ap.add_argument("--skip-enumerate", action="store_true", help="use an existing --ids-path file instead of re-fetching")
     ap.add_argument("--akas", default=None, help="path to IMDb title.akas.tsv.gz (optional)")
+    ap.add_argument("--assemble-only", action="store_true",
+                     help="skip running 01-09 (assume something else already ran them, e.g. Step "
+                          "Functions/Fargate tasks) and just read their outputs to assemble the "
+                          "three deliverables")
     args = ap.parse_args()
 
     t0 = time.time()
@@ -84,24 +95,27 @@ def main():
     vision_path = out("vision_title_check")
     lang_path = out("language_detection")
 
-    if not args.skip_enumerate:
-        run_step("01_tmdb_enumerate.py", [
-            "--genre", str(args.genre), "--start-year", str(args.start_year), "--end-year", str(args.end_year),
-            "--limit", str(args.limit), "--out", ids_path,
-        ])
+    if not args.assemble_only:
+        if not args.skip_enumerate:
+            run_step("01_tmdb_enumerate.py", [
+                "--genre", str(args.genre), "--start-year", str(args.start_year), "--end-year", str(args.end_year),
+                "--limit", str(args.limit), "--out", ids_path,
+            ])
 
-    run_step("02_verify_poster_exists.py", ["--in", ids_path, "--out", ver_path])
-    run_step("03_fetch_alt_titles.py", ["--in", ids_path, "--out", out("alt_titles", "json"),
-                                   *(["--akas", args.akas] if args.akas else [])])
-    run_step("04_bedrock_ocr.py", ["--in", ids_path, "--out", vision_path, "--verified", ver_path])
-    run_step("05_comprehend_language.py", ["--in", vision_path, "--out", lang_path])
-    run_step("06_translate_titles.py", ["--in", lang_path, "--titles", ids_path, "--out", out("translated_titles")])
-    run_step("07_dedupe_tmdb_metadata.py", ["--in", ids_path, "--out", out("duplicate_resolution"),
-                                             "--cache", str(out_dir / ".tmdb_dedupe_cache.csv")])
-    run_step("08_dedupe_poster_md5.py", ["--in", ids_path, "--out", out("poster_md5_duplicates"),
-                                          "--cache", str(out_dir / ".poster_md5_cache.csv"), "--verified", ver_path])
-    run_step("09_collapse_compilations.py", ["--in", vision_path, "--out", out("compilation_groups"),
-                                              "--cache", str(out_dir / ".compilation_search_cache.csv")])
+        run_step("02_verify_poster_exists.py", ["--in", ids_path, "--out", ver_path])
+        run_step("03_fetch_alt_titles.py", ["--in", ids_path, "--out", out("alt_titles", "json"),
+                                       *(["--akas", args.akas] if args.akas else [])])
+        run_step("04_bedrock_ocr.py", ["--in", ids_path, "--out", vision_path, "--verified", ver_path])
+        run_step("05_comprehend_language.py", ["--in", vision_path, "--out", lang_path])
+        run_step("06_translate_titles.py", ["--in", lang_path, "--titles", ids_path, "--out", out("translated_titles")])
+        run_step("07_dedupe_tmdb_metadata.py", ["--in", ids_path, "--out", out("duplicate_resolution"),
+                                                 "--cache", str(out_dir / ".tmdb_dedupe_cache.csv")])
+        run_step("08_dedupe_poster_md5.py", ["--in", ids_path, "--out", out("poster_md5_duplicates"),
+                                              "--cache", str(out_dir / ".poster_md5_cache.csv"), "--verified", ver_path])
+        run_step("09_collapse_compilations.py", ["--in", vision_path, "--out", out("compilation_groups"),
+                                                  "--cache", str(out_dir / ".compilation_search_cache.csv")])
+    else:
+        log.info("--assemble-only: skipping 01-09, reading their outputs directly")
 
     # -- assemble final outputs --
     with open(ids_path, newline="", encoding="utf-8") as f:
@@ -109,30 +123,37 @@ def main():
 
     excluded: dict[str, str] = {}
 
+    # Every gate below only records an exclusion for an id that's actually in
+    # this run's catalog. A gate's output file can reference ids outside it
+    # (e.g. a resumable --cache or a shared-poster group built from an older,
+    # larger --in) -- without this guard those ids leak into excluded_ids.csv
+    # with a blank title and inflate qa_report.json's count, even though
+    # validated_corpus.csv (built by iterating `catalog`) was never affected.
+
     if Path(ver_path).exists():
         with open(ver_path, newline="", encoding="utf-8") as f:
             for r in csv.DictReader(f):
-                if r["verified"] != "1":
+                if r["id"] in catalog and r["verified"] != "1":
                     excluded[r["id"]] = f"no_verifiable_poster:{r['reason']}"
 
     dup_path = out("duplicate_resolution")
     if Path(dup_path).exists():
         with open(dup_path, newline="", encoding="utf-8") as f:
             for r in csv.DictReader(f):
-                if r["keep"] != "1" and r["id"] not in excluded:
+                if r["id"] in catalog and r["keep"] != "1" and r["id"] not in excluded:
                     excluded[r["id"]] = f"tmdb_duplicate:{r['resolution']}"
 
     md5_path = out("poster_md5_duplicates")
     if Path(md5_path).exists():
         with open(md5_path, newline="", encoding="utf-8") as f:
             for r in csv.DictReader(f):
-                if r["keep"] != "1" and r["id"] not in excluded:
+                if r["id"] in catalog and r["keep"] != "1" and r["id"] not in excluded:
                     excluded[r["id"]] = f"poster_md5_dup:{r['reason']}"
 
     comp_path = out("compilation_groups")
     if Path(comp_path).exists():
         with open(comp_path, newline="", encoding="utf-8") as f:
-            comp_rows = list(csv.DictReader(f))
+            comp_rows = [r for r in csv.DictReader(f) if r["segment_id"] in catalog]
         for r in comp_rows:
             if r["resolution"] == "compilation_entry_found" and r["segment_id"] != r["canonical_id"] and r["segment_id"] not in excluded:
                 excluded[r["segment_id"]] = f"collapsed_into_compilation:{r['canonical_title']}"
@@ -163,7 +184,7 @@ def main():
         with open(vision_path, newline="", encoding="utf-8") as f:
             for r in csv.DictReader(f):
                 mid = r["id"]
-                if r.get("verdict") != "mismatch" or mid in excluded:
+                if mid not in catalog or r.get("verdict") != "mismatch" or mid in excluded:
                     continue
                 alts = alt_titles.get(mid, {})
                 candidates = [catalog.get(mid, {}).get("title", ""),
