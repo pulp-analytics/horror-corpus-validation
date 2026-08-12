@@ -30,7 +30,10 @@
 These are all pay-per-request services with no idle cost — a 100-row
 sample run (on your own laptop, no AWS compute needed) costs well under $1.
 Nova Pro vision calls are the largest single cost per call; Comprehend/
-Translate are negligible at this scale. See "Running at scale" below for
+Translate are negligible at this scale. `04_bedrock_ocr.py --model` accepts
+any Bedrock model id that supports image input, so swapping in Nova Lite
+(~18x cheaper, less precise) for a large run is a one-flag change, not a
+code change. See "Running at scale" below for
 what a full-corpus run actually needs.
 
 ## Running at scale
