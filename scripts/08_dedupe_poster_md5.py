@@ -20,6 +20,12 @@ interrupted run doesn't re-download posters it already hashed. The final
 grouping step is cheap and local, so it's always redone in full from
 whatever's in the cache.
 
+Depends on 02_verify_poster_exists.py having already run: --verified points
+at its output, and any id it marked unverified is skipped here too, instead
+of wasting a download attempt on a poster already known to be unreachable.
+If --verified doesn't exist, falls back to just checking poster_path is
+non-empty.
+
   python3 08_dedupe_poster_md5.py --in data/sample_input/sample_100_ids.csv
 """
 from __future__ import annotations
@@ -48,18 +54,39 @@ def poster_md5(session: requests.Session, poster_path: str) -> str:
     return hashlib.md5(resp.content).hexdigest()
 
 
+def load_verified_ids(path: Path) -> set[str] | None:
+    """Ids that 02_verify_poster_exists.py marked verified=1. Returns None
+    (meaning "no filter, trust each row's own poster_path") if the file
+    doesn't exist -- lets this script still run standalone."""
+    if not path.exists():
+        return None
+    with path.open(newline="", encoding="utf-8", errors="replace") as f:
+        return {row["id"] for row in csv.DictReader(f) if row.get("verified") == "1"}
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--in", dest="in_path", default="data/sample_input/sample_100_ids.csv")
     ap.add_argument("--out", default="data/sample_output/poster_md5_duplicates.csv")
     ap.add_argument("--cache", default="data/sample_output/.poster_md5_cache.csv",
                      help="id->md5 cache, resumed across runs")
+    ap.add_argument("--verified", default="data/sample_output/poster_verification.csv",
+                     help="output of 02_verify_poster_exists.py; ids not marked verified=1 there "
+                          "are skipped here without attempting a download. Pass '' to disable.")
     args = ap.parse_args()
 
     session = requests.Session()
 
     with open(args.in_path, newline="", encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
+
+    verified_ids = load_verified_ids(Path(args.verified)) if args.verified else None
+    if verified_ids is not None:
+        n_before = len(rows)
+        rows = [row for row in rows if row["id"] in verified_ids]
+        log.info(f"filtered by {args.verified}: {len(rows)}/{n_before} have a verified poster")
+    else:
+        log.info(f"no --verified file at {args.verified!r}, falling back to a bare poster_path check")
 
     cache_path = Path(args.cache)
     cache_fields = ["id", "title", "vote_count", "md5", "error"]

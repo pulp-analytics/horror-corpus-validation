@@ -85,7 +85,7 @@ def main():
     run_step("07_dedupe_tmdb_metadata.py", ["--in", ids_path, "--out", out("duplicate_resolution"),
                                              "--cache", str(out_dir / ".tmdb_dedupe_cache.csv")])
     run_step("08_dedupe_poster_md5.py", ["--in", ids_path, "--out", out("poster_md5_duplicates"),
-                                          "--cache", str(out_dir / ".poster_md5_cache.csv")])
+                                          "--cache", str(out_dir / ".poster_md5_cache.csv"), "--verified", ver_path])
     run_step("09_collapse_compilations.py", ["--in", vision_path, "--out", out("compilation_groups"),
                                               "--cache", str(out_dir / ".compilation_search_cache.csv")])
 
