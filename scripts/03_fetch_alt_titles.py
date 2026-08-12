@@ -5,6 +5,12 @@ IMDb's title.akas.tsv.gz if you have it locally (see docs/AWS_SETUP.md —
 IMDb non-commercial datasets, not an AWS resource, but documented there
 alongside the other one-time setup steps).
 
+The IMDb cross-check joins on IMDb's own id (a "tt..." tconst), which TMDB's
+/discover/movie results (what 01_tmdb_enumerate.py writes) don't include. So
+when --akas is given, this script also fetches each id's imdb_id from TMDB's
+external_ids endpoint (unless your --in file already has an --imdb-id-col
+column, in which case that's used instead and no extra call is made).
+
 This script only collects candidates -- it does not itself decide whether a
 poster's visible title matches one of them. That comparison happens when
 reviewing 04_bedrock_ocr.py's mismatch verdicts against this output (see
@@ -47,6 +53,14 @@ def fetch_tmdb_alts(session: requests.Session, api_key: str, movie_id: str) -> l
     return [t["title"] for t in resp.json().get("titles", []) if t.get("title")]
 
 
+def fetch_imdb_id(session: requests.Session, api_key: str, movie_id: str) -> str:
+    resp = session.get(f"https://api.themoviedb.org/3/movie/{movie_id}/external_ids",
+                        params={"api_key": api_key}, timeout=15)
+    if resp.status_code != 200:
+        return ""
+    return resp.json().get("imdb_id") or ""
+
+
 def load_akas_for_tconsts(akas_path: Path, tconsts: set[str]) -> dict[str, list[str]]:
     """One streaming pass over title.akas.tsv.gz, keeping only rows for our ids."""
     out: dict[str, list[str]] = {}
@@ -83,29 +97,48 @@ def main():
         existing = json.loads(out_path.read_text(encoding="utf-8"))
 
     tmdb_alts: dict[str, list[str]] = {mid: v["alt_titles_tmdb"] for mid, v in existing.items()}
+    imdb_ids: dict[str, str] = {mid: v.get("imdb_id", "") for mid, v in existing.items()}
     todo = [row for row in rows if row["id"] not in tmdb_alts]
     if tmdb_alts:
         log.info(f"resuming: {len(tmdb_alts)} already fetched, {len(todo)} remaining")
 
+    def checkpoint():
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(json.dumps(
+            {mid: {"alt_titles_tmdb": tmdb_alts.get(mid, []), "alt_titles_imdb": existing.get(mid, {}).get("alt_titles_imdb", []),
+                   "imdb_id": imdb_ids.get(mid, "")}
+             for mid in tmdb_alts}, indent=2), encoding="utf-8")
+
     for i, row in enumerate(todo, 1):
         tmdb_alts[row["id"]] = fetch_tmdb_alts(session, api_key, row["id"])
+        if args.akas and not row.get(args.imdb_id_col):
+            imdb_ids[row["id"]] = fetch_imdb_id(session, api_key, row["id"])
         if i % 25 == 0:
             log.info(f"TMDB alt titles {i}/{len(todo)}")
-            out_path.parent.mkdir(parents=True, exist_ok=True)
-            out_path.write_text(json.dumps(
-                {mid: {"alt_titles_tmdb": tmdb_alts.get(mid, []), "alt_titles_imdb": existing.get(mid, {}).get("alt_titles_imdb", [])}
-                 for mid in tmdb_alts}, indent=2), encoding="utf-8")
+            checkpoint()
         time.sleep(0.1)
     log.info(f"TMDB alt titles: {sum(1 for v in tmdb_alts.values() if v)}/{len(rows)} with >=1 alt")
 
     imdb_alts: dict[str, list[str]] = {}
     if args.akas and args.akas.exists():
-        tconsts = {row[args.imdb_id_col] for row in rows if row.get(args.imdb_id_col)}
+        # backfill imdb_id for rows fetched in an earlier run (before --akas
+        # was first used, or before this id had been checkpointed yet)
+        missing = [row for row in rows if not row.get(args.imdb_id_col) and not imdb_ids.get(row["id"])]
+        if missing:
+            log.info(f"fetching imdb_id for {len(missing)} id(s) not covered by --imdb-id-col or the cache...")
+            for i, row in enumerate(missing, 1):
+                imdb_ids[row["id"]] = fetch_imdb_id(session, api_key, row["id"])
+                if i % 25 == 0:
+                    log.info(f"  imdb_id {i}/{len(missing)}")
+                    checkpoint()
+                time.sleep(0.1)
+
+        tconsts = {row.get(args.imdb_id_col) or imdb_ids.get(row["id"], "") for row in rows} - {""}
         if tconsts:
             log.info(f"scanning {args.akas} for {len(tconsts)} tconsts...")
             by_tconst = load_akas_for_tconsts(args.akas, tconsts)
             for row in rows:
-                tt = row.get(args.imdb_id_col)
+                tt = row.get(args.imdb_id_col) or imdb_ids.get(row["id"], "")
                 if tt:
                     imdb_alts[row["id"]] = by_tconst.get(tt, [])
             log.info(f"IMDb AKAs: {sum(1 for v in imdb_alts.values() if v)}/{len(tconsts)} with >=1 AKA")
@@ -116,7 +149,8 @@ def main():
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     combined = {
-        row["id"]: {"alt_titles_tmdb": tmdb_alts.get(row["id"], []), "alt_titles_imdb": imdb_alts.get(row["id"], [])}
+        row["id"]: {"alt_titles_tmdb": tmdb_alts.get(row["id"], []), "alt_titles_imdb": imdb_alts.get(row["id"], []),
+                    "imdb_id": row.get(args.imdb_id_col) or imdb_ids.get(row["id"], "")}
         for row in rows
     }
     out_path.write_text(json.dumps(combined, indent=2), encoding="utf-8")

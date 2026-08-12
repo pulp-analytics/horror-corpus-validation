@@ -72,3 +72,10 @@ independent source of alternate titles beyond TMDB's own
 `alternative_titles`. Download `title.akas.tsv.gz` from
 [datasets.imdbws.com](https://datasets.imdbws.com/) if you want that extra
 cross-check — the script works fine without it, using TMDB's API alone.
+
+The IMDb file is keyed by IMDb's own id (a `tt...` tconst), not TMDB's, so
+the script needs one to join on. It fetches this automatically from TMDB's
+`external_ids` endpoint the first time you pass `--akas` (one extra API
+call per id, cached in the output JSON so it isn't re-fetched on later
+runs) — you don't need to supply it yourself unless your input CSV already
+happens to have an `imdb_id` column, in which case that's used instead.
