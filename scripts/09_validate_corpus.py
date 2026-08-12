@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Orchestrates scripts 01-07 end to end and produces the three deliverables:
+"""Orchestrates scripts 01-08 end to end and produces the three deliverables:
 data/sample_output/validated_corpus.csv, excluded_ids.csv, qa_report.json.
 
-  TMDB_API_KEY=... AWS_PROFILE=your-profile python3 08_validate_corpus.py --limit 100
+  TMDB_API_KEY=... AWS_PROFILE=your-profile python3 09_validate_corpus.py --limit 100
 """
 from __future__ import annotations
 
@@ -46,7 +46,8 @@ def main():
     run_step("04_comprehend_language.py", ["--in", "data/sample_output/vision_title_check.csv"])
     run_step("05_translate_titles.py", ["--in", "data/sample_output/language_detection.csv", "--titles", ids_path])
     run_step("06_dedupe_tmdb_metadata.py", ["--in", ids_path])
-    run_step("07_collapse_compilations.py", ["--in", "data/sample_output/vision_title_check.csv"])
+    run_step("07_dedupe_poster_md5.py", ["--in", ids_path])
+    run_step("08_collapse_compilations.py", ["--in", "data/sample_output/vision_title_check.csv"])
 
     # -- assemble final outputs --
     with open(ids_path, newline="", encoding="utf-8") as f:
@@ -60,6 +61,13 @@ def main():
             for r in csv.DictReader(f):
                 if r["keep"] != "1":
                     excluded[r["id"]] = f"tmdb_duplicate:{r['resolution']}"
+
+    md5_path = Path("data/sample_output/poster_md5_duplicates.csv")
+    if md5_path.exists():
+        with md5_path.open(newline="", encoding="utf-8") as f:
+            for r in csv.DictReader(f):
+                if r["keep"] != "1" and r["id"] not in excluded:
+                    excluded[r["id"]] = f"poster_md5_dup:{r['reason']}"
 
     comp_path = Path("data/sample_output/compilation_groups.csv")
     if comp_path.exists():

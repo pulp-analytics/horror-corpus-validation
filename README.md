@@ -50,8 +50,9 @@ scripts/
   04_comprehend_language.py  Language of the poster's visible text
   05_translate_titles.py     Re-score non-English text after translation
   06_dedupe_tmdb_metadata.py Same title+year+overview, different id?
-  07_collapse_compilations.py Same poster shared across multiple ids?
-  08_validate_corpus.py      Orchestrates 1-7, writes final outputs
+  07_dedupe_poster_md5.py    Same exact poster image file used twice?
+  08_collapse_compilations.py Same poster shared across multiple ids?
+  09_validate_corpus.py      Orchestrates 1-8, writes final outputs
   utils/                     Shared AWS clients, constants, text matching
 
 data/

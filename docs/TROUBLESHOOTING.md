@@ -24,7 +24,7 @@ sentence or code fence. `03_bedrock_ocr.py` strips common
 data, log the raw `result` before the `json.loads()` call to see what
 came back.
 
-**TMDB search (`07_collapse_compilations.py`) finds nothing for a known
+**TMDB search (`08_collapse_compilations.py`) finds nothing for a known
 compilation**
 TMDB doesn't have every VHS/DVD compilation or TV anthology as its own
 entry — this is expected for a meaningful minority of cases. See
@@ -34,4 +34,4 @@ for how to handle that.
 **Rate limiting / `429` from TMDB**
 The scripts already sleep between calls, but if you're running several at
 once against the same API key, space out `--delay` further or run scripts
-sequentially (which `08_validate_corpus.py` already does).
+sequentially (which `09_validate_corpus.py` already does).

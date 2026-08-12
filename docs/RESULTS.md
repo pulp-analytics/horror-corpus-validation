@@ -18,10 +18,16 @@ are simplified, portable versions of.
 | Category | Removed (horror-scoped) |
 |---|---|
 | TMDB duplicate entries, resolved | 8 |
+| Exact poster image duplicates (MD5) | 3 |
 | Compilation/anthology posters, collapsed | 11 |
 | Dead TMDB ids (404, confirmed live) | 6 |
 | No verifiable poster (empty `poster_path`, unreproducible analysis) | 327 |
-| **Total** | **352** |
+| **Total** | **352*** |
+
+\* MD5 dedup ran earlier in the project, as part of initial corpus filtering
+rather than this specific review pass — included here because it's the same
+kind of check ([07_dedupe_poster_md5.py](../scripts/07_dedupe_poster_md5.py))
+and belongs in the same accounting.
 
 ## Duplicate detection funnel
 
@@ -30,6 +36,14 @@ are simplified, portable versions of.
   (404), so there was no real duplicate, just a stale reference
 - Of the 34 real duplicates, 18 were resolved (the rest spanned genres
   outside the horror scope above)
+
+## Exact poster duplicates (MD5)
+
+A real example: "Castle Ghosts of Ireland" and "Castle Ghosts of Wales" both
+used the exact same poster file (byte-for-byte, same MD5) as "Castle Ghosts
+of England" — almost certainly a documentary series where only one episode
+ever had unique cover art and the rest were stubbed with a placeholder. Kept
+the highest-`vote_count` id in each group, flagged the rest.
 
 ## Poster/title mismatch review funnel
 

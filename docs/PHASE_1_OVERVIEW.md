@@ -38,8 +38,9 @@ our corpus.
 04_comprehend_language → language of that text
 05_translate_titles  → re-score non-English text against the catalog title
 06_dedupe_tmdb_metadata → same title+year+overview, different id?
-07_collapse_compilations → same poster shared across several ids?
-08_validate_corpus   → orchestrates 1-7, writes the final validated CSV
+07_dedupe_poster_md5 → same exact poster image file used for two ids?
+08_collapse_compilations → same poster shared across several ids?
+09_validate_corpus   → orchestrates 1-8, writes the final validated CSV
 ```
 
 Quick start: see the root [README.md](../README.md).
