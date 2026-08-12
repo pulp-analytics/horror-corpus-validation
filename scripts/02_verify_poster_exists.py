@@ -10,6 +10,10 @@ was ~90% of everything excluded (330 of 367 rows) -- much bigger than
 duplicates or compilations, and easy to miss if you only look for the more
 interesting-sounding problems.
 
+Resumable: if --out already exists (e.g. an earlier run was interrupted),
+already-verified ids are skipped and new results are appended -- re-running
+after a crash doesn't re-spend API calls on rows you already have.
+
   TMDB_API_KEY=... python3 02_verify_poster_exists.py --in data/sample_output/tmdb_horror_ids.csv
 """
 from __future__ import annotations
@@ -24,6 +28,7 @@ import requests
 
 sys.path.insert(0, str(Path(__file__).parent))
 from utils.logging_setup import get_logger
+from utils.resumable import load_done_ids, open_for_append
 
 log = get_logger("verify_poster_exists")
 TMDB_IMG = "https://image.tmdb.org/t/p/w92"  # small size -- we only need the status code
@@ -46,14 +51,17 @@ def main():
         rows = list(csv.DictReader(f))
 
     out_path = Path(args.out)
-    out_path.parent.mkdir(parents=True, exist_ok=True)
     fields = ["id", "title", "poster_path", "verified", "reason"]
 
+    done = load_done_ids(out_path)
+    todo = [row for row in rows if row["id"] not in done]
+    if done:
+        log.info(f"resuming: {len(done)} already done, {len(todo)} remaining")
+
     n_no_path, n_unreachable, n_ok = 0, 0, 0
-    with out_path.open("w", newline="", encoding="utf-8") as f:
-        w = csv.DictWriter(f, fieldnames=fields)
-        w.writeheader()
-        for i, row in enumerate(rows, 1):
+    f, w = open_for_append(out_path, fields)
+    try:
+        for i, row in enumerate(todo, 1):
             poster_path = row.get("poster_path", "").strip()
             if not poster_path:
                 verified, reason = False, "no_poster_path"
@@ -72,10 +80,12 @@ def main():
             w.writerow({"id": row["id"], "title": row.get("title", ""), "poster_path": poster_path,
                         "verified": int(verified), "reason": reason})
             if i % 25 == 0:
-                log.info(f"{i}/{len(rows)}")
+                log.info(f"{i}/{len(todo)}")
             time.sleep(0.03)
+    finally:
+        f.close()
 
-    log.info(f"wrote {out_path}: {n_ok} verified, {n_no_path} no poster_path, {n_unreachable} unreachable")
+    log.info(f"wrote {out_path}: {n_ok} verified, {n_no_path} no poster_path, {n_unreachable} unreachable (this run)")
 
 
 if __name__ == "__main__":

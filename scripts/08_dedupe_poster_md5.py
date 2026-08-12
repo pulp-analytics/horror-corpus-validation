@@ -14,6 +14,12 @@ the rest were stubbed with a placeholder.
 Where two or more ids share an MD5, keeps whichever has the most complete
 metadata (vote_count) and flags the rest.
 
+Resumable: downloading and hashing every poster is the slow part -- that
+work is cached in --cache (id -> md5), appended to on each run, so an
+interrupted run doesn't re-download posters it already hashed. The final
+grouping step is cheap and local, so it's always redone in full from
+whatever's in the cache.
+
   python3 08_dedupe_poster_md5.py --in data/sample_input/sample_100_ids.csv
 """
 from __future__ import annotations
@@ -30,6 +36,7 @@ import requests
 
 sys.path.insert(0, str(Path(__file__).parent))
 from utils.logging_setup import get_logger
+from utils.resumable import load_done_ids, open_for_append
 
 log = get_logger("dedupe_poster_md5")
 TMDB_IMG = "https://image.tmdb.org/t/p/w500"
@@ -45,6 +52,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--in", dest="in_path", default="data/sample_input/sample_100_ids.csv")
     ap.add_argument("--out", default="data/sample_output/poster_md5_duplicates.csv")
+    ap.add_argument("--cache", default="data/sample_output/.poster_md5_cache.csv",
+                     help="id->md5 cache, resumed across runs")
     args = ap.parse_args()
 
     session = requests.Session()
@@ -52,17 +61,37 @@ def main():
     with open(args.in_path, newline="", encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
 
-    by_md5: dict[str, list[dict]] = defaultdict(list)
-    for i, row in enumerate(rows, 1):
-        if row.get("poster_path"):
+    cache_path = Path(args.cache)
+    cache_fields = ["id", "title", "vote_count", "md5", "error"]
+    done = load_done_ids(cache_path)
+    todo = [row for row in rows if row["id"] not in done and row.get("poster_path")]
+    if done:
+        log.info(f"resuming: {len(done)} already hashed, {len(todo)} remaining")
+
+    cf, cw = open_for_append(cache_path, cache_fields)
+    try:
+        for i, row in enumerate(todo, 1):
             try:
                 h = poster_md5(session, row["poster_path"])
-                by_md5[h].append(row)
+                cw.writerow({"id": row["id"], "title": row.get("title", ""),
+                             "vote_count": row.get("vote_count", ""), "md5": h, "error": ""})
             except Exception as e:
                 log.info(f"  {row['id']}: fetch failed ({e})")
-        if i % 25 == 0:
-            log.info(f"{i}/{len(rows)}")
-        time.sleep(0.05)
+                cw.writerow({"id": row["id"], "title": row.get("title", ""),
+                             "vote_count": row.get("vote_count", ""), "md5": "", "error": str(e)[:200]})
+            if i % 25 == 0:
+                log.info(f"{i}/{len(todo)}")
+            time.sleep(0.05)
+    finally:
+        cf.close()
+
+    with cache_path.open(newline="", encoding="utf-8") as f:
+        cached = list(csv.DictReader(f))
+
+    by_md5: dict[str, list[dict]] = defaultdict(list)
+    for r in cached:
+        if r.get("md5"):
+            by_md5[r["md5"]].append(r)
 
     dup_groups = {h: items for h, items in by_md5.items() if len(items) > 1}
     log.info(f"exact-duplicate poster groups: {len(dup_groups)}")

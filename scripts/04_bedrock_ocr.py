@@ -17,6 +17,11 @@ model, or anything else Bedrock exposes, without touching the code.
   python3 04_bedrock_ocr.py --in data/sample_input/sample_100_ids.csv
   python3 04_bedrock_ocr.py --model us.amazon.nova-lite-v1:0 --in ...
   python3 04_bedrock_ocr.py --model us.anthropic.claude-sonnet-4-5-v1:0 --in ...
+
+Resumable: re-running with the same --out skips ids already in that file
+(including ones that errored last time -- add --retry-errors to redo just
+those) and appends new results, instead of re-spending Bedrock calls on
+work already done.
 """
 from __future__ import annotations
 
@@ -34,6 +39,7 @@ from PIL import Image
 sys.path.insert(0, str(Path(__file__).parent))
 from utils.aws_config import get_client
 from utils.logging_setup import get_logger
+from utils.resumable import open_for_append
 
 log = get_logger("bedrock_ocr")
 DEFAULT_MODEL_ID = "us.amazon.nova-pro-v1:0"
@@ -88,6 +94,21 @@ def check_poster(bedrock, session: requests.Session, poster_path: str, catalog_t
     return json.loads(text)
 
 
+def load_done_ids(path: Path, retry_errors: bool) -> set[str]:
+    """Like utils.resumable.load_done_ids, but optionally treats rows that
+    errored last time as NOT done, so a re-run retries just those."""
+    if not path.exists():
+        return set()
+    done = set()
+    with path.open(newline="", encoding="utf-8", errors="replace") as f:
+        for row in csv.DictReader(f):
+            if retry_errors and row.get("error"):
+                continue
+            if row.get("id"):
+                done.add(row["id"])
+    return done
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--in", dest="in_path", default="data/sample_input/sample_100_ids.csv")
@@ -97,6 +118,8 @@ def main():
                           "us.amazon.nova-pro-v1:0 (default), us.amazon.nova-lite-v1:0, "
                           "us.anthropic.claude-sonnet-4-5-v1:0")
     ap.add_argument("--delay", type=float, default=0.3)
+    ap.add_argument("--retry-errors", action="store_true",
+                     help="on resume, redo ids that errored last time instead of skipping them")
     args = ap.parse_args()
 
     bedrock = get_client("bedrock-runtime")
@@ -107,13 +130,18 @@ def main():
         rows = list(csv.DictReader(f))
 
     out_path = Path(args.out)
-    out_path.parent.mkdir(parents=True, exist_ok=True)
     fields = ["id", "title", "model", "text_you_read", "verdict", "reason", "error"]
 
-    with out_path.open("w", newline="", encoding="utf-8") as f:
-        w = csv.DictWriter(f, fieldnames=fields)
-        w.writeheader()
-        for i, row in enumerate(rows, 1):
+    done = load_done_ids(out_path, args.retry_errors)
+    todo = [row for row in rows if row["id"] not in done]
+    if done:
+        log.info(f"resuming: {len(done)} already done, {len(todo)} remaining")
+
+    # --retry-errors appends fresh rows for retried ids rather than editing
+    # in place, so a downstream reader should keep the LAST row per id.
+    f, w = open_for_append(out_path, fields)
+    try:
+        for i, row in enumerate(todo, 1):
             out = {"id": row["id"], "title": row.get("title", ""), "model": args.model,
                    "text_you_read": "", "verdict": "", "reason": "", "error": ""}
             if not row.get("poster_path"):
@@ -126,8 +154,10 @@ def main():
                     out["error"] = str(e)[:200]
             w.writerow(out)
             if i % 10 == 0:
-                log.info(f"{i}/{len(rows)}")
+                log.info(f"{i}/{len(todo)}")
             time.sleep(args.delay)
+    finally:
+        f.close()
 
     log.info(f"wrote {out_path}")
 

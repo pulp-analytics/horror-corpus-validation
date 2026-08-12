@@ -6,9 +6,9 @@ Only calls Translate when it's actually needed (non-English text, weak local
 overlap already) — see utils/constants.py for the exact thresholds
 (TRANSLATE_BELOW, TRANSLATE_MIN_CHARS), which matter: in our real run only
 ~3,700 of ~65,000 posters needed a Translate call, out of ~5,500 that
-technically qualified — the gap turned out to be an incomplete prior run,
-not a real gap in the logic. Re-run with the same thresholds to fill gaps
-without re-processing everything (idempotent by design).
+technically qualified — the gap turned out to be an incomplete prior run
+that was never resumed, not a real gap in the logic (this script now skips
+ids already in --out on re-run, so that gap shouldn't recur).
 
   export AWS_PROFILE=your-translate-profile
   python3 06_translate_titles.py --in data/sample_output/language_detection.csv
@@ -25,6 +25,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from utils.aws_config import get_client
 from utils.constants import TRANSLATE_BELOW, TRANSLATE_MIN_CHARS
 from utils.logging_setup import get_logger
+from utils.resumable import load_done_ids, open_for_append
 from utils.text_match import title_overlap_score
 
 log = get_logger("translate_titles")
@@ -50,14 +51,18 @@ def main():
         titles = {r["id"]: r.get("title", "") for r in csv.DictReader(f)}
 
     out_path = Path(args.out)
-    out_path.parent.mkdir(parents=True, exist_ok=True)
     fields = ["id", "lang_code", "text", "translated", "overlap_before", "overlap_after"]
 
+    done = load_done_ids(out_path)
+    todo_ids = [mid for mid in lang_rows if mid not in done]
+    if done:
+        log.info(f"resuming: {len(done)} already done, {len(todo_ids)} remaining")
+
     n_translated = 0
-    with out_path.open("w", newline="", encoding="utf-8") as f:
-        w = csv.DictWriter(f, fieldnames=fields)
-        w.writeheader()
-        for i, (mid, row) in enumerate(lang_rows.items(), 1):
+    f, w = open_for_append(out_path, fields)
+    try:
+        for i, mid in enumerate(todo_ids, 1):
+            row = lang_rows[mid]
             title = titles.get(mid, "")
             text = row.get("text", "")
             lang = row.get("lang_code", "")
@@ -74,9 +79,11 @@ def main():
             w.writerow({"id": mid, "lang_code": lang, "text": text, "translated": translated,
                         "overlap_before": overlap_before, "overlap_after": overlap_after})
             if i % 25 == 0:
-                log.info(f"{i}/{len(lang_rows)} (translated so far: {n_translated})")
+                log.info(f"{i}/{len(todo_ids)} (translated so far: {n_translated})")
+    finally:
+        f.close()
 
-    log.info(f"wrote {out_path} ({n_translated} translated)")
+    log.info(f"wrote {out_path} ({n_translated} translated this run)")
 
 
 if __name__ == "__main__":

@@ -10,6 +10,8 @@ pattern, not errors.
 
   export AWS_PROFILE=your-comprehend-profile
   python3 05_comprehend_language.py --in data/sample_output/vision_title_check.csv
+
+Resumable: re-running with the same --out skips ids already processed.
 """
 from __future__ import annotations
 
@@ -22,6 +24,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 from utils.aws_config import get_client
 from utils.logging_setup import get_logger
+from utils.resumable import load_done_ids, open_for_append
 
 log = get_logger("comprehend_language")
 
@@ -50,19 +53,24 @@ def main():
         rows = list(csv.DictReader(f))
 
     out_path = Path(args.out)
-    out_path.parent.mkdir(parents=True, exist_ok=True)
     fields = ["id", "text", "lang_code", "lang_score"]
 
-    with out_path.open("w", newline="", encoding="utf-8") as f:
-        w = csv.DictWriter(f, fieldnames=fields)
-        w.writeheader()
-        for i, row in enumerate(rows, 1):
+    done = load_done_ids(out_path)
+    todo = [row for row in rows if row["id"] not in done]
+    if done:
+        log.info(f"resuming: {len(done)} already done, {len(todo)} remaining")
+
+    f, w = open_for_append(out_path, fields)
+    try:
+        for i, row in enumerate(todo, 1):
             text = row.get(args.text_col, "")
             lang_code, lang_score = detect_language(comprehend, text)
             w.writerow({"id": row["id"], "text": text, "lang_code": lang_code, "lang_score": lang_score})
             if i % 25 == 0:
-                log.info(f"{i}/{len(rows)}")
+                log.info(f"{i}/{len(todo)}")
             time.sleep(0.05)
+    finally:
+        f.close()
 
     log.info(f"wrote {out_path}")
 
