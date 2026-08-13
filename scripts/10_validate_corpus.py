@@ -29,7 +29,7 @@ already ran can't resolve them --
 --assemble-only skips running 01-09 and jumps straight to reading their
 outputs and writing the three deliverables. For running each script as its
 own step in an external orchestrator (e.g. AWS Step Functions driving
-Fargate tasks -- see the sibling horror-analysis-infrastructure repo), that
+Fargate tasks -- see the sibling poster-analysis-infrastructure repo), that
 orchestrator runs 01-09 itself; this script's only job at that point is the
 assembly logic, which is exactly what --assemble-only gives you.
 """

@@ -35,7 +35,7 @@ def shard_rows(rows: list[dict], shard_index: int, shard_count: int) -> list[dic
     """Deterministic partition of --in's rows by position, for running N
     copies of a script in parallel over disjoint slices of the same file
     (e.g. one per AWS Batch array job index -- see the sibling
-    horror-analysis-infrastructure repo). shard_count=1 (the default)
+    poster-analysis-infrastructure repo). shard_count=1 (the default)
     returns every row unchanged, so this is a no-op unless you opt in."""
     if shard_count <= 1:
         return rows

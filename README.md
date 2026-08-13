@@ -1,4 +1,4 @@
-# horror-corpus-validation
+# poster-corpus-validation
 
 Data quality and validation tooling for a large-scale movie poster corpus
 (built and run against 69,789 horror titles sourced from TMDB, part of a
@@ -16,8 +16,8 @@ run: [docs/RESULTS.md](docs/RESULTS.md).
 ## Quick start
 
 ```bash
-git clone https://github.com/pulp-analytics/horror-corpus-validation
-cd horror-corpus-validation
+git clone https://github.com/pulp-analytics/poster-corpus-validation
+cd poster-corpus-validation
 make setup
 source .venv/bin/activate
 cp .env.example .env   # fill in TMDB_API_KEY and AWS_PROFILE

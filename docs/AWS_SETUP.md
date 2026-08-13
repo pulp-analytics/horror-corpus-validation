@@ -53,7 +53,7 @@ plenty) running the scripts under `nohup`/`screen` so a dropped SSH
 connection doesn't kill an hours-long run. For a corpus large enough that
 sequential API calls become the bottleneck, shard by id range across a
 handful of small instances in parallel (same shape as the sharded EC2 jobs
-in the sibling `horror-metrics-pipeline` repo — the sharding there is for
+in the sibling `poster-metrics-pipeline` repo — the sharding there is for
 GPU throughput; here it's purely to parallelize API calls within TMDB/
 Bedrock rate limits). Either way, `instance-initiated-shutdown-behavior
 terminate` plus a `shutdown -h now` at the end of the script means each
@@ -61,7 +61,7 @@ instance bills only for its own runtime and cleans itself up.
 
 Cost-safety tooling for running this unattended (budget alerts, anomaly
 detection, a pre-flight account check) lives in the sibling
-`horror-analysis-infrastructure` repo, not here — that repo exists
+`poster-analysis-infrastructure` repo, not here — that repo exists
 specifically because it's easy to point a batch job at the wrong AWS
 account by accident.
 

@@ -71,7 +71,7 @@ def test_mismatch_stays_unresolved_without_matching_evidence():
 
 
 # shard_rows -- used by 02/03/04/05/06 for AWS Batch array-job sharding
-# (horror-analysis-infrastructure). Every shard together must reconstruct
+# (poster-analysis-infrastructure). Every shard together must reconstruct
 # the original rows exactly once each, with no overlap and no gaps.
 
 def test_shard_rows_no_sharding_by_default():
