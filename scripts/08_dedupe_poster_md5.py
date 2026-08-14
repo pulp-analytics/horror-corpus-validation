@@ -42,7 +42,7 @@ import requests
 
 sys.path.insert(0, str(Path(__file__).parent))
 from utils.logging_setup import get_logger
-from utils.resumable import load_done_ids, open_for_append
+from utils.resumable import load_done_ids, open_for_append, write_csv_rows
 
 log = get_logger("dedupe_poster_md5")
 TMDB_IMG = "https://image.tmdb.org/t/p/w500"
@@ -138,12 +138,7 @@ def main():
                               "keep": int(r["id"] == keep), "reason": "exact_poster_md5_dup"})
 
     out_path = Path(args.out)
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    if out_rows:
-        with out_path.open("w", newline="", encoding="utf-8") as f:
-            w = csv.DictWriter(f, fieldnames=list(out_rows[0].keys()))
-            w.writeheader()
-            w.writerows(out_rows)
+    write_csv_rows(out_path, out_rows)
 
     log.info(f"wrote {out_path} ({len(out_rows)} rows)")
 

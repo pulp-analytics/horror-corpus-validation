@@ -34,8 +34,9 @@ import requests
 sys.path.insert(0, str(Path(__file__).parent))
 from utils.aws_config import get_tmdb_key
 from utils.logging_setup import get_logger
-from utils.resumable import load_done_ids, open_for_append
+from utils.resumable import load_done_ids, open_for_append, write_csv_rows
 from utils.text_match import title_overlap_score
+from utils.tmdb_client import tmdb_get
 
 log = get_logger("collapse_compilations")
 
@@ -43,7 +44,7 @@ log = get_logger("collapse_compilations")
 def search_movie(session: requests.Session, api_key: str, query: str) -> list[dict]:
     if not query.strip():
         return []
-    resp = session.get("https://api.themoviedb.org/3/search/movie", params={"api_key": api_key, "query": query}, timeout=15)
+    resp = tmdb_get(session, api_key, "search/movie", params={"query": query})
     if resp.status_code != 200:
         return []
     return resp.json().get("results", [])
@@ -114,12 +115,7 @@ def main():
             })
 
     out_path = Path(args.out)
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    if out_rows:
-        with out_path.open("w", newline="", encoding="utf-8") as f:
-            w = csv.DictWriter(f, fieldnames=list(out_rows[0].keys()))
-            w.writeheader()
-            w.writerows(out_rows)
+    write_csv_rows(out_path, out_rows)
 
     n_resolved = len({r["poster_path"] for r in out_rows if r["resolution"] == "compilation_entry_found"})
     log.info(f"wrote {out_path} — {n_resolved}/{len(shared)} groups had a rescuable compilation id in TMDB")

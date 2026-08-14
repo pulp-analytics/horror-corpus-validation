@@ -38,7 +38,8 @@ import requests
 sys.path.insert(0, str(Path(__file__).parent))
 from utils.aws_config import get_tmdb_key
 from utils.logging_setup import get_logger
-from utils.resumable import load_done_ids, open_for_append
+from utils.resumable import load_done_ids, open_for_append, write_csv_rows
+from utils.tmdb_client import tmdb_get
 
 log = get_logger("dedupe_tmdb")
 
@@ -48,12 +49,12 @@ def norm(s: str) -> str:
 
 
 def movie_is_alive(session: requests.Session, api_key: str, movie_id: str) -> bool:
-    resp = session.get(f"https://api.themoviedb.org/3/movie/{movie_id}", params={"api_key": api_key}, timeout=15)
+    resp = tmdb_get(session, api_key, f"movie/{movie_id}")
     return resp.status_code == 200
 
 
 def get_credits_count(session: requests.Session, api_key: str, movie_id: str) -> int:
-    resp = session.get(f"https://api.themoviedb.org/3/movie/{movie_id}/credits", params={"api_key": api_key}, timeout=15)
+    resp = tmdb_get(session, api_key, f"movie/{movie_id}/credits")
     if resp.status_code != 200:
         return 0
     d = resp.json()
@@ -131,12 +132,7 @@ def main():
                               "keep": int(r["id"] == keep), "resolution": resolution})
 
     out_path = Path(args.out)
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    if out_rows:
-        with out_path.open("w", newline="", encoding="utf-8") as f:
-            w = csv.DictWriter(f, fieldnames=list(out_rows[0].keys()))
-            w.writeheader()
-            w.writerows(out_rows)
+    write_csv_rows(out_path, out_rows)
 
     log.info(f"checked {n_checked} ids across {len(out_rows) and len({r['group_title'] for r in out_rows})} candidate groups")
     log.info(f"wrote {out_path} ({len(out_rows)} rows)")

@@ -48,21 +48,20 @@ sys.path.insert(0, str(Path(__file__).parent))
 from utils.aws_config import get_tmdb_key
 from utils.logging_setup import get_logger
 from utils.resumable import shard_rows
+from utils.tmdb_client import tmdb_get
 
 log = get_logger("fetch_alt_titles")
-ALT_URL = "https://api.themoviedb.org/3/movie/{id}/alternative_titles"
 
 
 def fetch_tmdb_alts(session: requests.Session, api_key: str, movie_id: str) -> list[str]:
-    resp = session.get(ALT_URL.format(id=movie_id), params={"api_key": api_key}, timeout=15)
+    resp = tmdb_get(session, api_key, f"movie/{movie_id}/alternative_titles")
     if resp.status_code != 200:
         return []
     return [t["title"] for t in resp.json().get("titles", []) if t.get("title")]
 
 
 def fetch_imdb_id(session: requests.Session, api_key: str, movie_id: str) -> str:
-    resp = session.get(f"https://api.themoviedb.org/3/movie/{movie_id}/external_ids",
-                        params={"api_key": api_key}, timeout=15)
+    resp = tmdb_get(session, api_key, f"movie/{movie_id}/external_ids")
     if resp.status_code != 200:
         return ""
     return resp.json().get("imdb_id") or ""

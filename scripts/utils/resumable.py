@@ -42,3 +42,18 @@ def shard_rows(rows: list[dict], shard_index: int, shard_count: int) -> list[dic
     if not (0 <= shard_index < shard_count):
         raise ValueError(f"shard_index {shard_index} out of range for shard_count {shard_count}")
     return rows[shard_index::shard_count]
+
+
+def write_csv_rows(out_path: Path | str, rows: list[dict]) -> None:
+    """Writes a full --out CSV from an in-memory list of dicts (as opposed
+    to open_for_append's incremental per-row writes), inferring fieldnames
+    from the first row. No-op if rows is empty -- callers that always want
+    a file on disk should check for that themselves."""
+    out_path = Path(out_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    if not rows:
+        return
+    with out_path.open("w", newline="", encoding="utf-8") as f:
+        w = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
+        w.writeheader()
+        w.writerows(rows)
