@@ -35,6 +35,20 @@ running N copies of this script in parallel (e.g. an AWS Batch array job)
 each covering a disjoint slice -- the highest-value script to shard, since
 it's a Bedrock call per row and the slowest/most numerous step in the full
 corpus. Each shard needs its own --out to merge afterward.
+
+  python3 04_bedrock_ocr.py --validate
+
+--validate scores --model live against data/ground_truth/
+bedrock_ocr_ground_truth_human_labels.csv -- 100 real posters a human
+reviewed blind (see docs/MODELS.md, "Building a human ground-truth set"),
+excluding rows marked "unjudgeable" (a script the reviewer couldn't read).
+Reports overall accuracy plus per-class precision/recall/support, and
+writes the raw per-row comparison to --validate-out. This makes real
+Bedrock calls against ~75 posters -- a few cents, not free, and the
+result reflects whatever --model serves *today*, which for a managed
+model like Nova isn't guaranteed to match what produced the human labels'
+original stratum (see docs/MODELS.md's note on why Bedrock can't be
+pinned the way the sibling repo pins CLIP/SigLIP).
 """
 from __future__ import annotations
 
@@ -52,7 +66,7 @@ from PIL import Image
 sys.path.insert(0, str(Path(__file__).parent))
 from utils.aws_config import get_client
 from utils.logging_setup import get_logger
-from utils.resumable import open_for_append, shard_rows
+from utils.resumable import open_for_append, shard_rows, write_csv_rows
 
 log = get_logger("bedrock_ocr")
 DEFAULT_MODEL_ID = "us.amazon.nova-pro-v1:0"
@@ -132,6 +146,101 @@ def load_verified_ids(path: Path) -> set[str] | None:
         return {row["id"] for row in csv.DictReader(f) if row.get("verified") == "1"}
 
 
+VALIDATE_CLASSES = ["match", "mismatch", "no_title_on_poster"]
+
+
+def compute_validate_metrics(results: list[dict]) -> dict:
+    """Pure function (no I/O) over a list of {human_verdict, live_verdict,
+    error} dicts: overall accuracy plus per-class precision/recall/support.
+    Rows with a non-empty `error` (a failed live call) are excluded from
+    every count -- they're neither a right nor a wrong answer, just a call
+    that didn't complete."""
+    scored = [r for r in results if not r.get("error")]
+    n = len(scored)
+    correct = sum(1 for r in scored if r["human_verdict"] == r["live_verdict"])
+
+    per_class = {}
+    for c in VALIDATE_CLASSES:
+        tp = sum(1 for r in scored if r["live_verdict"] == c and r["human_verdict"] == c)
+        fp = sum(1 for r in scored if r["live_verdict"] == c and r["human_verdict"] != c)
+        fn = sum(1 for r in scored if r["live_verdict"] != c and r["human_verdict"] == c)
+        support = sum(1 for r in scored if r["human_verdict"] == c)
+        per_class[c] = {
+            "precision": tp / (tp + fp) if (tp + fp) else None,
+            "recall": tp / (tp + fn) if (tp + fn) else None,
+            "support": support,
+        }
+
+    return {
+        "n_scored": n,
+        "n_errored": len(results) - n,
+        "accuracy": correct / n if n else None,
+        "per_class": per_class,
+    }
+
+
+def print_validate_report(results: list[dict]) -> None:
+    metrics = compute_validate_metrics(results)
+    if metrics["n_errored"]:
+        log.info(f"{metrics['n_errored']} row(s) errored during live scoring -- excluded from metrics:")
+        for r in results:
+            if r.get("error"):
+                log.info(f"  {r['id']}: {r['error']}")
+
+    n = metrics["n_scored"]
+    if n == 0:
+        log.info("nothing scored -- can't report metrics")
+        return
+
+    acc = metrics["accuracy"]
+    print(f"\nOverall accuracy: {round(acc * n)}/{n} = {acc * 100:.1f}%\n")
+
+    print(f'{"class":20}{"precision":>12}{"recall":>10}{"support":>10}')
+    for c in VALIDATE_CLASSES:
+        pc = metrics["per_class"][c]
+        prec = f"{pc['precision']*100:.1f}%" if pc["precision"] is not None else "n/a"
+        rec = f"{pc['recall']*100:.1f}%" if pc["recall"] is not None else "n/a"
+        print(f"{c:20}{prec:>12}{rec:>10}{pc['support']:>10}")
+
+    scored = [r for r in results if not r.get("error")]
+    print("\nConfusion matrix (rows=human, cols=live):")
+    print(f'{"":20}' + "".join(f"{c[:13]:>15}" for c in VALIDATE_CLASSES))
+    for hc in VALIDATE_CLASSES:
+        row_counts = [sum(1 for r in scored if r["human_verdict"] == hc and r["live_verdict"] == lc)
+                      for lc in VALIDATE_CLASSES]
+        print(f"{hc:20}" + "".join(f"{v:15}" for v in row_counts))
+
+
+def run_validate(bedrock, session: requests.Session, args) -> None:
+    gt_path = Path(args.ground_truth)
+    with gt_path.open(newline="", encoding="utf-8") as f:
+        gt_rows = list(csv.DictReader(f))
+
+    judged = [r for r in gt_rows if r.get("human_verdict") and r["human_verdict"] != "unjudgeable"]
+    log.info(f"{len(judged)}/{len(gt_rows)} ground-truth rows judged "
+             f"({len(gt_rows) - len(judged)} unjudgeable, excluded) -- scoring {args.model} live")
+
+    results = []
+    for i, row in enumerate(judged, 1):
+        out = {"id": row["id"], "title": row.get("title", ""), "stratum": row.get("stratum", ""),
+               "human_verdict": row["human_verdict"], "live_verdict": "", "error": ""}
+        try:
+            live = check_poster(bedrock, session, row["poster_path"], row.get("title", ""), args.model)
+            out["live_verdict"] = live.get("verdict", "")
+        except Exception as e:
+            out["error"] = str(e)[:200]
+        results.append(out)
+        if i % 10 == 0:
+            log.info(f"{i}/{len(judged)}")
+        time.sleep(args.delay)
+
+    validate_out = Path(args.validate_out)
+    write_csv_rows(validate_out, results)
+    log.info(f"wrote {validate_out} ({len(results)} rows)")
+
+    print_validate_report(results)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--in", dest="in_path", default="data/sample_input/sample_100_ids.csv")
@@ -148,11 +257,21 @@ def main():
                      help="on resume, redo ids that errored last time instead of skipping them")
     ap.add_argument("--shard-index", type=int, default=0)
     ap.add_argument("--shard-count", type=int, default=1, help="split --in across N parallel shards (default 1: no sharding)")
+    ap.add_argument("--validate", action="store_true",
+                     help="score --model live against --ground-truth's human-reviewed labels "
+                          "and report accuracy/precision/recall instead of the normal --in run "
+                          "(makes real Bedrock calls -- see docs/MODELS.md)")
+    ap.add_argument("--ground-truth", default="data/ground_truth/bedrock_ocr_ground_truth_human_labels.csv")
+    ap.add_argument("--validate-out", default="data/ground_truth/bedrock_ocr_validate_results.csv")
     args = ap.parse_args()
 
     bedrock = get_client("bedrock-runtime")
     session = requests.Session()
     log.info(f"using model: {args.model}")
+
+    if args.validate:
+        run_validate(bedrock, session, args)
+        return
 
     with open(args.in_path, newline="", encoding="utf-8") as f:
         rows = list(csv.DictReader(f))

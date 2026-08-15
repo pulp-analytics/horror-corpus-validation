@@ -9,6 +9,8 @@ Only exercises check_poster()'s parsing, since that's the fragile part:
 main()'s CSV/resume plumbing is exercised end to end by the sample data
 already checked into data/sample_output/.
 """
+import argparse
+import csv
 import importlib
 import io
 import sys
@@ -117,3 +119,106 @@ def test_check_poster_download_failure_never_calls_bedrock(bedrock_stub):
                                   "/missing.jpg", "Some Movie", "us.amazon.nova-pro-v1:0")
 
     stubber.assert_no_pending_responses()
+
+
+# ---------------------------------------------------------------------------
+# compute_validate_metrics -- pure function, no AWS/network involved at all
+# ---------------------------------------------------------------------------
+
+def test_compute_validate_metrics_perfect_agreement():
+    results = [
+        {"human_verdict": "match", "live_verdict": "match", "error": ""},
+        {"human_verdict": "mismatch", "live_verdict": "mismatch", "error": ""},
+        {"human_verdict": "no_title_on_poster", "live_verdict": "no_title_on_poster", "error": ""},
+    ]
+    m = bedrock_ocr.compute_validate_metrics(results)
+    assert m["n_scored"] == 3
+    assert m["n_errored"] == 0
+    assert m["accuracy"] == 1.0
+    for c in bedrock_ocr.VALIDATE_CLASSES:
+        assert m["per_class"][c]["precision"] == 1.0
+        assert m["per_class"][c]["recall"] == 1.0
+
+
+def test_compute_validate_metrics_errors_excluded_from_every_count():
+    results = [
+        {"human_verdict": "match", "live_verdict": "match", "error": ""},
+        {"human_verdict": "match", "live_verdict": "", "error": "boto3 timeout"},
+    ]
+    m = bedrock_ocr.compute_validate_metrics(results)
+    assert m["n_scored"] == 1
+    assert m["n_errored"] == 1
+    assert m["accuracy"] == 1.0  # the errored row doesn't count as wrong
+
+
+def test_compute_validate_metrics_false_reject_pattern():
+    # mirrors the real finding: Nova said "mismatch" on several rows a
+    # human confirmed were actually "match" -- precision for "mismatch"
+    # should tank while recall for "match" tanks too, in opposite directions
+    results = (
+        [{"human_verdict": "match", "live_verdict": "mismatch", "error": ""}] * 4
+        + [{"human_verdict": "match", "live_verdict": "match", "error": ""}]
+        + [{"human_verdict": "mismatch", "live_verdict": "mismatch", "error": ""}]
+    )
+    m = bedrock_ocr.compute_validate_metrics(results)
+    assert m["n_scored"] == 6
+    # "mismatch" predicted 5 times, only 1 actually was -> low precision
+    assert m["per_class"]["mismatch"]["precision"] == pytest.approx(1 / 5)
+    # "mismatch" support is 1, and that 1 was caught -> perfect recall despite bad precision
+    assert m["per_class"]["mismatch"]["recall"] == 1.0
+    # "match" support is 5, only 1 predicted correctly -> low recall
+    assert m["per_class"]["match"]["recall"] == pytest.approx(1 / 5)
+
+
+def test_compute_validate_metrics_no_support_is_none_not_zero():
+    # a class that never appears in human_verdict has no recall to report --
+    # None (not 0.0), so callers don't mistake "never happened" for "always wrong"
+    results = [{"human_verdict": "match", "live_verdict": "match", "error": ""}]
+    m = bedrock_ocr.compute_validate_metrics(results)
+    assert m["per_class"]["mismatch"]["support"] == 0
+    assert m["per_class"]["mismatch"]["recall"] is None
+    assert m["per_class"]["mismatch"]["precision"] is None  # never predicted either
+
+
+def test_compute_validate_metrics_empty_results():
+    m = bedrock_ocr.compute_validate_metrics([])
+    assert m["n_scored"] == 0
+    assert m["accuracy"] is None
+
+
+# ---------------------------------------------------------------------------
+# run_validate -- full flow: ground-truth CSV in, stubbed Bedrock calls,
+# results CSV out. unjudgeable rows must never reach check_poster (no
+# stubbed response queued for them -- Stubber fails loudly if they did).
+# ---------------------------------------------------------------------------
+
+def test_run_validate_skips_unjudgeable_and_writes_results(tmp_path, bedrock_stub):
+    client, stubber = bedrock_stub
+    gt_path = tmp_path / "ground_truth.csv"
+    gt_path.write_text(
+        "id,title,poster_path,stratum,human_verdict,human_note\n"
+        '1,"Movie A",/a.jpg,accurate,match,""\n'
+        '2,"Movie B",/b.jpg,inaccurate,mismatch,""\n'
+        '3,"Movie C",/c.jpg,inaccurate,unjudgeable,""\n',
+        encoding="utf-8",
+    )
+    # exactly two live calls expected -- id 3 (unjudgeable) must be skipped
+    stubber.add_response("converse", converse_response(
+        '{"text_you_read": "Movie A", "verdict": "match", "reason": "matches"}'))
+    stubber.add_response("converse", converse_response(
+        '{"text_you_read": "Movie X", "verdict": "match", "reason": "close enough"}'))
+
+    validate_out = tmp_path / "results.csv"
+    args = argparse.Namespace(ground_truth=str(gt_path), validate_out=str(validate_out),
+                               model="us.amazon.nova-pro-v1:0", delay=0)
+    session = FakeSession(FakeResponse(make_jpeg_bytes()))
+
+    bedrock_ocr.run_validate(client, session, args)
+
+    stubber.assert_no_pending_responses()  # id 3 never called converse
+    with validate_out.open(newline="", encoding="utf-8") as f:
+        rows = list(csv.DictReader(f))
+    assert [r["id"] for r in rows] == ["1", "2"]
+    assert rows[0]["human_verdict"] == "match" and rows[0]["live_verdict"] == "match"
+    # id 2's ground truth is "mismatch" but the stub returns "match" -- a real disagreement
+    assert rows[1]["human_verdict"] == "mismatch" and rows[1]["live_verdict"] == "match"
