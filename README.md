@@ -63,7 +63,9 @@ data/
   sample_output/                    Written by the scripts
   decision_matrix.csv               Real exclusion decisions from the full run
 
-docs/         Full writeups — overview, decision logic, AWS setup, results
+docs/         Full writeups — overview, decision logic, AWS setup, results,
+              models (docs/MODELS.md — why Bedrock can't be pinned the way
+              the sibling repo pins CLIP/SigLIP/YuNet)
 tests/        Unit tests for the pure matching logic (no network calls)
 ```
 
