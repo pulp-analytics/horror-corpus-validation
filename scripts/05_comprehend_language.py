@@ -8,6 +8,16 @@ poster as wrong. See docs/RESULTS.md for the real breakdown we found: ~79%
 of disagreements were the expected "foreign film, English-market poster"
 pattern, not errors.
 
+Operates on `04_bedrock_ocr.py`'s `text_you_read` by default (Bedrock's own
+short title extraction), not on the real project's longer, multi-engine
+`full_ocr` text (this repo never ported Textract/EasyOCR/Rekognition) --
+live-verified 2026-08-15 that this matters: fed the real historical
+`full_ocr` instead, language codes matched history 8/10; fed Bedrock's
+shorter default, only 3/10 matched (short/ambiguous text is genuinely
+harder for Comprehend to call, not this script being wrong). See
+docs/RESULTS.md, "Language detection & translation (gates 5-6),
+live-verified" for the full comparison.
+
   export AWS_PROFILE=your-comprehend-profile
   python3 05_comprehend_language.py --in data/sample_output/vision_title_check.csv
 

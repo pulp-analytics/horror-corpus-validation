@@ -4,11 +4,21 @@ re-score overlap against the catalog title.
 
 Only calls Translate when it's actually needed (non-English text, weak local
 overlap already) — see utils/constants.py for the exact thresholds
-(TRANSLATE_BELOW, TRANSLATE_MIN_CHARS), which matter: in our real run only
-~3,700 of ~65,000 posters needed a Translate call, out of ~5,500 that
-technically qualified — the gap turned out to be an incomplete prior run
-that was never resumed, not a real gap in the logic (this script now skips
-ids already in --out on re-run, so that gap shouldn't recur).
+(TRANSLATE_BELOW, TRANSLATE_MIN_CHARS), which matter: in the real project's
+run only ~3,700 of ~65,000 posters needed a Translate call, out of ~5,500
+that technically qualified — the gap turned out to be an incomplete prior
+run that was never resumed, not a real gap in the logic (this script now
+skips ids already in --out on re-run, so that gap shouldn't recur).
+
+That ~3,700-of-65,000 count is from the real project's `full_ocr` (the
+longer, multi-engine OCR text `poster_title_match.py` gates and translates
+on) — chaining this script from `05`'s default input (Bedrock's shorter
+`text_you_read`, since this repo never ported Textract/EasyOCR/Rekognition)
+runs the same thresholds against narrower text and won't reproduce that
+exact count. Live-verified 2026-08-15 that the gating/translate/overlap
+logic itself is faithful once given comparable input text — see
+docs/RESULTS.md, "Language detection & translation (gates 5-6),
+live-verified."
 
   export AWS_PROFILE=your-translate-profile
   python3 06_translate_titles.py --in data/sample_output/language_detection.csv

@@ -109,3 +109,56 @@ Parker, Castle Ghosts of England, Castle Ghosts of Ireland, and Grudge (all
   different films with reused stock art, different casts), "Ripple" and
   "The Boogeyman" (unrelated films that happen to share a generic title and
   year) — confirmed via director/cast lookup before excluding anything.
+
+## Language detection & translation (gates 5-6), live-verified
+
+`05_comprehend_language.py`/`06_translate_titles.py` chain from
+`04_bedrock_ocr.py`'s `text_you_read` — Bedrock's own short title
+extraction — not from the real project's `full_ocr` (the longer,
+multi-engine OCR blob `poster_title_match.py` actually gates and
+translates on). This repo never ported the Textract/EasyOCR/Rekognition
+engines that produce `full_ocr` in the first place (`04` is Bedrock-only
+by design), so the two pipelines run on genuinely different text, not
+just a different model version.
+
+Live-checked (2026-08-15, real AWS calls, `sandbox_bedrock` profile) two
+ways, against real ids with known historical Comprehend/Translate
+results:
+
+**Fed the port's own default input** (Bedrock's short `text_you_read`)
+against 10 real ids: only 3/10 language codes matched exactly. Looked
+like model drift at first — it wasn't. The real historical decisions
+were made on `full_ocr` text (much longer, much less ambiguous for a
+language-ID model) than what Bedrock's title-only extraction gives
+Comprehend to work with.
+
+**Re-ran feeding the same `05`/`06` functions the real historical
+`ocr_full_text` instead** (no new engines ported — this is
+`master_dataset.csv`'s own already-computed column, just plugged into
+this repo's live logic in place of Bedrock's shorter extraction): 8/10
+language codes matched exactly, and the 2 misses were both very short
+`full_ocr` strings (13-16 chars) with low confidence on both sides —
+consistent with genuine Comprehend model drift on ambiguous text over
+time (the same kind of thing found live-checking Bedrock, see
+docs/MODELS.md), not a logic bug. The port's Comprehend call,
+translate-gating threshold, Translate call, and overlap scoring are all
+faithful to the real project's logic once given comparable input text.
+
+What isn't reproducible: the exact original OCR text some historical
+rows were computed from. A few historically-translated ids had a saved
+`ocr_full_text` shorter than `TRANSLATE_MIN_CHARS` (60), meaning the
+real run's translate gate must have fired on different (likely longer,
+possibly a different OCR engine's) text than what ended up in that
+column — the same "original bytes aren't reproducible months later"
+caveat this project already documents for other scripts (see
+poster-metrics-pipeline's docs/RESULTS.md), not a bug in this port.
+
+**Bottom line:** running `04_bedrock_ocr.py` → `05` → `06` chained by
+default in this repo validates Bedrock's title reads against
+Comprehend/Translate — a real and useful check — but it's a narrower
+question than the real project's `full_ocr`-based gates 5-6, and won't
+reproduce the "~3,700 of ~65,000 translated" historical count (see
+`06_translate_titles.py`'s docstring). Point `--text-col`/`--in` at a
+fuller OCR text source if you want the closer comparison; this repo
+doesn't provide one by default since it never ported
+Textract/EasyOCR/Rekognition.
