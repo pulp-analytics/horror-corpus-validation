@@ -66,6 +66,18 @@ auto-resolve: leaving the segments un-collapsed loses nothing (no wrong
 data), while collapsing into an arbitrarily-chosen segment misrepresents
 the others.
 
+*Provenance note (2026-08-16 re-check):* the real project's own
+`data/excluded_compilation.csv` confirms the exact ids in every example
+below (Sheets of Gore's 6, Ultimate Zombie Feast's 2, Late Night Horror's
+4) — the outcomes are verified real, not invented. The script that
+actually *produced* that file couldn't be found in the local copy of the
+real project; the narrative doc that would name it
+(`docs/HISTORIAL_PROYECTO.md`, "Fase 11") is on a currently-disconnected
+external drive. `09_collapse_compilations.py`'s TMDB-search mechanism is
+this port's reconstruction of an approach consistent with the real
+outcomes, not a line-by-line verified reproduction — same caveat applies
+to `08_dedupe_poster_md5.py`'s tiebreaker (see that script's docstring).
+
 ## Common false-positive patterns we found
 
 - **Genre doubt, not title mismatch** — vision model second-guesses an

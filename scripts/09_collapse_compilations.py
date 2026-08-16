@@ -14,6 +14,19 @@ no entry for the compilation/anthology itself, this script reports the
 group but does not auto-resolve it — that's a judgment call (see
 docs/RESULTS.md, "Bite Size Halloween" / "Late Night Horror").
 
+Confirmed real, exact ids and all: the real project's own
+`data/excluded_compilation.csv` lists precisely these 11 collapsed ids --
+6 for Sheets of Gore, 2 for Ultimate Zombie Feast, 3 for the 1968 BBC
+anthology "Late Night Horror" (4 episodes total sharing one poster once
+the kept id is counted back in) -- matching this doc's examples exactly.
+What hasn't been verified line-by-line is the *mechanism* that produced
+that file: the narrative doc that would name the real script
+(`docs/HISTORIAL_PROYECTO.md`, "Fase 11") lives on a currently-disconnected
+external drive, and no locally-present script computes this. The
+TMDB-search-and-collapse approach below is this port's best-effort
+reconstruction of a mechanism consistent with those real outcomes, not a
+verified reproduction of the real script's code.
+
   TMDB_API_KEY=... python3 09_collapse_compilations.py --in data/sample_output/vision_title_check.csv
 
 Resumable: the TMDB search per shared-poster group is cached in --cache

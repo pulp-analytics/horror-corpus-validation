@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Find exact-duplicate poster images by MD5 hash of the downloaded file.
 
-Different from 06_dedupe_tmdb_metadata.py: that script catches the same
+Different from 07_dedupe_tmdb_metadata.py: that script catches the same
 *film* listed twice under different ids (possibly with different posters).
 This one catches the same *image file* used for two different catalog ids
 -- often a franchise/series that reused stock art (see the real example
@@ -9,10 +9,21 @@ below), sometimes a genuine data error. A real example from the full run:
 "Castle Ghosts of Ireland" and "Castle Ghosts of Wales" both used the exact
 same poster file (same MD5) as "Castle Ghosts of England" -- almost
 certainly a documentary series where only one episode had unique art and
-the rest were stubbed with a placeholder.
+the rest were stubbed with a placeholder. (Confirmed real: all three ids
+and this exact grouping are still present in the real project's own data,
+`data/master_dataset.csv` and `TODO_RESUME.md`.)
 
 Where two or more ids share an MD5, keeps whichever has the most complete
-metadata (vote_count) and flags the rest.
+metadata (vote_count) and flags the rest. Honesty note, same situation as
+07's tiebreaker: no script that actually computes poster MD5 hashes exists
+in the local copy of the real project (its data/qa/ directory references
+an `excluded_poster_md5_dup.csv` as already-computed input, and the
+narrative doc that would name the real script, `docs/HISTORIAL_PROYECTO.md`
+"Fase 11", lives on a currently-disconnected external drive) -- so the
+real tiebreaker mechanism for *this specific gate* has not been directly
+verified against source, unlike gate 7's (which was). `vote_count` here is
+this port's best-guess substitute for the same "keep the more complete
+entry" intent already confirmed for gate 7, not a verified reproduction.
 
 Resumable: downloading and hashing every poster is the slow part -- that
 work is cached in --cache (id -> md5), appended to on each run, so an
