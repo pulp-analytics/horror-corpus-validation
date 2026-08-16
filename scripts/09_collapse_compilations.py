@@ -19,13 +19,20 @@ Confirmed real, exact ids and all: the real project's own
 6 for Sheets of Gore, 2 for Ultimate Zombie Feast, 3 for the 1968 BBC
 anthology "Late Night Horror" (4 episodes total sharing one poster once
 the kept id is counted back in) -- matching this doc's examples exactly.
-What hasn't been verified line-by-line is the *mechanism* that produced
-that file: the narrative doc that would name the real script
-(`docs/HISTORIAL_PROYECTO.md`, "Fase 11") lives on a currently-disconnected
-external drive, and no locally-present script computes this. The
-TMDB-search-and-collapse approach below is this port's best-effort
-reconstruction of a mechanism consistent with those real outcomes, not a
-verified reproduction of the real script's code.
+The script that produced that file isn't in the local copy of the real
+project (the narrative doc that would name it, `docs/HISTORIAL_PROYECTO.md`
+"Fase 11", lives on a currently-disconnected external drive), so rather
+than guess at reproducing an unseen mechanism, this implements the most
+robust version of the same intent directly:
+
+- Score *every* TMDB search result against the shared OCR text (not just
+  bail out unless the search returns exactly one candidate) using the
+  same overlap+fuzzy title matching used elsewhere in this repo (see
+  `utils/text_match.py`), and keep the best-scoring one above a real
+  threshold -- not "any nonzero token overlap."
+- Exclude any candidate whose id is one of the segment ids themselves --
+  a compilation search can otherwise "match" one of the segments' own
+  TMDB entries rather than the actual compilation/anthology entry.
 
   TMDB_API_KEY=... python3 09_collapse_compilations.py --in data/sample_output/vision_title_check.csv
 
@@ -48,10 +55,12 @@ sys.path.insert(0, str(Path(__file__).parent))
 from utils.aws_config import get_tmdb_key
 from utils.logging_setup import get_logger
 from utils.resumable import load_done_ids, open_for_append, write_csv_rows
-from utils.text_match import title_overlap_score
+from utils.text_match import title_fuzzy_score, title_overlap_score
 from utils.tmdb_client import tmdb_get
 
 log = get_logger("collapse_compilations")
+
+MIN_MATCH_SCORE = 0.55
 
 
 def search_movie(session: requests.Session, api_key: str, query: str) -> list[dict]:
@@ -61,6 +70,29 @@ def search_movie(session: requests.Session, api_key: str, query: str) -> list[di
     if resp.status_code != 200:
         return []
     return resp.json().get("results", [])
+
+
+def best_compilation_match(query_text: str, candidates: list[dict], exclude_ids: set[str],
+                            min_score: float = MIN_MATCH_SCORE) -> dict:
+    """Pure function: pick the best-scoring TMDB search result for a
+    shared-poster compilation/anthology, using max(overlap, fuzzy) title
+    matching against every candidate -- not just requiring exactly one raw
+    search result. Skips any candidate whose id is one of the segment ids
+    themselves (that's a self-match, not a real compilation entry).
+    Returns {"canonical_id", "canonical_title", "score"}, id/title empty
+    if nothing clears min_score."""
+    best_id, best_title, best_score = "", "", 0.0
+    for c in candidates:
+        cid = str(c.get("id", ""))
+        if not cid or cid in exclude_ids:
+            continue
+        title = c.get("title", "")
+        score = max(title_overlap_score(query_text, title), title_fuzzy_score(query_text, title))
+        if score > best_score:
+            best_id, best_title, best_score = cid, title, score
+    if best_score >= min_score:
+        return {"canonical_id": best_id, "canonical_title": best_title, "score": best_score}
+    return {"canonical_id": "", "canonical_title": "", "score": best_score}
 
 
 def main():
@@ -89,7 +121,7 @@ def main():
     log.info(f"posters shared by 2+ catalog ids: {len(shared)} groups, {sum(len(v) for v in shared.values())} ids")
 
     cache_path = Path(args.cache)
-    cache_fields = ["poster_path", "shared_text", "canonical_id", "canonical_title", "resolution"]
+    cache_fields = ["poster_path", "shared_text", "canonical_id", "canonical_title", "match_score", "resolution"]
     done = load_done_ids(cache_path, id_col="poster_path")
     todo = {p: items for p, items in shared.items() if p not in done}
     if done:
@@ -102,15 +134,13 @@ def main():
             candidates = search_movie(session, api_key, query_text)
             time.sleep(0.1)
 
-            canonical_id, canonical_title, resolution = "", "", "no_compilation_entry_found"
-            if len(candidates) == 1:
-                c = candidates[0]
-                if title_overlap_score(query_text, c.get("title", "")) > 0:
-                    canonical_id, canonical_title = str(c["id"]), c.get("title", "")
-                    resolution = "compilation_entry_found"
+            segment_ids = {r["id"] for r in items}
+            match = best_compilation_match(query_text, candidates, segment_ids)
+            resolution = "compilation_entry_found" if match["canonical_id"] else "no_compilation_entry_found"
 
-            cw.writerow({"poster_path": poster, "shared_text": query_text, "canonical_id": canonical_id,
-                         "canonical_title": canonical_title, "resolution": resolution})
+            cw.writerow({"poster_path": poster, "shared_text": query_text,
+                         "canonical_id": match["canonical_id"], "canonical_title": match["canonical_title"],
+                         "match_score": match["score"], "resolution": resolution})
     finally:
         cf.close()
 
@@ -124,7 +154,8 @@ def main():
             out_rows.append({
                 "poster_path": poster, "segment_id": r["id"], "segment_title": r.get("title", ""),
                 "shared_text": c.get("shared_text", ""), "canonical_id": c.get("canonical_id", ""),
-                "canonical_title": c.get("canonical_title", ""), "resolution": c.get("resolution", "no_compilation_entry_found"),
+                "canonical_title": c.get("canonical_title", ""), "match_score": c.get("match_score", ""),
+                "resolution": c.get("resolution", "no_compilation_entry_found"),
             })
 
     out_path = Path(args.out)

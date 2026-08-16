@@ -75,17 +75,22 @@ auto-resolve: leaving the segments un-collapsed loses nothing (no wrong
 data), while collapsing into an arbitrarily-chosen segment misrepresents
 the others.
 
-*Provenance note (2026-08-16 re-check):* the real project's own
-`data/excluded_compilation.csv` confirms the exact ids in every example
-below (Sheets of Gore's 6, Ultimate Zombie Feast's 2, Late Night Horror's
-4) — the outcomes are verified real, not invented. The script that
-actually *produced* that file couldn't be found in the local copy of the
-real project; the narrative doc that would name it
-(`docs/HISTORIAL_PROYECTO.md`, "Fase 11") is on a currently-disconnected
-external drive. `09_collapse_compilations.py`'s TMDB-search mechanism is
-this port's reconstruction of an approach consistent with the real
-outcomes, not a line-by-line verified reproduction — same caveat applies
-to `08_dedupe_poster_md5.py`'s tiebreaker (see that script's docstring).
+The real project's own `data/excluded_compilation.csv` confirms the exact
+ids in every example below (Sheets of Gore's 6, Ultimate Zombie Feast's 2,
+Late Night Horror's 4) — the outcomes are verified real, not invented. The
+script that produced that file isn't available to verify line-by-line
+(the narrative doc that would name it, `docs/HISTORIAL_PROYECTO.md` "Fase
+11", is on a currently-disconnected external drive), so
+`09_collapse_compilations.py` implements the most robust version of the
+same intent directly, rather than guessing at an unseen mechanism: score
+*every* TMDB search result against the shared OCR text (`utils/text_match.py`'s
+overlap+fuzzy scoring, same as gates 5 and 12) instead of only trusting a
+single raw search result, require a real match-score threshold rather than
+"any nonzero overlap," and explicitly exclude any candidate that's one of
+the segment ids themselves. `08_dedupe_poster_md5.py`'s tiebreaker is in
+the same position — no real script found to verify against, so it uses
+the same robust `utils/tmdb_completeness.py` cascade as gate 7 instead of
+a bespoke proxy.
 
 ## Common false-positive patterns we found
 

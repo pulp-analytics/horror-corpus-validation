@@ -17,17 +17,11 @@ run used a signal that can't be reproduced here — whichever id already had
 *that specific run's own* metrics computed on it (`has_pipeline_metrics`),
 which depends on this codebase's processing history, not on anything TMDB
 itself exposes. Rather than porting a proxy for a mechanism we can't
-reproduce anyway, this script implements a more robust tiebreaker straight
-from TMDB's own data — a 4-signal cascade, each signal only breaking the
-tie if every signal before it was equal:
-
-  1. `imdb_id` present — an id cross-referenced to IMDb is more likely to
-     be a properly curated entry than a TMDB stub.
-  2. cast+crew count (`/credits`) — richer credit data, a reasonable proxy
-     for "more complete entry."
-  3. official trailer present (`/videos`, any `type == "Trailer"`) — another
-     completeness signal independent of cast/crew size.
-  4. TMDB's own `popularity` score — last resort, breaks remaining ties.
+reproduce anyway, this script uses `utils/tmdb_completeness.py`'s 4-signal
+cascade built straight from TMDB's own data (imdb_id present -> credits
+count -> trailer present -> popularity), shared with 08_dedupe_poster_md5.py
+so both gates use one canonical definition of "more complete entry" rather
+than each inventing its own proxy.
 
 Grouping key uses the full title, not a truncated prefix: an earlier version
 of this comparison truncated to 60 chars, which silently merged unrelated
@@ -57,49 +51,13 @@ sys.path.insert(0, str(Path(__file__).parent))
 from utils.aws_config import get_tmdb_key
 from utils.logging_setup import get_logger
 from utils.resumable import load_done_ids, open_for_append, write_csv_rows
-from utils.tmdb_client import tmdb_get
+from utils.tmdb_completeness import completeness_key, get_completeness_signals
 
 log = get_logger("dedupe_tmdb")
 
 
 def norm(s: str) -> str:
     return (s or "").strip().lower()
-
-
-def get_movie_details(session: requests.Session, api_key: str, movie_id: str) -> dict | None:
-    """Single call covers three signals at once: alive (200 vs not),
-    imdb_id presence, and TMDB's own popularity score -- all top-level
-    fields on the plain /movie/{id} response."""
-    resp = tmdb_get(session, api_key, f"movie/{movie_id}")
-    if resp.status_code != 200:
-        return None
-    return resp.json()
-
-
-def get_credits_count(session: requests.Session, api_key: str, movie_id: str) -> int:
-    resp = tmdb_get(session, api_key, f"movie/{movie_id}/credits")
-    if resp.status_code != 200:
-        return 0
-    d = resp.json()
-    return len(d.get("cast", [])) + len(d.get("crew", []))
-
-
-def has_trailer(session: requests.Session, api_key: str, movie_id: str) -> bool:
-    resp = tmdb_get(session, api_key, f"movie/{movie_id}/videos")
-    if resp.status_code != 200:
-        return False
-    return any(v.get("type") == "Trailer" for v in resp.json().get("results", []))
-
-
-def completeness_key(cache_row: dict) -> tuple:
-    """Cascade as a sort key: Python's tuple comparison already implements
-    "only fall through to the next signal if the earlier ones tie."""
-    return (
-        int(cache_row.get("has_imdb_id") or 0),
-        int(cache_row.get("credits") or 0),
-        int(cache_row.get("has_trailer") or 0),
-        float(cache_row.get("popularity") or 0.0),
-    )
 
 
 def main():
@@ -136,24 +94,9 @@ def main():
     cf, cw = open_for_append(cache_path, cache_fields)
     try:
         for i, r in enumerate(todo, 1):
-            details = get_movie_details(session, api_key, r["id"])
-            time.sleep(0.1)
-            alive = details is not None
-            credits_count = 0
-            trailer = False
-            if alive:
-                credits_count = get_credits_count(session, api_key, r["id"])
-                time.sleep(0.1)
-                trailer = has_trailer(session, api_key, r["id"])
-                time.sleep(0.1)
-            cw.writerow({
-                "id": r["id"],
-                "alive": int(alive),
-                "credits": credits_count,
-                "has_imdb_id": int(bool(details.get("imdb_id"))) if details else 0,
-                "has_trailer": int(trailer),
-                "popularity": details.get("popularity", 0.0) if details else 0.0,
-            })
+            signals = get_completeness_signals(session, api_key, r["id"])
+            time.sleep(0.3)
+            cw.writerow({"id": r["id"], **signals})
             if i % 25 == 0:
                 log.info(f"{i}/{len(todo)}")
     finally:

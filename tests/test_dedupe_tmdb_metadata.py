@@ -1,17 +1,12 @@
-"""Pure-function tests for scripts/07_dedupe_tmdb_metadata.py's
-completeness_key() -- the imdb_id -> credits -> trailer -> popularity
-cascade tiebreaker. No network needed."""
-import importlib.util
+"""Pure-function tests for utils/tmdb_completeness.py's completeness_key()
+-- the imdb_id -> credits -> trailer -> popularity cascade tiebreaker
+shared by 07_dedupe_tmdb_metadata.py and 08_dedupe_poster_md5.py. No
+network needed."""
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
-_spec = importlib.util.spec_from_file_location(
-    "dedupe_tmdb_metadata", Path(__file__).resolve().parents[1] / "scripts" / "07_dedupe_tmdb_metadata.py")
-mod = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(mod)
-
-completeness_key = mod.completeness_key
+from utils.tmdb_completeness import completeness_key
 
 
 def cache_row(has_imdb_id=0, credits=0, has_trailer=0, popularity=0.0):
