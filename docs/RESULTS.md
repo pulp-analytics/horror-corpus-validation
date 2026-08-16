@@ -202,3 +202,58 @@ poster — this confirms the pipeline runs correctly end-to-end without
 forcing a swap that shouldn't happen; it doesn't yet demonstrate a real
 `propose=1` case live (would need a film with a genuinely mismatched
 current primary and a better-reading alternate on hand).
+
+## Gate 5's 4-engine example, re-run live: OCR engines drift too
+
+The article's gate 5 case study ("don't trust a single OCR engine")
+compares four real engines' historical reads of three real posters —
+*Who Goes There?* (id 752443), *Dykefoot* (644460), *Living
+Arrangements* (751497). Live-checked (2026-08-16, real AWS calls) what
+Rekognition and Textract read on the *exact same three image files*
+today, plus a fresh EasyOCR pass (local, no AWS) and a fresh Bedrock
+read. Not just "the numbers moved a little" — the qualitative story
+changed, in both directions:
+
+**Who Goes There? (752443)** — the article's clean-vs-messy example.
+Historically: Textract read `WHO GOES THERE?` alone, cleanly, at 0.9999
+confidence, ignoring the tiny stylized cast-credit text that confused
+every other engine. Live today: Textract reads the cast credits too —
+`NINA | SIRI | RIKKE | AND LIAM | YNDIS | MELAND | HAUGHEM | MCMAHON |
+WHO GOES | THERE? | NFTS` at 0.9645 — correctly, but no longer the
+clean single-title read the article's narrative leans on. Rekognition
+live reads the same real cast names Textract now picks up, still with
+garbage after. EasyOCR live also reads the credits cleanly (`YNDIs
+'MELAND HAUGHEM McMAHON WHO GOES THERE?`, conf 0.735, up from a garbled
+0.43 historically). Bedrock live: `who goes there?`, `match` — no
+numeric confidence field in Bedrock's own output (see the note below).
+
+**Dykefoot (644460)** — engines swapped which one is reliable.
+Textract: from a weak-but-plausible "Dyke...dyketect.com" (0.46) to
+outright garbage "YOU -" (0.19) — got worse. Rekognition: from
+hallucinating Arabic script and a wrong domain ("dykotoot.com", 0.24)
+to a clean, correct read ("glitterdrop | dykefoot.com", 0.97) — got
+much better. Whichever engine "won" this poster in the original
+comparison would not win it today.
+
+**Living Arrangements (751497)** — both still weak, different specific
+errors. Textract: "4\nARRANGEMENTS" (0.61) live is `PO` (0.12) — much
+worse. Rekognition: comparably messy both times, different exact typos
+(`FRODUCTIONS`→`PRODUCTIONS` now correct, `LIVING.`→`IVING` now missing
+a letter).
+
+**Bottom line:** this isn't just Bedrock/Comprehend that drift over
+time (see this doc's gates-5-6 section above and the sibling repo's
+docs/MODELS.md) — Textract and Rekognition, AWS's more "traditional"
+(non-LLM) OCR services, also produce measurably different reads on
+identical images months apart. Two of three posters got a *better*
+overall read live than historically; one engine (Textract) got
+meaningfully worse on two of three. No engine is safe to treat as a
+frozen, reproducible reference — the "don't trust a single OCR engine"
+lesson extends to "don't trust that any given engine's *historical*
+read still describes what it does today."
+
+**Separately:** live-checking this surfaced that Bedrock's real output
+schema (`text_you_read`/`verdict`/`reason`, see 04_bedrock_ocr.py's
+PROMPT) has no numeric confidence field at all. If an article draft
+cites a specific "Bedrock confidence" score, that number isn't coming
+from this call — worth tracing to its actual source before publishing.
