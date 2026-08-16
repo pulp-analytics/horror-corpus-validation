@@ -1,0 +1,23 @@
+name: tests
+
+# Pure-function tests + fixture-consistency checks -- no TMDB/AWS
+# credentials needed, so this runs on every push/PR with no secrets setup.
+# See .github/workflows/live-drift-check.yml for the TMDB-key-gated
+# workflow that catches real drift (ids going dead on TMDB, sample
+# fixtures no longer matching live reality).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - run: python -m pytest tests/ -q

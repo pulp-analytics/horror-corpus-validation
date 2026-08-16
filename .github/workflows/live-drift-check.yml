@@ -1,0 +1,26 @@
+name: live drift check
+
+# Weekly + manual: live-checks the specific real examples cited in
+# docs/RESULTS.md and docs/VALIDATION_LOGIC.md against TMDB today and
+# writes a report to the job summary. Does not fail the build -- TMDB
+# drifting is an expected, already-documented finding of this project, not
+# a bug. Skips gracefully (prints one line, exits 0) if the TMDB_API_KEY
+# secret isn't configured on this repo yet.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 13 * * 1"  # Mondays, 13:00 UTC
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - run: python3 scripts/qa/check_live_drift.py
+        env:
+          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
