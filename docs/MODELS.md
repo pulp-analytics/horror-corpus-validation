@@ -123,7 +123,7 @@ disagreements are Nova saying mismatch on what a human confirmed was
 actually a match (a false reject), versus only 3 false accepts. Nova's
 `inaccurate` verdict, historically, was wrong about 4 times out of 5.
 
-**`--validate` mode (built, not yet run against live Bedrock):**
+**`--validate` mode, run live (2026-08-15):**
 ```bash
 export AWS_PROFILE=your-bedrock-profile
 python3 04_bedrock_ocr.py --validate
@@ -135,7 +135,30 @@ and prints overall accuracy plus per-class precision/recall/support and a
 confusion matrix. This is the rigorous version of the preliminary signal
 above: it scores whatever Nova actually serves *today*, not the
 historical `stratum` snapshot -- meaningfully different given Bedrock
-can't be pinned (see this doc's top section). Makes real Bedrock calls
-against ~75 posters (a few cents, not free). Pure-function unit tests for
-the accuracy/precision/recall math live in `tests/test_bedrock_ocr.py`
+can't be pinned (see this doc's top section). Pure-function unit tests
+for the accuracy/precision/recall math live in `tests/test_bedrock_ocr.py`
 and don't need AWS credentials; only actually running `--validate` does.
+
+**Real result: 93.3% (70/75), notably higher than the 81.7% preliminary
+estimate.** This is exactly the non-determinism this doc's top section
+warns about, made concrete: `us.amazon.nova-pro-v1:0` today is not the
+same answer machine that built this corpus.
+
+| class | precision | recall | support |
+|---|---|---|---|
+| match | 96.1% | 94.2% | 52 |
+| mismatch | 62.5% | 71.4% | 7 |
+| no_title_on_poster | 100.0% | 100.0% | 16 |
+
+The finding that drove this whole investigation -- "Nova's `mismatch`
+verdict was wrong about 4 times out of 5" -- does not hold up against a
+live call. Today's model gets `mismatch` right 71.4% of the time (5 of
+7), a large jump from the 18.2% the historical `stratum` comparison
+found. Confusion matrix (rows=human, cols=live): of the 52 true
+`match` rows, 49 matched live and 3 came back `mismatch`; of the 7 true
+`mismatch` rows, 5 matched live and 2 came back `match`. Small support
+on `mismatch` (n=7) means don't over-read the exact 62.5%/71.4% -- but
+the direction and the size of the jump are the real finding: this gate
+is more trustworthy today than the numbers it was built on suggested,
+and the only way to know that was to actually run it, not reason about
+whether Bedrock output should be stable.
