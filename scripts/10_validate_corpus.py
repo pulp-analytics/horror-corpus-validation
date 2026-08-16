@@ -23,6 +23,20 @@ already ran can't resolve them --
     entry is excluded as unresolved_shared_poster, instead of being left
     unresolved.
 
+Gates 7 (same film, different id), 8 (exact same poster image, different
+id), and 9 (poster shared by 2+ ids -- is it a compilation) can all reach a
+verdict on the same id, and their verdicts can disagree -- found live,
+2026-08-16, real TMDB calls: on the real Sheets of Gore pair (749611
+"Blood of the Undead: The Final Chapter", 934611 "Sheets of Gore" itself),
+gate 8's generic completeness cascade kept 749611 and excluded 934611
+(749611 happens to have an imdb_id, 934611 doesn't) -- backwards from the
+real project's own data/excluded_compilation.csv. Gate 9 gets it right,
+because it's TMDB-search-confirmed (934611's real overview lists all 6
+real segment titles), not a generic proxy. compute_dedup_exclusions()
+below gives gate 9 first say and protects any id it confirms as a
+compilation's canonical entry from being excluded by gates 7/8's
+less-informed signals -- see docs/VALIDATION_LOGIC.md for the full story.
+
   TMDB_API_KEY=... AWS_PROFILE=your-profile python3 10_validate_corpus.py --limit 100
   python3 10_validate_corpus.py --genre 878 --limit 100
 
@@ -57,6 +71,43 @@ def run_step(name: str, args: list[str]) -> None:
     result = subprocess.run([sys.executable, str(SCRIPTS_DIR / name), *args])
     if result.returncode != 0:
         raise SystemExit(f"{name} failed (exit {result.returncode})")
+
+
+def compute_dedup_exclusions(comp_rows: list[dict], dup_rows: list[dict], md5_rows: list[dict]) -> dict[str, str]:
+    """Pure function: merges gates 7 (metadata duplicate), 8 (poster MD5
+    duplicate), and 9 (compilation collapse) into one id -> exclusion-reason
+    map. Gate 9 goes first and any id it confirms as a compilation's
+    canonical entry (a row where segment_id == canonical_id) is protected
+    from exclusion by gates 7/8 -- they have no way to know a poster is
+    actually a compilation from their own signals (completeness proxies,
+    exact image match) alone, so their verdict for a protected id is
+    simply wrong, not just lower-confidence. Every input row is assumed
+    already filtered to catalog ids the caller cares about."""
+    excluded: dict[str, str] = {}
+    protected: set[str] = set()
+
+    for r in comp_rows:
+        if r["resolution"] != "compilation_entry_found":
+            continue
+        if r["segment_id"] == r["canonical_id"]:
+            protected.add(r["segment_id"])
+        else:
+            excluded[r["segment_id"]] = f"collapsed_into_compilation:{r['canonical_title']}"
+    for r in comp_rows:
+        # no rescuable canonical TMDB entry for this shared poster -- can't
+        # confirm it's right, so it doesn't get left as a manual judgment call
+        if r["resolution"] == "no_compilation_entry_found" and r["segment_id"] not in excluded:
+            excluded[r["segment_id"]] = "unresolved_shared_poster:no_compilation_entry_found"
+
+    for r in dup_rows:
+        if r["keep"] != "1" and r["id"] not in excluded and r["id"] not in protected:
+            excluded[r["id"]] = f"tmdb_duplicate:{r['resolution']}"
+
+    for r in md5_rows:
+        if r["keep"] != "1" and r["id"] not in excluded and r["id"] not in protected:
+            excluded[r["id"]] = f"poster_md5_dup:{r['reason']}"
+
+    return excluded
 
 
 def main():
@@ -137,31 +188,30 @@ def main():
                     excluded[r["id"]] = f"no_verifiable_poster:{r['reason']}"
 
     dup_path = out("duplicate_resolution")
+    dup_rows = []
     if Path(dup_path).exists():
         with open(dup_path, newline="", encoding="utf-8") as f:
-            for r in csv.DictReader(f):
-                if r["id"] in catalog and r["keep"] != "1" and r["id"] not in excluded:
-                    excluded[r["id"]] = f"tmdb_duplicate:{r['resolution']}"
+            dup_rows = [r for r in csv.DictReader(f) if r["id"] in catalog]
 
     md5_path = out("poster_md5_duplicates")
+    md5_rows = []
     if Path(md5_path).exists():
         with open(md5_path, newline="", encoding="utf-8") as f:
-            for r in csv.DictReader(f):
-                if r["id"] in catalog and r["keep"] != "1" and r["id"] not in excluded:
-                    excluded[r["id"]] = f"poster_md5_dup:{r['reason']}"
+            md5_rows = [r for r in csv.DictReader(f) if r["id"] in catalog]
 
     comp_path = out("compilation_groups")
+    comp_rows = []
     if Path(comp_path).exists():
         with open(comp_path, newline="", encoding="utf-8") as f:
             comp_rows = [r for r in csv.DictReader(f) if r["segment_id"] in catalog]
-        for r in comp_rows:
-            if r["resolution"] == "compilation_entry_found" and r["segment_id"] != r["canonical_id"] and r["segment_id"] not in excluded:
-                excluded[r["segment_id"]] = f"collapsed_into_compilation:{r['canonical_title']}"
-        for r in comp_rows:
-            # no rescuable canonical TMDB entry for this shared poster -- can't
-            # confirm it's right, so it doesn't get left as a manual judgment call
-            if r["resolution"] == "no_compilation_entry_found" and r["segment_id"] not in excluded:
-                excluded[r["segment_id"]] = "unresolved_shared_poster:no_compilation_entry_found"
+
+    dedup_excluded = compute_dedup_exclusions(comp_rows, dup_rows, md5_rows)
+    overlap = set(excluded) & set(dedup_excluded)
+    if overlap:
+        log.info(f"{len(overlap)} id(s) already excluded (no_verifiable_poster) before dedup gates ran, "
+                 f"keeping that reason: {sorted(overlap)}")
+    for id_, reason in dedup_excluded.items():
+        excluded.setdefault(id_, reason)
 
     # unresolved title mismatches: a 04 "mismatch" verdict is only kept if the
     # poster's OCR'd text (raw or translated) overlaps the catalog title or one

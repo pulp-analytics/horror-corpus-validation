@@ -1,4 +1,5 @@
 """Unit tests for the pure-function matching logic (no AWS/TMDB calls)."""
+import importlib.util
 import sys
 from pathlib import Path
 
@@ -9,6 +10,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from utils.constants import ALT_TITLE_OVERLAP_THRESHOLD  # noqa: E402
 from utils.resumable import shard_rows  # noqa: E402
 from utils.text_match import best_overlap, strip_accents, title_overlap_score  # noqa: E402
+
+_spec = importlib.util.spec_from_file_location(
+    "validate_corpus", Path(__file__).resolve().parents[1] / "scripts" / "10_validate_corpus.py")
+_validate_corpus = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(_validate_corpus)
+compute_dedup_exclusions = _validate_corpus.compute_dedup_exclusions
 
 
 def test_exact_match():
@@ -91,3 +98,65 @@ def test_shard_rows_partition_is_exhaustive_and_disjoint():
 def test_shard_rows_rejects_out_of_range_index():
     with pytest.raises(ValueError):
         shard_rows([{"id": "1"}], shard_index=4, shard_count=4)
+
+
+# compute_dedup_exclusions -- merges gates 7/8/9's independent verdicts,
+# gate 9 (compilation, TMDB-search-confirmed) taking precedence over 7/8
+# (generic completeness proxies). test_gate9_overrides_gate8_on_the_real_case
+# pins the real bug found live 2026-08-16: on the real Sheets of Gore pair,
+# gate 8 alone kept the wrong id (749611, a segment) over the correct one
+# (934611, the canonical compilation entry) because 749611 happens to have
+# an imdb_id and 934611 doesn't -- backwards from data/excluded_compilation.csv.
+
+def test_gate9_overrides_gate8_on_the_real_case():
+    comp_rows = [
+        {"segment_id": "749611", "canonical_id": "934611", "canonical_title": "Sheets of Gore",
+         "resolution": "compilation_entry_found"},
+        {"segment_id": "934611", "canonical_id": "934611", "canonical_title": "Sheets of Gore",
+         "resolution": "compilation_entry_found"},
+    ]
+    # gate 8's real (wrong, in isolation) verdict: keeps the segment, drops the canonical entry
+    md5_rows = [
+        {"id": "749611", "keep": "1", "reason": "exact_poster_md5_dup"},
+        {"id": "934611", "keep": "0", "reason": "exact_poster_md5_dup"},
+    ]
+    excluded = compute_dedup_exclusions(comp_rows, [], md5_rows)
+    assert excluded == {"749611": "collapsed_into_compilation:Sheets of Gore"}
+    assert "934611" not in excluded  # protected: it's the canonical entry, gate 8 doesn't get a say
+
+
+def test_gate8_still_applies_when_gate9_has_no_opinion():
+    md5_rows = [
+        {"id": "1", "keep": "1", "reason": "exact_poster_md5_dup"},
+        {"id": "2", "keep": "0", "reason": "exact_poster_md5_dup"},
+    ]
+    excluded = compute_dedup_exclusions([], [], md5_rows)
+    assert excluded == {"2": "poster_md5_dup:exact_poster_md5_dup"}
+
+
+def test_gate7_still_applies_when_gates_8_and_9_have_no_opinion():
+    dup_rows = [
+        {"id": "1", "keep": "1", "resolution": "duplicate_resolved_by_completeness_cascade"},
+        {"id": "2", "keep": "0", "resolution": "duplicate_resolved_by_completeness_cascade"},
+    ]
+    excluded = compute_dedup_exclusions([], dup_rows, [])
+    assert excluded == {"2": "tmdb_duplicate:duplicate_resolved_by_completeness_cascade"}
+
+
+def test_unresolved_compilation_group_excluded_as_before():
+    comp_rows = [
+        {"segment_id": "1", "canonical_id": "", "canonical_title": "", "resolution": "no_compilation_entry_found"},
+        {"segment_id": "2", "canonical_id": "", "canonical_title": "", "resolution": "no_compilation_entry_found"},
+    ]
+    excluded = compute_dedup_exclusions(comp_rows, [], [])
+    assert excluded == {
+        "1": "unresolved_shared_poster:no_compilation_entry_found",
+        "2": "unresolved_shared_poster:no_compilation_entry_found",
+    }
+
+
+def test_gate9_silent_on_ids_it_never_saw():
+    # a poster no gate 9 group even covers -- gates 7/8 decide normally
+    dup_rows = [{"id": "5", "keep": "0", "resolution": "duplicate_resolved_by_completeness_cascade"}]
+    excluded = compute_dedup_exclusions([], dup_rows, [])
+    assert excluded == {"5": "tmdb_duplicate:duplicate_resolved_by_completeness_cascade"}

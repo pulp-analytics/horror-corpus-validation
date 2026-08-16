@@ -103,14 +103,27 @@ needed for any of gates 7-9):
   "self-match" — but 934611 (the correct answer) is itself one of the
   rows sharing the old poster_path in the real data, so that guard would
   have excluded the right answer. Removed (see the script's docstring).
-- **Gate 8's generic tiebreak gets this same pair wrong.** Run
-  independently on the same two real ids (749611, 934611), the
-  completeness cascade keeps 749611 over 934611 -- 749611 happens to have
-  an `imdb_id`, 934611 doesn't, so signal #1 in the cascade picks it, even
-  though the real answer is the opposite. Gate 8 has no way to know "this
-  poster is actually a compilation" from MD5 + completeness signals alone
-  -- when both gates fire on the same `poster_path`, gate 9's
-  search-verified resolution should take precedence over gate 8's.
+- **Gate 8's generic tiebreak gets this same pair wrong -- and so did the
+  orchestrator that merges gates 7-9.** Run independently on the same two
+  real ids (749611, 934611), the completeness cascade keeps 749611 over
+  934611 -- 749611 happens to have an `imdb_id`, 934611 doesn't, so signal
+  #1 in the cascade picks it, even though the real answer is the opposite.
+  Worse: `10_validate_corpus.py` (the script that actually assembles
+  `excluded_ids.csv`/`validated_corpus.csv` from gates 7-9's outputs) ran
+  gate 8's exclusion block *before* gate 9's, and both only ever add a
+  reason for an id that isn't already excluded -- so for this exact real
+  pair, gate 8 would exclude 934611 first (the wrong id), and by the time
+  gate 9's block ran, 934611 was already excluded (its own row does
+  nothing, since `segment_id == canonical_id`), while 749611 (which
+  *should* be excluded) never was, because gate 8 had already decided to
+  keep it. Net effect: the real correct entry gets dropped, the real
+  segment gets kept -- exactly backwards. Fixed by extracting
+  `compute_dedup_exclusions()` in `10_validate_corpus.py`: gate 9 now
+  runs first, and any id it confirms as a compilation's canonical entry
+  is protected from exclusion by gates 7/8 regardless of what their own
+  signals say. Locked in by
+  `test_gate9_overrides_gate8_on_the_real_case` in `tests/test_validate_corpus.py`,
+  using these exact real ids and values.
 - **Gate 7's own real example has drifted since it was documented.** The
   Omegle "duplicate" pair (1009049/1743173) that this repo cites as a
   real `tmdb_duplicate` example no longer resolves that way live: id
