@@ -11,19 +11,23 @@ of 72 candidate groups turned out to be one-sided — one of the two ids no
 longer existed in TMDB at all (404), so there was no real duplicate, just a
 stale reference. See docs/RESULTS.md.
 
-Once a group is confirmed a real duplicate (2+ ids still alive), the real
-project's actual tiebreaker was whichever id already had this project's
-own metrics computed on it (`has_pipeline_metrics`, from that specific
-run's own processing history) -- not a signal a fresh clone of this repo
-can ever reproduce, since it depends on which id *this* codebase's earlier
-runs happened to have already analyzed, not on anything TMDB exposes.
-That mechanism was operationalizing a simpler intent, though: once you're
-sure it's the same film, keep whichever entry has the richer metadata. This
-script approximates that same intent with a signal any fresh checkout
-actually has available -- TMDB's own `/credits` endpoint, cast+crew count,
-as a proxy for "more complete/curated entry" -- an honest substitution for
-the same goal, not a literal reproduction of the real run's exact
-mechanism. See docs/RESULTS.md for both notes.
+Once a group is confirmed a real duplicate (2+ ids still alive), pick
+whichever entry is the more complete/curated one. The real project's own
+run used a signal that can't be reproduced here — whichever id already had
+*that specific run's own* metrics computed on it (`has_pipeline_metrics`),
+which depends on this codebase's processing history, not on anything TMDB
+itself exposes. Rather than porting a proxy for a mechanism we can't
+reproduce anyway, this script implements a more robust tiebreaker straight
+from TMDB's own data — a 4-signal cascade, each signal only breaking the
+tie if every signal before it was equal:
+
+  1. `imdb_id` present — an id cross-referenced to IMDb is more likely to
+     be a properly curated entry than a TMDB stub.
+  2. cast+crew count (`/credits`) — richer credit data, a reasonable proxy
+     for "more complete entry."
+  3. official trailer present (`/videos`, any `type == "Trailer"`) — another
+     completeness signal independent of cast/crew size.
+  4. TMDB's own `popularity` score — last resort, breaks remaining ties.
 
 Grouping key uses the full title, not a truncated prefix: an earlier version
 of this comparison truncated to 60 chars, which silently merged unrelated
@@ -32,8 +36,8 @@ volumes of the same series) into false "duplicate" groups.
 
   TMDB_API_KEY=... python3 07_dedupe_tmdb_metadata.py --in data/sample_input/sample_100_ids.csv
 
-Resumable: the per-id "is it still alive on TMDB" / "how many credits" checks
-are cached in --cache (id -> alive/credits), appended to on each run, so an
+Resumable: the per-id TMDB checks (alive/imdb_id/popularity, credits count,
+trailer presence) are cached in --cache, appended to on each run, so an
 interrupted run doesn't re-hit the TMDB API for ids it already checked. The
 grouping/resolution step is cheap and local, so it's always redone in full
 from whatever's in the cache.
@@ -62,9 +66,14 @@ def norm(s: str) -> str:
     return (s or "").strip().lower()
 
 
-def movie_is_alive(session: requests.Session, api_key: str, movie_id: str) -> bool:
+def get_movie_details(session: requests.Session, api_key: str, movie_id: str) -> dict | None:
+    """Single call covers three signals at once: alive (200 vs not),
+    imdb_id presence, and TMDB's own popularity score -- all top-level
+    fields on the plain /movie/{id} response."""
     resp = tmdb_get(session, api_key, f"movie/{movie_id}")
-    return resp.status_code == 200
+    if resp.status_code != 200:
+        return None
+    return resp.json()
 
 
 def get_credits_count(session: requests.Session, api_key: str, movie_id: str) -> int:
@@ -75,12 +84,30 @@ def get_credits_count(session: requests.Session, api_key: str, movie_id: str) ->
     return len(d.get("cast", [])) + len(d.get("crew", []))
 
 
+def has_trailer(session: requests.Session, api_key: str, movie_id: str) -> bool:
+    resp = tmdb_get(session, api_key, f"movie/{movie_id}/videos")
+    if resp.status_code != 200:
+        return False
+    return any(v.get("type") == "Trailer" for v in resp.json().get("results", []))
+
+
+def completeness_key(cache_row: dict) -> tuple:
+    """Cascade as a sort key: Python's tuple comparison already implements
+    "only fall through to the next signal if the earlier ones tie."""
+    return (
+        int(cache_row.get("has_imdb_id") or 0),
+        int(cache_row.get("credits") or 0),
+        int(cache_row.get("has_trailer") or 0),
+        float(cache_row.get("popularity") or 0.0),
+    )
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--in", dest="in_path", default="data/sample_input/sample_100_ids.csv")
     ap.add_argument("--out", default="data/sample_output/duplicate_resolution.csv")
     ap.add_argument("--cache", default="data/sample_output/.tmdb_dedupe_cache.csv",
-                     help="id->alive/credits cache, resumed across runs")
+                     help="id->alive/credits/imdb_id/trailer/popularity cache, resumed across runs")
     args = ap.parse_args()
 
     api_key = get_tmdb_key()
@@ -100,7 +127,7 @@ def main():
                   for r in items]
 
     cache_path = Path(args.cache)
-    cache_fields = ["id", "alive", "credits"]
+    cache_fields = ["id", "alive", "credits", "has_imdb_id", "has_trailer", "popularity"]
     done = load_done_ids(cache_path)
     todo = [r for r in candidates if r["id"] not in done]
     if done:
@@ -109,12 +136,24 @@ def main():
     cf, cw = open_for_append(cache_path, cache_fields)
     try:
         for i, r in enumerate(todo, 1):
-            alive = movie_is_alive(session, api_key, r["id"])
+            details = get_movie_details(session, api_key, r["id"])
             time.sleep(0.1)
-            credits_count = get_credits_count(session, api_key, r["id"]) if alive else 0
+            alive = details is not None
+            credits_count = 0
+            trailer = False
             if alive:
+                credits_count = get_credits_count(session, api_key, r["id"])
                 time.sleep(0.1)
-            cw.writerow({"id": r["id"], "alive": int(alive), "credits": credits_count})
+                trailer = has_trailer(session, api_key, r["id"])
+                time.sleep(0.1)
+            cw.writerow({
+                "id": r["id"],
+                "alive": int(alive),
+                "credits": credits_count,
+                "has_imdb_id": int(bool(details.get("imdb_id"))) if details else 0,
+                "has_trailer": int(trailer),
+                "popularity": details.get("popularity", 0.0) if details else 0.0,
+            })
             if i % 25 == 0:
                 log.info(f"{i}/{len(todo)}")
     finally:
@@ -137,8 +176,8 @@ def main():
             resolution = "phantom_duplicate_dead_id" if len(items) > len(live) else "no_duplicate"
             keep = live[0]["id"] if live else ""
         else:
-            best = max(live, key=lambda r: int(cache.get(r["id"], {}).get("credits") or 0))
-            resolution = "duplicate_resolved_by_credits_count"
+            best = max(live, key=lambda r: completeness_key(cache.get(r["id"], {})))
+            resolution = "duplicate_resolved_by_completeness_cascade"
             keep = best["id"]
 
         for r in items:

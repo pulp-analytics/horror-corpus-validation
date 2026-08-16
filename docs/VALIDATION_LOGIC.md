@@ -40,17 +40,26 @@ you're sure it's the same film, keep whichever entry has the richer
 metadata. The real project's actual mechanism for that was whichever id
 already had *this project's own metrics* computed on it — a signal from
 that specific run's own processing history, not anything TMDB itself
-exposes, so it can't be reproduced by a fresh checkout of this repo.
-`07_dedupe_tmdb_metadata.py` approximates the same intent instead with
-cast/crew count from `/movie/{id}/credits` — a real, computable proxy for
-"more complete/curated entry," not a literal reproduction of the real
-run's mechanism. (An earlier version of this doc also listed `imdb_id`
-presence, trailer presence, and `popularity` as further tiebreakers in a
-4-step cascade — no real script implementing that combination could be
-found on a 2026-08-16 re-check; removed rather than left as an
-unverified claim. If an earlier, different heuristic really was tried
-and dropped, that's a real possibility worth remembering — just not one
-to port forward as if it were the final logic.)
+exposes, so it can't be reproduced by a fresh checkout of this repo, and
+isn't worth porting even if it could be: it's an artifact of *this
+project's* run order, not a signal that says anything about which entry
+is actually more complete.
+
+Rather than approximate an unreproducible mechanism, `07_dedupe_tmdb_metadata.py`
+implements a more robust tiebreaker built straight from what TMDB itself
+exposes — a 4-signal cascade, each signal only used if every signal
+before it ties:
+
+1. `imdb_id` present on the entry — cross-referenced to IMDb, a real
+   curation signal.
+2. cast+crew count (`/credits`) — richer credit data.
+3. official trailer present (`/videos`, any `type == "Trailer"`).
+4. TMDB's own `popularity` score, as a last resort.
+
+This is a deliberate improvement over the real run's tiebreaker, not a
+faithful reproduction of it — the goal for a fresh public port is the most
+robust version of "keep the richer entry," not a copy of one run's
+internal, non-reproducible bookkeeping.
 
 ## Deciding whether a shared poster is a compilation
 
