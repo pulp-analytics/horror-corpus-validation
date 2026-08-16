@@ -225,5 +225,10 @@ data/ground_truth/bedrock_ocr_review.html
 # Local poster-image download cache for the same script, not source of truth
 data/ground_truth/.poster_cache/
 
+# Downloaded poster variant files from 11_find_alternate_posters.py --
+# regenerable from data/gate89_full/catalog.csv + input_262.csv, not source
+data/gate89_full/posters_multi/
+data/posters_multi/
+
 # macOS Finder metadata
 .DS_Store

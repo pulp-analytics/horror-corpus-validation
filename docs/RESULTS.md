@@ -198,10 +198,38 @@ primaries scored a perfect 1.0 overlap/fuzzy against the catalog title
 posters only (matching the real project's own default), so every
 candidate already reads the English title cleanly. 0 swaps proposed for
 either film, correctly, since both already had a matching primary
-poster — this confirms the pipeline runs correctly end-to-end without
-forcing a swap that shouldn't happen; it doesn't yet demonstrate a real
-`propose=1` case live (would need a film with a genuinely mismatched
-current primary and a better-reading alternate on hand).
+poster.
+
+**Full run against all 262 real candidates** (2026-08-16, both engines,
+`sandbox_bedrock` profile — the actual `id`/`title`/`poster_path` rows
+from the real `data/qa/multi_poster_variant_ocr_swaps.csv`, TMDB variant
+discovery via `11`, capped at 5 variants/film):
+
+| engine | candidates scored | variants found | swaps proposed |
+|---|---|---|---|
+| real historical (`score_multi_poster_variants_ocr.py`, Rekognition) | 262 | ~544 (806 total rows − 262 primaries) | 78 |
+| this port, `--engine rekognition` | 261 | 493 | 1 |
+| this port, `--engine bedrock` | 261 | 493 | 9 |
+
+(261, not 262: one candidate had zero locally-discovered variant files
+to score at all.)
+
+The two engines' 9 vs. 1 proposed swaps share **zero ids in common** —
+completely disjoint sets, not "Bedrock finds a superset of what
+Rekognition finds" or vice versa. That, plus both landing nowhere near
+the real 78, points at the actual bottleneck: it's not which OCR engine
+scores the candidates, it's that `11_find_alternate_posters.py`'s
+discovery (TMDB `images` endpoint, `en,null` languages, 5-variant cap)
+finds a narrower and *different* set of alternate posters than the real
+project's own `multi_poster_pipeline.py` (discover → download → embed →
+cluster → select, a richer multi-stage process this port didn't
+reproduce — see that script's own docstring). Whichever candidate
+posters actually get scored determines the ceiling on what any OCR
+engine can find; both engines here were mostly being asked to grade a
+different, smaller set of alternatives than the real run had available.
+**This is the real gap to close before trusting this port's swap count
+at scale, more than the Bedrock/Rekognition choice this section started
+by asking about.**
 
 ## Gate 5's 4-engine example, re-run live: OCR engines drift too
 
