@@ -200,36 +200,54 @@ candidate already reads the English title cleanly. 0 swaps proposed for
 either film, correctly, since both already had a matching primary
 poster.
 
-**Full run against all 262 real candidates** (2026-08-16, both engines,
-`sandbox_bedrock` profile — the actual `id`/`title`/`poster_path` rows
-from the real `data/qa/multi_poster_variant_ocr_swaps.csv`, TMDB variant
-discovery via `11`, capped at 5 variants/film):
+**Full run against all 262 real candidates, first attempt (2026-08-16,
+retracted -- see correction below).** Ran both engines against the
+actual `id`/`title`/`poster_path` rows from the real
+`data/qa/multi_poster_variant_ocr_swaps.csv`, TMDB variant discovery via
+`11`. Result: real historical run 78 proposed swaps; this port's
+`--engine rekognition` 1; `--engine bedrock` 9 -- with **zero ids in
+common** between the two engines' proposals. First read: "the discovery
+step (`11`) must be finding a narrower set of candidate posters than
+the real project's own `multi_poster_pipeline.py`."
 
-| engine | candidates scored | variants found | swaps proposed |
-|---|---|---|---|
-| real historical (`score_multi_poster_variants_ocr.py`, Rekognition) | 262 | ~544 (806 total rows − 262 primaries) | 78 |
-| this port, `--engine rekognition` | 261 | 493 | 1 |
-| this port, `--engine bedrock` | 261 | 493 | 9 |
+**That read was wrong, and the actual bug is worth documenting.** The
+`poster_path` fed into that run came from `master_dataset.csv` --
+which, it turns out, already reflects the real project's own
+`apply_multi_poster_ocr_swaps.py` having run. Checked all 78 real
+historical `propose=1` rows against that `poster_path`: **78 of 78**
+had the historically-proposed "best alternative" already sitting as
+the *current* primary poster in the input. The run wasn't testing "does
+this port find the same swaps live" -- it was comparing an
+already-corrected poster against itself, which trivially finds nothing
+left to fix. A real methodological bug in this port's own test setup,
+not a finding about TMDB drift, discovery coverage, or either OCR
+engine.
 
-(261, not 262: one candidate had zero locally-discovered variant files
-to score at all.)
+The actual pre-swap `poster_path` does still exist: `data/qa/
+poster_title_mismatch_consensus.csv` (306 rows, the original consensus
+input the real scoring script's candidates were drawn from, predating
+any swap) has it for 252 of the 262 -- confirmed against the RISEN
+example above: `poster_path` there is `/vX3uVYYG1YMbZijRoaFSXtNuIO2.jpg`,
+not the `mULRjy8rGqZx9Ql5TTKV4inH9If.jpg` that `master_dataset.csv`
+gives (which is exactly the file the real run proposed swapping *to*).
+96 of the 262 (37%) have a `poster_path` here that differs from
+`master_dataset.csv`'s -- this bug wasn't confined to the 78 swapped
+rows.
 
-The two engines' 9 vs. 1 proposed swaps share **zero ids in common** —
-completely disjoint sets, not "Bedrock finds a superset of what
-Rekognition finds" or vice versa. That, plus both landing nowhere near
-the real 78, points at the actual bottleneck: it's not which OCR engine
-scores the candidates, it's that `11_find_alternate_posters.py`'s
-discovery (TMDB `images` endpoint, `en,null` languages, 5-variant cap)
-finds a narrower and *different* set of alternate posters than the real
-project's own `multi_poster_pipeline.py` (discover → download → embed →
-cluster → select, a richer multi-stage process this port didn't
-reproduce — see that script's own docstring). Whichever candidate
-posters actually get scored determines the ceiling on what any OCR
-engine can find; both engines here were mostly being asked to grade a
-different, smaller set of alternatives than the real run had available.
-**This is the real gap to close before trusting this port's swap count
-at scale, more than the Bedrock/Rekognition choice this section started
-by asking about.**
+**Status: correction in progress, blocked on AWS access.** Rebuilt the
+input CSV from the consensus file's real pre-swap `poster_path`
+(`data/gate89_full/input_262_corrected.csv`, kept locally, not yet
+committed -- generating it needs no AWS and is safe to redo anytime).
+Both engines were re-run against it and returned `UnrecognizedClientException:
+The security token included in the request is invalid` on every single
+row -- the AWS sandbox session expired mid-run, not a pipeline issue.
+Those all-error result files were deleted rather than committed. The
+sandbox account itself can't be renewed for ~7 days (workshop account
+policy). Next session with AWS access: re-run `12_score_alternate_posters.py`
+(both `--engine` values) against the corrected input and update this
+section with the real, valid comparison -- the corrected input CSV
+generation logic and the diagnosis above should carry over directly,
+only the live scoring needs to happen again.
 
 ## Gate 5's 4-engine example, re-run live: OCR engines drift too
 
