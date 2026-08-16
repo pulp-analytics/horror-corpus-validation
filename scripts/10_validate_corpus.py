@@ -25,17 +25,14 @@ already ran can't resolve them --
 
 Gates 7 (same film, different id), 8 (exact same poster image, different
 id), and 9 (poster shared by 2+ ids -- is it a compilation) can all reach a
-verdict on the same id, and their verdicts can disagree -- found live,
-2026-08-16, real TMDB calls: on the real Sheets of Gore pair (749611
-"Blood of the Undead: The Final Chapter", 934611 "Sheets of Gore" itself),
-gate 8's generic completeness cascade kept 749611 and excluded 934611
-(749611 happens to have an imdb_id, 934611 doesn't) -- backwards from the
-real project's own data/excluded_compilation.csv. Gate 9 gets it right,
-because it's TMDB-search-confirmed (934611's real overview lists all 6
-real segment titles), not a generic proxy. compute_dedup_exclusions()
+verdict on the same id, and their verdicts can disagree: gate 9's
+TMDB-search-confirmed answer is strictly more informed than gates 7/8's
+generic completeness proxies whenever it applies. compute_dedup_exclusions()
 below gives gate 9 first say and protects any id it confirms as a
-compilation's canonical entry from being excluded by gates 7/8's
-less-informed signals -- see docs/VALIDATION_LOGIC.md for the full story.
+compilation's canonical entry from being excluded by gates 7/8. This
+precedence was added after a real bug -- see docs/VALIDATION_LOGIC.md
+("Deciding whether a shared poster is a compilation") for the full story
+and the exact ids involved.
 
   TMDB_API_KEY=... AWS_PROFILE=your-profile python3 10_validate_corpus.py --limit 100
   python3 10_validate_corpus.py --genre 878 --limit 100

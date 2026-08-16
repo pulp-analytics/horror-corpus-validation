@@ -4,44 +4,28 @@
 Different from 07_dedupe_tmdb_metadata.py: that script catches the same
 *film* listed twice under different ids (possibly with different posters).
 This one catches the same *image file* used for two different catalog ids
--- often a franchise/series that reused stock art (see the real example
-below), sometimes a genuine data error. A real example from the full run:
-"Castle Ghosts of Ireland" and "Castle Ghosts of Wales" both used the exact
-same poster file (same MD5) as "Castle Ghosts of England" -- almost
-certainly a documentary series where only one episode had unique art and
-the rest were stubbed with a placeholder. (Confirmed real: all three ids
-and this exact grouping are still present in the real project's own data,
-`data/master_dataset.csv` and `TODO_RESUME.md`.)
+-- often a franchise/series that reused stock art, sometimes a genuine
+data error (real example: a documentary series with only one episode's
+poster art, the rest stubbed with a placeholder -- see docs/RESULTS.md).
 
 Where two or more ids share an MD5, keeps whichever entry is more
 complete/curated, using `utils/tmdb_completeness.py`'s 4-signal cascade
 (imdb_id present -> credits count -> trailer present -> popularity) -- the
 same canonical "more complete entry" signal 07_dedupe_tmdb_metadata.py
-uses, rather than a separate, weaker proxy (an earlier version of this
-script used TMDB's `vote_count` alone) invented just for this gate. The
-real project's own mechanism for this specific gate couldn't be verified
-against source either way -- no script that computes poster MD5 hashes
-exists in the local copy of the real project (its data/qa/ directory
-references an already-computed `excluded_poster_md5_dup.csv`, and the
-narrative doc that would name the real script, `docs/HISTORIAL_PROYECTO.md`
-"Fase 11", lives on a currently-disconnected external drive) -- so rather
-than guess at an unreproducible mechanism, this uses the same robust,
-TMDB-grounded cascade as gate 7.
+uses, rather than a separate, weaker proxy invented just for this gate.
+See docs/VALIDATION_LOGIC.md ("Deciding whether two ids are really
+duplicates") for why this cascade exists instead of trying to reproduce
+the real project's own (unreproducible) tiebreaker.
 
-Real limitation, found live (2026-08-16, real TMDB calls): this gate's
-generic "keep the more complete entry" cascade is the wrong question when
-the shared poster is actually a compilation, not a franchise reusing stock
-art. Tested against the real Sheets of Gore pair (749611 "Blood of the
-Undead: The Final Chapter" and 934611 "Sheets of Gore" itself, confirmed
-sharing one poster file) -- the cascade keeps 749611, because it happens
-to have an imdb_id and 934611 doesn't, even though the real, correct
-answer (data/excluded_compilation.csv) is the opposite: 934611 is the
-canonical compilation entry, 749611 is one of the 6 segments that should
-collapse into it. This gate has no way to know that from MD5 alone.
-09_collapse_compilations.py resolves this correctly (TMDB search on the
-shared text finds 934611 specifically). Whenever both gates fire on the
-same poster_path, gate 9's resolution should win -- it's the
-search-verified answer, not a generic completeness guess.
+This gate's cascade is a generic "which entry is richer" answer, and
+that's the wrong question when the shared poster is actually a
+compilation rather than a franchise reusing stock art -- it has no way to
+know that from MD5 + completeness alone. 09_collapse_compilations.py's
+TMDB-search-verified resolution is the more-informed answer for that
+case; 10_validate_corpus.py's compute_dedup_exclusions() is what actually
+arbitrates between the two gates when both fire on the same poster_path.
+Full story (a real bug this found and how it was fixed) in
+docs/VALIDATION_LOGIC.md.
 
 Resumable: downloading and hashing every poster is the slow part -- that
 work is cached in --cache (id -> md5), appended to on each run, so an

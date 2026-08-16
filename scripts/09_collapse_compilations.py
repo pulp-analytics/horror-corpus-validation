@@ -14,36 +14,17 @@ no entry for the compilation/anthology itself, this script reports the
 group but does not auto-resolve it — that's a judgment call (see
 docs/RESULTS.md, "Bite Size Halloween" / "Late Night Horror").
 
-Confirmed real, exact ids and all: the real project's own
-`data/excluded_compilation.csv` lists precisely these 11 collapsed ids --
-6 for Sheets of Gore, 2 for Ultimate Zombie Feast, 3 for the 1968 BBC
-anthology "Late Night Horror" (4 episodes total sharing one poster once
-the kept id is counted back in) -- matching this doc's examples exactly.
-The script that produced that file isn't in the local copy of the real
-project (the narrative doc that would name it, `docs/HISTORIAL_PROYECTO.md`
-"Fase 11", lives on a currently-disconnected external drive), so rather
-than guess at reproducing an unseen mechanism, this implements the most
-robust version of the same intent directly:
-
 Score *every* TMDB search result against the shared OCR text (not just
 bail out unless the search returns exactly one candidate) using the same
 overlap+fuzzy title matching used elsewhere in this repo (see
 `utils/text_match.py`), and keep the best-scoring one above a real
-threshold -- not "any nonzero token overlap."
-
-Live-checked against the real Sheets of Gore case (2026-08-16, real TMDB
-API call): searching "Sheets of Gore" returns exactly one result, id
-934611 -- and its real overview text literally lists all 6 real segment
-titles from data/excluded_compilation.csv. An earlier version of this
-function also excluded any TMDB candidate whose id matched one of the
-segment ids in the input group, reasoning a compilation search might
-otherwise "self-match" a segment's own listing. That guard was untested
-speculation, and the live check disproved it: 934611 (the correct,
-canonical compilation entry) is itself one of the rows sharing the old
-poster_path in the real data (its own TMDB entry apparently briefly
-carried the wrong poster too), so excluding "the group's own ids" would
-have excluded the right answer. Removed rather than kept as unverified
-robustness.
+threshold -- not "any nonzero token overlap." Deliberately does NOT
+exclude a candidate just because its id matches one of the segment ids in
+the input group: the correct canonical entry can legitimately be one of
+them (a real, live-checked case forced this -- see
+docs/VALIDATION_LOGIC.md's "Deciding whether a shared poster is a
+compilation" for the full story and why an earlier, untested version of
+this function got that backwards).
 
   TMDB_API_KEY=... python3 09_collapse_compilations.py --in data/sample_output/vision_title_check.csv
 
