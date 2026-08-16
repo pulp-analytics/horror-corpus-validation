@@ -35,13 +35,22 @@ trusting it**. A meaningful fraction of candidates turn out to be one live
 id and one that's since been deleted from TMDB (404) — not a real duplicate
 at all, just a stale reference.
 
-For confirmed duplicates, pick which id to keep using this order (whichever
-question resolves it first, stop there):
-1. Does it have an `imdb_id`? (the one without one is usually the weaker
-   TMDB entry)
-2. Cast/crew count from `/movie/{id}/credits` — more complete data wins.
-3. Does it have a trailer in `/movie/{id}/videos`?
-4. Higher `popularity` — weakest signal, use only as a last resort.
+For confirmed duplicates (2+ ids still alive), the intent is simple: once
+you're sure it's the same film, keep whichever entry has the richer
+metadata. The real project's actual mechanism for that was whichever id
+already had *this project's own metrics* computed on it — a signal from
+that specific run's own processing history, not anything TMDB itself
+exposes, so it can't be reproduced by a fresh checkout of this repo.
+`07_dedupe_tmdb_metadata.py` approximates the same intent instead with
+cast/crew count from `/movie/{id}/credits` — a real, computable proxy for
+"more complete/curated entry," not a literal reproduction of the real
+run's mechanism. (An earlier version of this doc also listed `imdb_id`
+presence, trailer presence, and `popularity` as further tiebreakers in a
+4-step cascade — no real script implementing that combination could be
+found on a 2026-08-16 re-check; removed rather than left as an
+unverified claim. If an earlier, different heuristic really was tried
+and dropped, that's a real possibility worth remembering — just not one
+to port forward as if it were the final logic.)
 
 ## Deciding whether a shared poster is a compilation
 

@@ -11,6 +11,20 @@ of 72 candidate groups turned out to be one-sided — one of the two ids no
 longer existed in TMDB at all (404), so there was no real duplicate, just a
 stale reference. See docs/RESULTS.md.
 
+Once a group is confirmed a real duplicate (2+ ids still alive), the real
+project's actual tiebreaker was whichever id already had this project's
+own metrics computed on it (`has_pipeline_metrics`, from that specific
+run's own processing history) -- not a signal a fresh clone of this repo
+can ever reproduce, since it depends on which id *this* codebase's earlier
+runs happened to have already analyzed, not on anything TMDB exposes.
+That mechanism was operationalizing a simpler intent, though: once you're
+sure it's the same film, keep whichever entry has the richer metadata. This
+script approximates that same intent with a signal any fresh checkout
+actually has available -- TMDB's own `/credits` endpoint, cast+crew count,
+as a proxy for "more complete/curated entry" -- an honest substitution for
+the same goal, not a literal reproduction of the real run's exact
+mechanism. See docs/RESULTS.md for both notes.
+
 Grouping key uses the full title, not a truncated prefix: an earlier version
 of this comparison truncated to 60 chars, which silently merged unrelated
 franchise entries whose titles only differ after that point (e.g. numbered
