@@ -26,8 +26,15 @@ from .constants import AWS_REGION
 load_dotenv(Path(__file__).resolve().parents[2] / ".env")
 
 
-def get_client(service: str, region: str = AWS_REGION):
-    """boto3 client with sane retry/timeout defaults for batch API calls."""
+def get_client(service: str, region: str | None = None):
+    """boto3 client with sane retry/timeout defaults for batch API calls.
+
+    region, if not passed explicitly, comes from the AWS_DEFAULT_REGION
+    environment variable (.env or a real env var) if set, otherwise falls
+    back to AWS_REGION's hardcoded default. Resolved at call time, not at
+    import/module-load time, so setting AWS_DEFAULT_REGION in .env after
+    this module was first imported (e.g. in a test) still takes effect."""
+    region = region or os.environ.get("AWS_DEFAULT_REGION", "").strip() or AWS_REGION
     config = Config(retries={"max_attempts": 5, "mode": "adaptive"}, connect_timeout=10, read_timeout=30)
     return boto3.client(service, region_name=region, config=config)
 

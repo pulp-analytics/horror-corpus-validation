@@ -37,9 +37,10 @@ import requests
 sys.path.insert(0, str(Path(__file__).parent))
 from utils.logging_setup import get_logger
 from utils.resumable import load_done_ids, open_for_append, shard_rows
+from utils.tmdb_client import IMAGE_BASE_URL
 
 log = get_logger("verify_poster_exists")
-TMDB_IMG = "https://image.tmdb.org/t/p/w92"  # small size -- we only need the status code
+TMDB_IMG = f"{IMAGE_BASE_URL}w92"  # small size -- we only need the status code
 
 
 def poster_reachable(session: requests.Session, poster_path: str) -> bool:

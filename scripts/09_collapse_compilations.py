@@ -45,14 +45,13 @@ import requests
 
 sys.path.insert(0, str(Path(__file__).parent))
 from utils.aws_config import get_tmdb_key
+from utils.constants import COMPILATION_MATCH_THRESHOLD
 from utils.logging_setup import get_logger
 from utils.resumable import load_done_ids, open_for_append, write_csv_rows
 from utils.text_match import title_fuzzy_score, title_overlap_score
 from utils.tmdb_client import tmdb_get
 
 log = get_logger("collapse_compilations")
-
-MIN_MATCH_SCORE = 0.55
 
 
 def search_movie(session: requests.Session, api_key: str, query: str) -> list[dict]:
@@ -65,7 +64,7 @@ def search_movie(session: requests.Session, api_key: str, query: str) -> list[di
 
 
 def best_compilation_match(query_text: str, candidates: list[dict],
-                            min_score: float = MIN_MATCH_SCORE) -> dict:
+                            min_score: float = COMPILATION_MATCH_THRESHOLD) -> dict:
     """Pure function: pick the best-scoring TMDB search result for a
     shared-poster compilation/anthology, using max(overlap, fuzzy) title
     matching against every candidate -- not just requiring exactly one raw

@@ -59,10 +59,11 @@ sys.path.insert(0, str(Path(__file__).parent))
 from utils.aws_config import get_tmdb_key
 from utils.logging_setup import get_logger
 from utils.resumable import load_done_ids, open_for_append, write_csv_rows
+from utils.tmdb_client import IMAGE_BASE_URL
 from utils.tmdb_completeness import completeness_key, get_completeness_signals
 
 log = get_logger("dedupe_poster_md5")
-TMDB_IMG = "https://image.tmdb.org/t/p/w500"
+TMDB_IMG = f"{IMAGE_BASE_URL}w500"
 
 
 def poster_md5(session: requests.Session, poster_path: str) -> str:

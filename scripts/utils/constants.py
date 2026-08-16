@@ -15,4 +15,12 @@ SUSPECT_BELOW = 0.35
 # "mismatch" verdict is treated as unexplained (see docs/VALIDATION_LOGIC.md)
 ALT_TITLE_OVERLAP_THRESHOLD = 0.5
 
+# 09_collapse_compilations.py: minimum overlap/fuzzy title-match score to
+# accept a TMDB search result as the real compilation/anthology entry
+# (see docs/VALIDATION_LOGIC.md, "Deciding whether a shared poster is a
+# compilation")
+COMPILATION_MATCH_THRESHOLD = 0.55
+
+# Default AWS region -- only used if AWS_DEFAULT_REGION isn't set in the
+# environment/.env (see utils/aws_config.get_client()).
 AWS_REGION = "us-east-1"

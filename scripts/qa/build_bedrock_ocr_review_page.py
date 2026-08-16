@@ -58,10 +58,13 @@ from pathlib import Path
 import requests
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from utils.tmdb_client import IMAGE_BASE_URL  # noqa: E402
+
 SAMPLE_CSV = ROOT / "data" / "ground_truth" / "bedrock_ocr_sample.csv"
 OUT_HTML = ROOT / "data" / "ground_truth" / "bedrock_ocr_review.html"
 POSTER_CACHE = ROOT / "data" / "ground_truth" / ".poster_cache"
-TMDB_IMG = "https://image.tmdb.org/t/p/w780"
+TMDB_IMG = f"{IMAGE_BASE_URL}w780"
 
 HTML_TEMPLATE = """<!doctype html>
 <html>

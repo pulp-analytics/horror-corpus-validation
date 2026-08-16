@@ -67,11 +67,12 @@ sys.path.insert(0, str(Path(__file__).parent))
 from utils.aws_config import get_client
 from utils.logging_setup import get_logger
 from utils.resumable import open_for_append, shard_rows, write_csv_rows
+from utils.tmdb_client import IMAGE_BASE_URL
 
 log = get_logger("bedrock_ocr")
 DEFAULT_MODEL_ID = "us.amazon.nova-pro-v1:0"
 MAX_SIDE = 1200
-TMDB_IMG = "https://image.tmdb.org/t/p/w780"
+TMDB_IMG = f"{IMAGE_BASE_URL}w780"
 
 PROMPT = """Read any title text visible on this movie poster (the main film title,
 as printed on the artwork -- ignore tagline/credits/small print unless no title exists).

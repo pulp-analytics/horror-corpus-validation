@@ -48,6 +48,7 @@ from utils.aws_config import get_client
 from utils.logging_setup import get_logger
 from utils.resumable import load_done_ids, open_for_append
 from utils.text_match import title_fuzzy_score, title_overlap_score
+from utils.tmdb_client import IMAGE_BASE_URL
 
 # reuse 04_bedrock_ocr.py's resize_jpeg + PROMPT + DEFAULT_MODEL_ID rather
 # than duplicating them -- imported by file path since a leading digit
@@ -58,7 +59,7 @@ _bedrock_ocr = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(_bedrock_ocr)
 
 log = get_logger("score_alternate_posters")
-TMDB_IMG = "https://image.tmdb.org/t/p/w500"
+TMDB_IMG = f"{IMAGE_BASE_URL}w500"
 
 SCORE_FIELDS = ["id", "title", "original_title", "source", "file_path", "ocr_chars",
                 "overlap_title", "overlap_original", "overlap_max",

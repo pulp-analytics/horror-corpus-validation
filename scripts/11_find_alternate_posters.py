@@ -30,9 +30,10 @@ sys.path.insert(0, str(Path(__file__).parent))
 from utils.aws_config import get_tmdb_key
 from utils.logging_setup import get_logger
 from utils.resumable import shard_rows, write_csv_rows
+from utils.tmdb_client import IMAGE_BASE_URL
 
 log = get_logger("find_alternate_posters")
-TMDB_IMG = "https://image.tmdb.org/t/p/w500"
+TMDB_IMG = f"{IMAGE_BASE_URL}w500"
 
 
 def discover_images(session: requests.Session, api_key: str, movie_id: str, langs: str) -> dict:
