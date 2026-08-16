@@ -85,12 +85,39 @@ script that produced that file isn't available to verify line-by-line
 same intent directly, rather than guessing at an unseen mechanism: score
 *every* TMDB search result against the shared OCR text (`utils/text_match.py`'s
 overlap+fuzzy scoring, same as gates 5 and 12) instead of only trusting a
-single raw search result, require a real match-score threshold rather than
-"any nonzero overlap," and explicitly exclude any candidate that's one of
-the segment ids themselves. `08_dedupe_poster_md5.py`'s tiebreaker is in
+single raw search result, and require a real match-score threshold rather
+than "any nonzero overlap." `08_dedupe_poster_md5.py`'s tiebreaker is in
 the same position — no real script found to verify against, so it uses
 the same robust `utils/tmdb_completeness.py` cascade as gate 7 instead of
 a bespoke proxy.
+
+**Live-verified, 2026-08-16, real TMDB calls** (real TMDB_API_KEY, no AWS
+needed for any of gates 7-9):
+
+- **Gate 9 correctly resolves the real Sheets of Gore case.** Searching
+  TMDB for "Sheets of Gore" returns exactly one result, id 934611, whose
+  real `overview` literally lists all 6 real segment titles from
+  `data/excluded_compilation.csv`. `best_compilation_match()` finds it at
+  score 1.0. An earlier version of that function excluded candidates
+  matching the input group's own ids, reasoning that would prevent a
+  "self-match" — but 934611 (the correct answer) is itself one of the
+  rows sharing the old poster_path in the real data, so that guard would
+  have excluded the right answer. Removed (see the script's docstring).
+- **Gate 8's generic tiebreak gets this same pair wrong.** Run
+  independently on the same two real ids (749611, 934611), the
+  completeness cascade keeps 749611 over 934611 -- 749611 happens to have
+  an `imdb_id`, 934611 doesn't, so signal #1 in the cascade picks it, even
+  though the real answer is the opposite. Gate 8 has no way to know "this
+  poster is actually a compilation" from MD5 + completeness signals alone
+  -- when both gates fire on the same `poster_path`, gate 9's
+  search-verified resolution should take precedence over gate 8's.
+- **Gate 7's own real example has drifted since it was documented.** The
+  Omegle "duplicate" pair (1009049/1743173) that this repo cites as a
+  real `tmdb_duplicate` example no longer resolves that way live: id
+  1009049 now 404s on TMDB. Live today, this pair correctly comes back as
+  `phantom_duplicate_dead_id`, not a real duplicate to resolve -- the same
+  drift pattern already documented elsewhere in this project (see
+  docs/RESULTS.md's OCR-engine and Comprehend/Translate drift sections).
 
 ## Common false-positive patterns we found
 

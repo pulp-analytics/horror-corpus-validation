@@ -28,6 +28,21 @@ narrative doc that would name the real script, `docs/HISTORIAL_PROYECTO.md`
 than guess at an unreproducible mechanism, this uses the same robust,
 TMDB-grounded cascade as gate 7.
 
+Real limitation, found live (2026-08-16, real TMDB calls): this gate's
+generic "keep the more complete entry" cascade is the wrong question when
+the shared poster is actually a compilation, not a franchise reusing stock
+art. Tested against the real Sheets of Gore pair (749611 "Blood of the
+Undead: The Final Chapter" and 934611 "Sheets of Gore" itself, confirmed
+sharing one poster file) -- the cascade keeps 749611, because it happens
+to have an imdb_id and 934611 doesn't, even though the real, correct
+answer (data/excluded_compilation.csv) is the opposite: 934611 is the
+canonical compilation entry, 749611 is one of the 6 segments that should
+collapse into it. This gate has no way to know that from MD5 alone.
+09_collapse_compilations.py resolves this correctly (TMDB search on the
+shared text finds 934611 specifically). Whenever both gates fire on the
+same poster_path, gate 9's resolution should win -- it's the
+search-verified answer, not a generic completeness guess.
+
 Resumable: downloading and hashing every poster is the slow part -- that
 work is cached in --cache (id -> md5), appended to on each run, so an
 interrupted run doesn't re-download posters it already hashed. The

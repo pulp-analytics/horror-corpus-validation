@@ -1,7 +1,13 @@
 """Pure-function tests for scripts/09_collapse_compilations.py's
 best_compilation_match() -- picks the best-scoring TMDB search result for
-a shared-poster compilation, excluding the segments' own ids. No network
-needed."""
+a shared-poster compilation. No network needed.
+
+test_real_id_can_be_its_own_match locks in a real, live-checked case
+(2026-08-16): TMDB's actual entry for "Sheets of Gore" (id 934611) is
+itself one of the rows sharing the old poster_path in the real data --
+an earlier version of this function excluded candidates matching the
+input group's own ids and would have wrongly rejected the correct
+answer. See the script's module docstring for the full story."""
 import importlib.util
 import sys
 from pathlib import Path
@@ -21,26 +27,26 @@ def test_picks_best_scoring_candidate_among_several():
         {"id": 2, "title": "Sheets of Gore"},
         {"id": 3, "title": "Sheet Metal"},
     ]
-    match = best_compilation_match("sheets of gore", candidates, exclude_ids=set())
+    match = best_compilation_match("sheets of gore", candidates)
     assert match["canonical_id"] == "2"
     assert match["canonical_title"] == "Sheets of Gore"
 
 
-def test_excludes_segment_ids_even_if_best_scoring():
-    candidates = [{"id": 42, "title": "Sheets of Gore"}]
-    match = best_compilation_match("sheets of gore", candidates, exclude_ids={"42"})
-    assert match["canonical_id"] == ""
+def test_real_id_can_be_its_own_match():
+    candidates = [{"id": 934611, "title": "Sheets of Gore"}]
+    match = best_compilation_match("sheets of gore", candidates)
+    assert match["canonical_id"] == "934611"
 
 
 def test_below_threshold_returns_no_match():
     candidates = [{"id": 1, "title": "Completely Different Title"}]
-    match = best_compilation_match("sheets of gore", candidates, exclude_ids=set(), min_score=0.55)
+    match = best_compilation_match("sheets of gore", candidates, min_score=0.55)
     assert match["canonical_id"] == ""
     assert match["score"] < 0.55
 
 
 def test_empty_candidates_returns_no_match():
-    match = best_compilation_match("sheets of gore", [], exclude_ids=set())
+    match = best_compilation_match("sheets of gore", [])
     assert match == {"canonical_id": "", "canonical_title": "", "score": 0.0}
 
 
@@ -50,5 +56,5 @@ def test_does_not_require_exactly_one_search_result():
         {"id": 2, "title": "Some Other Movie Entirely"},
         {"id": 3, "title": "Yet Another Unrelated Title"},
     ]
-    match = best_compilation_match("sheets of gore", candidates, exclude_ids=set())
+    match = best_compilation_match("sheets of gore", candidates)
     assert match["canonical_id"] == "1"

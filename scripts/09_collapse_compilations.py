@@ -25,14 +25,25 @@ project (the narrative doc that would name it, `docs/HISTORIAL_PROYECTO.md`
 than guess at reproducing an unseen mechanism, this implements the most
 robust version of the same intent directly:
 
-- Score *every* TMDB search result against the shared OCR text (not just
-  bail out unless the search returns exactly one candidate) using the
-  same overlap+fuzzy title matching used elsewhere in this repo (see
-  `utils/text_match.py`), and keep the best-scoring one above a real
-  threshold -- not "any nonzero token overlap."
-- Exclude any candidate whose id is one of the segment ids themselves --
-  a compilation search can otherwise "match" one of the segments' own
-  TMDB entries rather than the actual compilation/anthology entry.
+Score *every* TMDB search result against the shared OCR text (not just
+bail out unless the search returns exactly one candidate) using the same
+overlap+fuzzy title matching used elsewhere in this repo (see
+`utils/text_match.py`), and keep the best-scoring one above a real
+threshold -- not "any nonzero token overlap."
+
+Live-checked against the real Sheets of Gore case (2026-08-16, real TMDB
+API call): searching "Sheets of Gore" returns exactly one result, id
+934611 -- and its real overview text literally lists all 6 real segment
+titles from data/excluded_compilation.csv. An earlier version of this
+function also excluded any TMDB candidate whose id matched one of the
+segment ids in the input group, reasoning a compilation search might
+otherwise "self-match" a segment's own listing. That guard was untested
+speculation, and the live check disproved it: 934611 (the correct,
+canonical compilation entry) is itself one of the rows sharing the old
+poster_path in the real data (its own TMDB entry apparently briefly
+carried the wrong poster too), so excluding "the group's own ids" would
+have excluded the right answer. Removed rather than kept as unverified
+robustness.
 
   TMDB_API_KEY=... python3 09_collapse_compilations.py --in data/sample_output/vision_title_check.csv
 
@@ -72,19 +83,20 @@ def search_movie(session: requests.Session, api_key: str, query: str) -> list[di
     return resp.json().get("results", [])
 
 
-def best_compilation_match(query_text: str, candidates: list[dict], exclude_ids: set[str],
+def best_compilation_match(query_text: str, candidates: list[dict],
                             min_score: float = MIN_MATCH_SCORE) -> dict:
     """Pure function: pick the best-scoring TMDB search result for a
     shared-poster compilation/anthology, using max(overlap, fuzzy) title
     matching against every candidate -- not just requiring exactly one raw
-    search result. Skips any candidate whose id is one of the segment ids
-    themselves (that's a self-match, not a real compilation entry).
-    Returns {"canonical_id", "canonical_title", "score"}, id/title empty
-    if nothing clears min_score."""
+    search result. Returns {"canonical_id", "canonical_title", "score"},
+    id/title empty if nothing clears min_score. Does NOT exclude candidates
+    that happen to be one of the segment ids in the input group -- the
+    correct compilation entry can legitimately be one of them (see the
+    real Sheets of Gore case in this script's docstring)."""
     best_id, best_title, best_score = "", "", 0.0
     for c in candidates:
         cid = str(c.get("id", ""))
-        if not cid or cid in exclude_ids:
+        if not cid:
             continue
         title = c.get("title", "")
         score = max(title_overlap_score(query_text, title), title_fuzzy_score(query_text, title))
@@ -134,8 +146,7 @@ def main():
             candidates = search_movie(session, api_key, query_text)
             time.sleep(0.1)
 
-            segment_ids = {r["id"] for r in items}
-            match = best_compilation_match(query_text, candidates, segment_ids)
+            match = best_compilation_match(query_text, candidates)
             resolution = "compilation_entry_found" if match["canonical_id"] else "no_compilation_entry_found"
 
             cw.writerow({"poster_path": poster, "shared_text": query_text,
