@@ -318,3 +318,95 @@ schema (`text_you_read`/`verdict`/`reason`, see 04_bedrock_ocr.py's
 PROMPT) has no numeric confidence field at all. If an article draft
 cites a specific "Bedrock confidence" score, that number isn't coming
 from this call — worth tracing to its actual source before publishing.
+
+## Poster-type human review: is a zero-OCR-text poster even a real poster?
+
+Follow-up to gates 5-6's finding above: 2,630 of 65,107 real titles
+(4.04%) have `ocr_chars == 0` in `poster_title_match.csv` — no text
+detected by Rekognition's `DetectText` at all. Zero text is a *candidate*
+signal an image isn't actually a movie poster (a film still, a generic
+photo, a placeholder), not proof — plenty of real posters are
+legitimately textless (minimalist international releases).
+
+2,539 of those 2,630 (the ones with a resolvable `poster_path`) were
+reviewed blind by hand via `scripts/qa/build_poster_type_review_page.py`
+— see `data/ground_truth/poster_type_human_labels.csv` for the raw
+result. **2,538 of 2,539 reviewed:**
+
+| Verdict | Count | % |
+|---|---|---|
+| No es poster | 1,856 | 73.1% |
+| Es poster | 672 | 26.5% |
+| No estoy seguro | 10 | 0.4% |
+
+The "zero OCR text" signal holds up: nearly three-quarters of this sample
+really aren't movie posters. The other real thing it surfaces: of the 672
+confirmed real posters, **670 (99.7%) were also marked as having visible
+text Rekognition missed entirely** — reinforcing gate 5's "don't trust a
+single OCR engine" finding at a different scale (Rekognition's
+`DetectText` specifically, not just "OCR in general," and specifically on
+its false-*negative* rate, not just misreads).
+
+Cross-checked against `poster-metrics-pipeline`'s existing `painted`
+classifier (illustrated/painted art vs. photographic, `data/medium.csv`):
+**no real discriminative value here** — `painted=1` appears in 17.0% of
+`es_poster` rows vs. 11.4% of `no_es_poster` rows, both far below what
+would make it a useful filter, and predicting "not a poster" from
+`painted=0` alone gets ~74.7% precision against a ~73.1% base rate —
+essentially no lift over guessing the majority class.
+
+Two patterns that do hold: `no_es_poster` skews toward recent titles
+(68% are 2010s or later, vs. 58% for `es_poster`) — small/obscure recent
+indie or festival titles are more likely to have never had real poster
+art. And Japanese-language titles are disproportionately `es_poster`
+(26.8% of that group) vs. `no_es_poster` (6.9%) — consistent with
+Rekognition's OCR miss rate being worse on non-Latin scripts specifically.
+
+## Gate 13: content moderation, live-verified
+
+Found while manually reviewing the poster-type sample (above): some real
+posters in the corpus sit right at the edge of graphic gore, closer to
+shock/snuff imagery than mainstream horror marketing art. The real
+project already built and ran two independent signals for exactly this —
+`nova_poster_enrich.py` (Nova vision-LLM scoring `blood_gore`/`violence`/
+`sexual_content` 0-1 per poster) and `rekognition_enrich.py` (Amazon
+Rekognition's purpose-built `detect_moderation_labels` API) — both
+present as real columns in `master_dataset.csv` (`nova_blood_gore`,
+`rek_gore`, `rek_mod`, etc.), just never ported into this repo's own gate
+structure until now. `13_content_moderation.py` ports both faithfully,
+using the real project's own real thresholds: 0.5 for Nova's fields
+(`nova_enrich_live_summary.py`'s own `pct_ge(col, thr=0.5)` corpus
+reporting), 0.4 for Rekognition's (`rekognition_enrich.py`'s own
+`decade_summary` `mean_flag(key, thr=0.4)`).
+
+**Live run (2026-08-16, real Nova + Rekognition calls, 20 concurrent
+workers, `sandbox_bedrock` profile):** all 672 ids from the poster-type
+human review (above) marked `es_poster` — scoring only confirmed real
+posters, not the 1,856 non-poster images already excluded by that same
+review. **74 of 672 (11.0%) flagged** by at least one engine crossing its
+real threshold. 0 errors across 672 real API calls. Reason breakdown:
+`nova_blood_gore` 44, `rek_violence` 38, `nova_violence` 35, `rek_gore`
+31, `rek_nudity` 6, `nova_sexual_content` 2 (a flagged row often trips
+more than one reason).
+
+The highest-severity real result is *Nekromantik 2* (id 48636) — a real,
+notoriously extreme film, flagged by both engines on every relevant
+axis (`nova_blood_gore`, `nova_violence`, `rek_gore`, `rek_violence` all
+≥ threshold). Other real top hits (*Wax*, *Meat*, *Red Account: My Bloody
+Angel*, *The Rope Maiden* — nudity + gore) are all plausible, not noise.
+
+One real, faithful extension beyond what the real project's script ever
+did: Rekognition's `detect_moderation_labels` response already includes
+"Explicit Nudity"/"Suggestive" labels — `rekognition_enrich.py` only ever
+parsed out Violence/Gore/Weapons. Extracting them the same way
+(`rek_nudity`/`rek_suggestive`) fired for real on 6 of the 74 flagged
+rows, including catching a case (*The Rope Maiden*) where nudity was the
+only additional signal beyond gore already present.
+
+TMDB's own `adult` field, checked against the full corpus
+(`master_dataset.csv`, 145,128 rows): `False` for 144,974 of them,
+blank for the other 154 — essentially no variance, not usable as a
+cross-check signal for this corpus. IMDb's `isAdult` field wasn't
+checked this session; a live cross-reference (same free `title.basics.tsv.gz`
+dataset gates 5-6's genre classifier validation already uses) is a
+reasonable next step if TMDB's flag being empty turns out to matter.
