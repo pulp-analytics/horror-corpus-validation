@@ -27,6 +27,14 @@ Differences for this sample's ~25x larger size (2,539 vs 100 posters):
   - The question is simpler (is this a poster at all, not does the title
     match), so there are 3 verdict buttons instead of 4: "Es poster",
     "No es poster", "No estoy seguro".
+  - A separate "Tiene texto visible" toggle, independent of the
+    es_poster/no verdict: real, early review data showed most zero-OCR
+    ids marked "es_poster" also had clearly legible title text on them
+    (Rekognition just missed it -- see docs/VALIDATION_LOGIC.md). That's
+    a distinct, structured signal worth capturing on its own (exported as
+    its own `has_text` column) rather than only inside free-text notes,
+    so it can feed a real estimate of how much text Rekognition's
+    DetectText actually misses.
 
   python3 scripts/qa/build_poster_type_review_page.py
   open data/ground_truth/poster_type_review.html
@@ -83,6 +91,10 @@ HTML_TEMPLATE = """<!doctype html>
   button.verdict.active[data-v="es_poster"] { background: #e7f2ec; border-color: #3f7d5c; color: #316447; }
   button.verdict.active[data-v="no_es_poster"] { background: #fbeae5; border-color: #bf3f24; color: #9c331d; }
   button.verdict.active[data-v="no_seguro"] { background: #f0f0f0; border-color: #888; color: #444; }
+  .text-toggle-row { display: flex; margin-bottom: 8px; }
+  button.text-toggle { width: 100%; padding: 10px 8px; font-size: 13px; border-radius: 8px; border: 2px dashed #ccc; background: #fff; color: #666; cursor: pointer; font-weight: 600; }
+  button.text-toggle:hover { border-color: #999; }
+  button.text-toggle.active { background: #fff6df; border-style: solid; border-color: #c99a2e; color: #8a6412; }
   .nav { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; }
   .nav button.plain { padding: 8px 16px; border-radius: 6px; border: 1px solid #ccc; background: #fff; color: #1a1a1a; cursor: pointer; }
   .nav button.plain:disabled { opacity: .4; cursor: default; }
@@ -104,6 +116,8 @@ HTML_TEMPLATE = """<!doctype html>
 (4% del corpus real). Pregunta: <b>la imagen es un poster de pelicula real</b> (arte diseniado,
 aunque no tenga texto), o <b>no es un poster</b> (still de la pelicula, foto generica, placeholder,
 imagen equivocada)? Si no estas seguro, usa "No estoy seguro" en vez de adivinar.
+Si el poster tiene texto visible que Rekognition no detecto, marca ademas el boton
+"Tiene texto visible" (tecla t) -- es independiente del veredicto de arriba.
 El progreso se guarda solo en este navegador (localStorage) -- cerrar la pestana es seguro.
 Ya tenes un CSV parcial de una sesion anterior? Usa "Import progress" para retomar donde quedaste.</div>
 
@@ -131,6 +145,9 @@ Ya tenes un CSV parcial de una sesion anterior? Usa "Import progress" para retom
 
 <div class="action-bar">
   <div class="action-bar-inner">
+    <div class="text-toggle-row">
+      <button class="text-toggle" id="text-toggle" onclick="toggleHasText()">Tiene texto visible (que Rekognition no detecto)</button>
+    </div>
     <div class="buttons">
       <button class="verdict" data-v="es_poster" onclick="setVerdict('es_poster')">Es poster</button>
       <button class="verdict" data-v="no_es_poster" onclick="setVerdict('no_es_poster')">No es poster</button>
@@ -138,7 +155,7 @@ Ya tenes un CSV parcial de una sesion anterior? Usa "Import progress" para retom
     </div>
     <div class="nav">
       <button class="plain" id="prev-btn" onclick="go(-1)">&larr; Prev</button>
-      <span class="hint">teclas: 1/2/3 = veredicto, &larr; &rarr; = navegar</span>
+      <span class="hint">teclas: 1/2/3 = veredicto, t = tiene texto, &larr; &rarr; = navegar</span>
       <button class="plain" id="next-btn" onclick="go(1)">Next &rarr;</button>
     </div>
   </div>
@@ -169,6 +186,7 @@ function render() {
   document.querySelectorAll("button.verdict").forEach(b => {
     b.classList.toggle("active", state[row.id] && state[row.id].verdict === b.dataset.v);
   });
+  document.getElementById("text-toggle").classList.toggle("active", !!(state[row.id] && state[row.id].has_text));
   const reviewed = Object.keys(state).filter(id => state[id].verdict).length;
   document.getElementById("counter").textContent =
     `${idx + 1} / ${DATA.length}   (${reviewed} reviewed so far)`;
@@ -193,6 +211,13 @@ function setNote(v) {
   state[id].note = v;
   saveState(state);
 }
+function toggleHasText() {
+  const id = DATA[idx].id;
+  state[id] = state[id] || {};
+  state[id].has_text = !state[id].has_text;
+  saveState(state);
+  render();
+}
 function go(delta) {
   idx = Math.max(0, Math.min(DATA.length - 1, idx + delta));
   render();
@@ -208,6 +233,7 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "1") setVerdict("es_poster");
   else if (e.key === "2") setVerdict("no_es_poster");
   else if (e.key === "3") setVerdict("no_seguro");
+  else if (e.key === "t" || e.key === "T") toggleHasText();
   else if (e.key === "ArrowLeft") go(-1);
   else if (e.key === "ArrowRight") go(1);
 });
@@ -241,6 +267,7 @@ function importCSV(file) {
     const idCol = header.indexOf("id");
     const verdictCol = header.indexOf("human_verdict");
     const noteCol = header.indexOf("human_note");
+    const hasTextCol = header.indexOf("has_text");
     if (idCol === -1 || verdictCol === -1) {
       alert("This doesn't look like an exported CSV (missing id/human_verdict columns).");
       return;
@@ -251,9 +278,11 @@ function importCSV(file) {
       const id = cols[idCol];
       const verdict = cols[verdictCol] || "";
       const note = noteCol !== -1 ? (cols[noteCol] || "") : "";
-      if (!id || (!verdict && !note)) continue;
+      const hasText = hasTextCol !== -1 ? (cols[hasTextCol] || "").trim().toLowerCase() === "si" : false;
+      if (!id || (!verdict && !note && !hasText)) continue;
       state[id] = { verdict: verdict || (state[id] && state[id].verdict) || "",
-                    note: note || (state[id] && state[id].note) || "" };
+                    note: note || (state[id] && state[id].note) || "",
+                    has_text: hasText || (state[id] && state[id].has_text) || false };
       imported++;
     }
     saveState(state);
@@ -266,13 +295,13 @@ function importCSV(file) {
 }
 
 function exportCSV() {
-  const header = ["id", "title", "year", "original_language", "poster_path", "human_verdict", "human_note"];
+  const header = ["id", "title", "year", "original_language", "poster_path", "human_verdict", "has_text", "human_note"];
   const lines = [header.join(",")];
   for (const row of DATA) {
     const s = state[row.id] || {};
     const esc = (v) => '"' + String(v || "").replace(/"/g, '""') + '"';
     lines.push([row.id, esc(row.title), row.year, row.original_language, row.poster_path,
-                s.verdict || "", esc(s.note)].join(","));
+                s.verdict || "", s.has_text ? "si" : "", esc(s.note)].join(","));
   }
   const blob = new Blob([lines.join("\\n")], { type: "text/csv" });
   const a = document.createElement("a");
