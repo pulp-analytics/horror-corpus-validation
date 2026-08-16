@@ -58,7 +58,7 @@ import requests
 sys.path.insert(0, str(Path(__file__).parent))
 from utils.aws_config import get_tmdb_key
 from utils.logging_setup import get_logger
-from utils.resumable import load_done_ids, open_for_append, shard_rows, write_csv_rows
+from utils.resumable import open_for_append, shard_rows, write_csv_rows
 from utils.tmdb_client import IMAGE_BASE_URL
 from utils.tmdb_completeness import completeness_key, get_completeness_signals
 
@@ -70,6 +70,26 @@ def poster_md5(session: requests.Session, poster_path: str) -> str:
     resp = session.get(f"{TMDB_IMG}{poster_path}", timeout=15)
     resp.raise_for_status()
     return hashlib.md5(resp.content).hexdigest()
+
+
+def load_done_ids(path: Path, retry_errors: bool = False) -> set[str]:
+    """Like utils.resumable.load_done_ids, but optionally treats rows that
+    errored last time (empty md5, non-empty error) as NOT done, so a
+    re-run retries just those instead of leaving that id's poster
+    permanently un-hashed -- a real transient TMDB image-CDN timeout did
+    exactly this to one id in a live run, silently under-counting its
+    duplicate group by one until the row was cleared and rehashed by
+    hand. Same --retry-errors pattern as 04_bedrock_ocr.py."""
+    if not path.exists():
+        return set()
+    done = set()
+    with path.open(newline="", encoding="utf-8", errors="replace") as f:
+        for row in csv.DictReader(f):
+            if retry_errors and row.get("error"):
+                continue
+            if row.get("id"):
+                done.add(row["id"])
+    return done
 
 
 def load_verified_ids(path: Path) -> set[str] | None:
@@ -103,6 +123,10 @@ def main():
                           "once more with --shard-count 1 and --cache pointed at the merged file "
                           "to get a correct final grouping (todo will be empty, so it goes "
                           "straight to grouping).")
+    ap.add_argument("--retry-errors", action="store_true",
+                     help="on resume, redo ids that errored last time (in either the poster-hash "
+                          "or completeness-signal cache) instead of leaving them permanently "
+                          "un-hashed")
     args = ap.parse_args()
 
     api_key = get_tmdb_key()
@@ -122,7 +146,7 @@ def main():
 
     cache_path = Path(args.cache)
     cache_fields = ["id", "title", "md5", "error"]
-    done = load_done_ids(cache_path)
+    done = load_done_ids(cache_path, args.retry_errors)
     todo = [row for row in rows if row["id"] not in done and row.get("poster_path")]
     if done:
         log.info(f"resuming: {len(done)} already hashed, {len(todo)} remaining")
