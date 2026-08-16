@@ -5,17 +5,21 @@ the primary poster when a variant reads noticeably better -- gate 8-9's
 second half.
 
 The real project's own version of this gate, score_multi_poster_
-variants_ocr.py, uses Amazon Rekognition's DetectText, not Bedrock --
-confirmed by matching its output counts (806 rows / 262 candidates / 78
-proposed swaps) byte-for-byte against the real data/qa/multi_poster_
-variant_ocr_scores.csv and _swaps.csv. This script instead sources the
-OCR read from Bedrock/Nova Pro (reusing 04_bedrock_ocr.py's
-check_poster()), since that's what this repo's own gate 5 already uses
-and no Rekognition-specific alternate-poster-scoring script could be
-located as of this port (2026-08-16) -- ask before trusting this as a
-literal reproduction of the real project's exact historical 806/262/78
-run; it reproduces the real *decision logic* (same thresholds, same
-title_overlap_score/title_fuzzy_score), against a different OCR source.
+variants_ocr.py, uses Amazon Rekognition's DetectText -- confirmed by
+matching its output counts (806 rows / 262 candidates / 78 proposed
+swaps) byte-for-byte against the real data/qa/multi_poster_
+variant_ocr_scores.csv and _swaps.csv. --engine controls which OCR
+source scores the candidates:
+  --engine rekognition  faithful to the real script (DetectText, same
+                         LINE-sorting-by-position join, same prepare_bytes
+                         resize/re-encode rule)
+  --engine bedrock      (default) this repo's own gate 5 engine instead,
+                         since that's already ported here and no
+                         Rekognition-specific alternate-poster script
+                         existed in this repo before this port
+                         (2026-08-16)
+Either way the *decision logic* is the real script's, unchanged: same
+title_overlap_score/title_fuzzy_score, same thresholds.
 
 Decision rule (ported as-is from the real script):
   propose a swap if
@@ -27,6 +31,7 @@ Decision rule (ported as-is from the real script):
 
   export AWS_PROFILE=your-bedrock-profile
   python3 12_score_alternate_posters.py --in data/sample_output/vision_title_check.csv
+  python3 12_score_alternate_posters.py --engine rekognition --in ...
 """
 from __future__ import annotations
 
@@ -41,7 +46,7 @@ import requests
 sys.path.insert(0, str(Path(__file__).parent))
 from utils.aws_config import get_client
 from utils.logging_setup import get_logger
-from utils.resumable import write_csv_rows
+from utils.resumable import load_done_ids, open_for_append
 from utils.text_match import title_fuzzy_score, title_overlap_score
 
 # reuse 04_bedrock_ocr.py's resize_jpeg + PROMPT + DEFAULT_MODEL_ID rather
@@ -61,6 +66,61 @@ SCORE_FIELDS = ["id", "title", "original_title", "source", "file_path", "ocr_cha
 SWAP_FIELDS = ["id", "title", "current_file_path", "current_overlap", "current_fuzzy",
                "best_file_path", "best_overlap", "best_fuzzy", "gain_overlap", "gain_fuzzy",
                "n_variants", "propose", "reason"]
+
+
+REK_MAX_BYTES = 4_500_000
+REK_MAX_SIDE = 1280
+
+
+def prepare_bytes_for_rekognition(raw: bytes) -> bytes:
+    """Ported as-is from the real project's poster_ocr_rek_text.py: pass
+    small-enough JPEGs through untouched, otherwise resize/re-encode
+    (dropping quality in steps) until under Rekognition's size limit."""
+    from io import BytesIO
+    from PIL import Image
+    try:
+        im = Image.open(BytesIO(raw))
+        im.load()
+        if len(raw) <= REK_MAX_BYTES and max(im.size) <= REK_MAX_SIDE:
+            return raw
+    except Exception:
+        pass
+    im = Image.open(BytesIO(raw)).convert("RGB")
+    w, h = im.size
+    scale = min(1.0, REK_MAX_SIDE / float(max(w, h)))
+    if scale < 1.0:
+        im = im.resize((max(1, int(w * scale)), max(1, int(h * scale))), Image.Resampling.LANCZOS)
+    q = 85
+    buf = BytesIO()
+    im.save(buf, format="JPEG", quality=q, optimize=True)
+    data = buf.getvalue()
+    while len(data) > REK_MAX_BYTES and q > 40:
+        q -= 10
+        buf = BytesIO()
+        im.save(buf, format="JPEG", quality=q, optimize=True)
+        data = buf.getvalue()
+    return data
+
+
+def ocr_text_via_rekognition(rekognition, image_bytes: bytes, **_ignored) -> str:
+    """DetectText, LINE detections only, sorted top-to-bottom then
+    left-to-right (rounded to a 40-row grid so lines at nearly the same
+    height still sort left-to-right) -- ported as-is from the real
+    score_multi_poster_variants_ocr.py's detect_text()."""
+    data = prepare_bytes_for_rekognition(image_bytes)
+    resp = rekognition.detect_text(Image={"Bytes": data})
+    line_items = []
+    for d in resp.get("TextDetections") or []:
+        if d.get("Type") != "LINE":
+            continue
+        t = (d.get("DetectedText") or "").strip()
+        if not t:
+            continue
+        geo = (d.get("Geometry") or {}).get("BoundingBox") or {}
+        top, left = float(geo.get("Top") or 0), float(geo.get("Left") or 0)
+        line_items.append((top, left, t))
+    line_items.sort(key=lambda x: (round(x[0] * 40) / 40, x[1]))
+    return "\n".join(t for _, _, t in line_items)
 
 
 def ocr_text_via_bedrock(bedrock, image_bytes: bytes, catalog_title: str, model_id: str) -> str:
@@ -123,78 +183,100 @@ def main():
     ap.add_argument("--variants-dir", default="data/posters_multi")
     ap.add_argument("--scores-out", default="data/sample_output/alternate_poster_scores.csv")
     ap.add_argument("--swaps-out", default="data/sample_output/alternate_poster_swaps.csv")
-    ap.add_argument("--model", default=_bedrock_ocr.DEFAULT_MODEL_ID)
+    ap.add_argument("--engine", choices=["bedrock", "rekognition"], default="bedrock",
+                     help="bedrock (default, this repo's own gate-5 engine) or rekognition "
+                          "(faithful to the real project's score_multi_poster_variants_ocr.py)")
+    ap.add_argument("--model", default=_bedrock_ocr.DEFAULT_MODEL_ID, help="bedrock engine only")
     ap.add_argument("--min-best", type=float, default=0.40)
     ap.add_argument("--min-gain", type=float, default=0.25)
     ap.add_argument("--min-fuzzy-best", type=float, default=0.55)
     args = ap.parse_args()
 
-    bedrock = get_client("bedrock-runtime")
+    if args.engine == "rekognition":
+        client = get_client("rekognition")
+        ocr_fn = lambda image_bytes, title: ocr_text_via_rekognition(client, image_bytes)
+    else:
+        client = get_client("bedrock-runtime")
+        ocr_fn = lambda image_bytes, title: ocr_text_via_bedrock(client, image_bytes, title, args.model)
     session = requests.Session()
 
     with open(args.in_path, newline="", encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
 
     variants_dir = Path(args.variants_dir)
-    score_rows, swap_rows = [], []
 
-    for i, row in enumerate(rows, 1):
-        pid, title = row["id"], row.get("title", "")
-        original_title = row.get("original_title", "") or title
-        movie_dir = variants_dir / pid
-        variant_files = sorted(movie_dir.glob("*.jpg")) if movie_dir.is_dir() else []
-        if not variant_files:
-            continue
+    # Resumable: --swaps-out is the per-movie checkpoint (one row per id,
+    # written only once a movie's full scoring finishes) -- a run that
+    # gets interrupted partway (long corpus-scale runs especially) picks
+    # up where it left off instead of re-spending Bedrock calls.
+    done = load_done_ids(Path(args.swaps_out))
+    todo = [row for row in rows if row["id"] not in done]
+    if done:
+        log.info(f"resuming: {len(done)} already done, {len(todo)} remaining")
 
-        current = None
-        if row.get("poster_path"):
-            resp = session.get(f"{TMDB_IMG}{row['poster_path']}", timeout=20)
-            if resp.status_code == 200:
+    scores_f, scores_w = open_for_append(Path(args.scores_out), SCORE_FIELDS)
+    swaps_f, swaps_w = open_for_append(Path(args.swaps_out), SWAP_FIELDS)
+    n_proposed = 0
+    try:
+        for i, row in enumerate(todo, 1):
+            pid, title = row["id"], row.get("title", "")
+            original_title = row.get("original_title", "") or title
+            movie_dir = variants_dir / pid
+            variant_files = sorted(movie_dir.glob("*.jpg")) if movie_dir.is_dir() else []
+            if not variant_files:
+                continue
+
+            current = None
+            if row.get("poster_path"):
+                resp = session.get(f"{TMDB_IMG}{row['poster_path']}", timeout=20)
+                if resp.status_code == 200:
+                    try:
+                        text = ocr_fn(resp.content, title)
+                        current = {"id": pid, "title": title, "original_title": original_title,
+                                   "source": "primary", "file_path": row["poster_path"], "error": "",
+                                   **score_text(text, title, original_title)}
+                    except Exception as e:
+                        current = {"id": pid, "title": title, "original_title": original_title,
+                                   "source": "primary", "file_path": row["poster_path"],
+                                   "overlap_max": 0.0, "fuzzy_max": 0.0, "ocr_chars": 0, "error": str(e)[:200]}
+                    scores_w.writerow(current)
+
+            variants = []
+            for vf in variant_files:
                 try:
-                    text = ocr_text_via_bedrock(bedrock, resp.content, title, args.model)
-                    current = {"id": pid, "title": title, "original_title": original_title,
-                               "source": "primary", "file_path": row["poster_path"], "error": "",
-                               **score_text(text, title, original_title)}
+                    text = ocr_fn(vf.read_bytes(), title)
+                    v = {"id": pid, "title": title, "original_title": original_title, "source": "variant",
+                         "file_path": f"/{vf.name}", "error": "", **score_text(text, title, original_title)}
                 except Exception as e:
-                    current = {"id": pid, "title": title, "original_title": original_title,
-                               "source": "primary", "file_path": row["poster_path"],
-                               "overlap_max": 0.0, "fuzzy_max": 0.0, "ocr_chars": 0, "error": str(e)[:200]}
-                score_rows.append(current)
+                    v = {"id": pid, "title": title, "original_title": original_title, "source": "variant",
+                         "file_path": f"/{vf.name}", "overlap_max": 0.0, "fuzzy_max": 0.0, "ocr_chars": 0,
+                         "error": str(e)[:200]}
+                scores_w.writerow(v)
+                if not v["error"]:
+                    variants.append(v)
 
-        variants = []
-        for vf in variant_files:
-            try:
-                text = ocr_text_via_bedrock(bedrock, vf.read_bytes(), title, args.model)
-                v = {"id": pid, "title": title, "original_title": original_title, "source": "variant",
-                     "file_path": f"/{vf.name}", "error": "", **score_text(text, title, original_title)}
-            except Exception as e:
-                v = {"id": pid, "title": title, "original_title": original_title, "source": "variant",
-                     "file_path": f"/{vf.name}", "overlap_max": 0.0, "fuzzy_max": 0.0, "ocr_chars": 0,
-                     "error": str(e)[:200]}
-            score_rows.append(v)
-            if not v["error"]:
-                variants.append(v)
+            if variants:
+                decision = propose_swap(current, variants, args.min_best, args.min_gain, args.min_fuzzy_best)
+                swaps_w.writerow({
+                    "id": pid, "title": title,
+                    "current_file_path": (current or {}).get("file_path", ""),
+                    "current_overlap": decision["current_overlap"], "current_fuzzy": decision["current_fuzzy"],
+                    "best_file_path": decision["best"]["file_path"],
+                    "best_overlap": decision["best_overlap"], "best_fuzzy": decision["best_fuzzy"],
+                    "gain_overlap": decision["gain_overlap"], "gain_fuzzy": decision["gain_fuzzy"],
+                    "n_variants": len(variants), "propose": decision["propose"], "reason": decision["reason"],
+                })
+                n_proposed += decision["propose"]
+                scores_f.flush()
+                swaps_f.flush()
 
-        if variants:
-            decision = propose_swap(current, variants, args.min_best, args.min_gain, args.min_fuzzy_best)
-            swap_rows.append({
-                "id": pid, "title": title,
-                "current_file_path": (current or {}).get("file_path", ""),
-                "current_overlap": decision["current_overlap"], "current_fuzzy": decision["current_fuzzy"],
-                "best_file_path": decision["best"]["file_path"],
-                "best_overlap": decision["best_overlap"], "best_fuzzy": decision["best_fuzzy"],
-                "gain_overlap": decision["gain_overlap"], "gain_fuzzy": decision["gain_fuzzy"],
-                "n_variants": len(variants), "propose": decision["propose"], "reason": decision["reason"],
-            })
+            if i % 10 == 0 or i == len(todo):
+                log.info(f"{i}/{len(todo)} (proposed so far: {n_proposed})")
+    finally:
+        scores_f.close()
+        swaps_f.close()
 
-        if i % 10 == 0 or i == len(rows):
-            log.info(f"{i}/{len(rows)}")
-
-    write_csv_rows(args.scores_out, score_rows)
-    write_csv_rows(args.swaps_out, swap_rows)
-    n_proposed = sum(1 for r in swap_rows if r["propose"] == 1)
-    log.info(f"wrote {args.scores_out} ({len(score_rows)} rows), {args.swaps_out} "
-             f"({len(swap_rows)} rows, {n_proposed} proposed swaps)")
+    log.info(f"wrote {args.scores_out}, {args.swaps_out} ({n_proposed} proposed swaps this run)")
 
 
 if __name__ == "__main__":
