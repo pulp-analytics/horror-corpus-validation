@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import re
 import unicodedata
+from difflib import SequenceMatcher
 
 
 def title_overlap_score(ocr_text: str, title: str) -> float:
@@ -19,6 +20,24 @@ def title_overlap_score(ocr_text: str, title: str) -> float:
         return 0.0
     ot = toks(ocr_text)
     return round(len(tt & ot) / len(tt), 4)
+
+
+def normalize_alnum(s: str) -> str:
+    """Strip non-alphanumeric (handles glued tokens / spacing differences
+    between an OCR read and the catalog title)."""
+    return re.sub(r"[^a-z0-9]", "", (s or "").lower())
+
+
+def title_fuzzy_score(ocr_text: str, title: str) -> float:
+    """SequenceMatcher ratio on alnum-normalized title vs. full OCR string
+    -- catches close-but-not-token-exact reads that title_overlap_score's
+    token-set comparison misses (e.g. OCR'd extra/missing spaces).
+    Ported as-is from the real project's ocr_metrics.py."""
+    a = normalize_alnum(title)
+    b = normalize_alnum(ocr_text)
+    if not a or not b:
+        return 0.0
+    return round(SequenceMatcher(None, a, b).ratio(), 4)
 
 
 def strip_accents(s: str) -> str:

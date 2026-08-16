@@ -162,3 +162,43 @@ reproduce the "~3,700 of ~65,000 translated" historical count (see
 fuller OCR text source if you want the closer comparison; this repo
 doesn't provide one by default since it never ported
 Textract/EasyOCR/Rekognition.
+
+## Gate 8-9: alternate poster scoring (`11`/`12`) — a correction
+
+The real project's own version of this gate,
+`score_multi_poster_variants_ocr.py`, scores TMDB alternate-poster
+candidates via **Amazon Rekognition's** `DetectText` — confirmed by
+matching its output byte-for-byte against the real
+`data/qa/multi_poster_variant_ocr_scores.csv` (806 rows) and
+`_swaps.csv` (262 candidates, 78 proposed) files. Earlier drafts of the
+public-facing article describing this gate said "Nova Pro" — that's
+wrong; searched both the local pipeline checkout and the author's
+personal GitHub repo (`juanpduque/what-fear-looks-like`) for a
+Nova/Bedrock-based version of this specific gate and found none.
+
+`11_find_alternate_posters.py` (TMDB discovery + download, no AWS,
+ports `multi_poster_pipeline.py`'s discover/download commands) and
+`12_score_alternate_posters.py` (scoring + swap proposal) are this
+repo's port — but `12` sources its OCR read from **Bedrock/Nova Pro**,
+not Rekognition, since that's what this repo's gate 5 already uses and
+no Rekognition-based alternate-poster script could be located to port
+faithfully instead. The *decision logic* is ported as-is from the real
+script (same `title_overlap_score`/`title_fuzzy_score` thresholds:
+`min_best=0.40`, `min_gain=0.25`, `min_fuzzy_best=0.55`, plus the
+"current near zero" rule) — only the OCR source differs. Treat this as
+a real, working gate 8-9 with a documented substitution, not a
+reproduction of the historical 806/262/78 run.
+
+Live-verified (2026-08-16, real TMDB + Bedrock calls, `sandbox_bedrock`
+profile): ran end-to-end against *The Exorcist* (id 9552) and *A
+Nightmare on Elm Street* (id 377), 4 real alternate posters each
+discovered via TMDB's `images` endpoint. All 8 variants plus both
+primaries scored a perfect 1.0 overlap/fuzzy against the catalog title
+— expected, not a bug: `11`'s discovery defaults to `en,null` language
+posters only (matching the real project's own default), so every
+candidate already reads the English title cleanly. 0 swaps proposed for
+either film, correctly, since both already had a matching primary
+poster — this confirms the pipeline runs correctly end-to-end without
+forcing a swap that shouldn't happen; it doesn't yet demonstrate a real
+`propose=1` case live (would need a film with a genuinely mismatched
+current primary and a better-reading alternate on hand).

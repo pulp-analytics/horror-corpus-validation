@@ -56,6 +56,11 @@ scripts/
   08_dedupe_poster_md5.py    Same exact poster image file used twice?
   09_collapse_compilations.py Same poster shared across multiple ids?
   10_validate_corpus.py      Orchestrates 1-9, writes final outputs
+  11_find_alternate_posters.py Discover + download TMDB poster variants (no AWS)
+  12_score_alternate_posters.py Score variants vs. catalog title, propose swaps —
+                                see docs/RESULTS.md "Gate 8-9" for an important
+                                caveat: uses Bedrock, not the real project's
+                                Rekognition-based version
   utils/                     Shared AWS clients, constants, text matching
 
 data/
