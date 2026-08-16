@@ -234,20 +234,35 @@ gives (which is exactly the file the real run proposed swapping *to*).
 `master_dataset.csv`'s -- this bug wasn't confined to the 78 swapped
 rows.
 
-**Status: correction in progress, blocked on AWS access.** Rebuilt the
-input CSV from the consensus file's real pre-swap `poster_path`
-(`data/gate89_full/input_262_corrected.csv`, kept locally, not yet
-committed -- generating it needs no AWS and is safe to redo anytime).
-Both engines were re-run against it and returned `UnrecognizedClientException:
-The security token included in the request is invalid` on every single
-row -- the AWS sandbox session expired mid-run, not a pipeline issue.
-Those all-error result files were deleted rather than committed. The
-sandbox account itself can't be renewed for ~7 days (workshop account
-policy). Next session with AWS access: re-run `12_score_alternate_posters.py`
-(both `--engine` values) against the corrected input and update this
-section with the real, valid comparison -- the corrected input CSV
-generation logic and the diagnosis above should carry over directly,
-only the live scoring needs to happen again.
+**The corrected re-run (2026-08-16, a fresh AWS sandbox account, real
+Bedrock + Rekognition calls).** `data/gate89_full/input_262_corrected.csv`
+(252 of the 262 real candidates -- 10 dropped, no recoverable pre-swap
+`poster_path` in the consensus file) was scored with both engines against
+the same real TMDB variant catalog already cached locally
+(`data/gate89_full/catalog.csv`/`posters_multi/`, no re-discovery needed
+-- TMDB poster variants don't change on the timescale of a week).
+
+| | proposed swaps |
+|---|---|
+| Real historical run (262 candidates) | 78 |
+| This port, `--engine rekognition` (252 candidates) | 73 |
+| This port, `--engine bedrock` (252 candidates) | 77 |
+
+**68 of the 73 Rekognition proposals and 68 of the 77 Bedrock proposals
+are the same ids** -- 88%/88% agreement between the two engines. Compare
+to the first (retracted) attempt above, which had **zero ids in
+common** between the two engines on the same candidate set -- that
+alone is a strong independent confirmation the corrected input fixed
+the real bug, not just a coincidence of different numbers. All three
+counts (78 real, 73 Rekognition, 77 Bedrock) now sit in the same
+ballpark, which is what you'd expect once the test actually measures
+"does this poster's title match" instead of comparing an
+already-corrected poster against itself.
+
+The remaining disagreement (9 Bedrock-only, 5 Rekognition-only, out of
+252) is exactly the kind of engine-specific drift this document already
+found directly in gate 5's 4-engine comparison -- not a new finding, a
+consistent one.
 
 ## Gate 5's 4-engine example, re-run live: OCR engines drift too
 

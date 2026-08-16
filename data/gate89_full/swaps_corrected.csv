@@ -1,0 +1,252 @@
+id,title,current_file_path,current_overlap,current_fuzzy,best_file_path,best_overlap,best_fuzzy,gain_overlap,gain_fuzzy,n_variants,propose,reason
+7180,RISEN,/vX3uVYYG1YMbZijRoaFSXtNuIO2.jpg,0.0,0.24,/mULRjy8rGqZx9Ql5TTKV4inH9If.jpg,1.0,1.0,1.0,0.76,2,1,overlap_gain
+13276,Deadwater,/tvF4dx3coDHCJrcn0nM38X663fH.jpg,0.0,0.1176,/1563LI6bmrzyXaGbbwTkAjpR0qA.jpg,1.0,1.0,1.0,0.8824,2,1,overlap_gain
+15057,The Evil Woods,/ppMNj9IAzEjQsQCjBloHo9qf6yJ.jpg,0.3333,0.6154,/ppMNj9IAzEjQsQCjBloHo9qf6yJ.jpg,0.3333,0.6154,0.0,0.0,1,0,no
+20321,Doctor Sleep,/eBRcmhQakzeYPU6AWLP1DtAoLtC.jpg,0.0,0.3333,/bWb7wrpWygWFEFlkkwU4cUTfE7V.jpg,0.0,0.3333,0.0,0.0,3,0,no
+26208,Credo,/zujrGZqzrXe8DVCZyig07O03Edz.jpg,0.0,0.2105,/uyBYb0e9cBQv4uJVIAIqYjIJ2qM.jpg,0.0,0.2105,0.0,0.0,2,0,no
+28930,Live Evil,/fZCS2BHwPhzeTDQKnflUzHPIcHv.jpg,0.0,0.2353,/fZCS2BHwPhzeTDQKnflUzHPIcHv.jpg,0.0,0.2353,0.0,0.0,1,0,no
+29214,Echoes,/kTAqXw80XokVrYHehoW01zt2HP3.jpg,0.0,0.0952,/mjM0EpHEgXVwGnd5fhBXpTkxOzU.jpg,1.0,1.0,1.0,0.9048,3,1,overlap_gain
+29899,Claustrophobia,/gNyLGFOTMvRwbGkrLuFiLAAfHhD.jpg,0.0,0.2308,/3vUeGjpPrEbllgm1EK68Y5hJNf4.jpg,0.0,0.2308,0.0,0.0,2,0,no
+30030,Eyes Are Upon You,/4nsQ3qGeP6xCllI2RDQBPstdtdP.jpg,0.0,0.3478,/4nsQ3qGeP6xCllI2RDQBPstdtdP.jpg,0.0,0.3478,0.0,0.0,1,0,no
+35949,Jennifer's Shadow,/emw0TaUE0jyaSuZQw2u0A3L4RMw.jpg,0.0,0.1176,/emw0TaUE0jyaSuZQw2u0A3L4RMw.jpg,0.0,0.1176,0.0,0.0,1,0,no
+36965,Infection,/6mEmhon5P1UfKOHGn07z8zlbeK1.jpg,0.0,0.5882,/6iX2M7APQTXtptwkZ193QOsYfaX.jpg,0.0,0.5882,0.0,0.0,4,0,no
+37687,3 A.M.,/5xrbnulJKpxtD2pCN1cdN0TXrMn.jpg,0.0,0.1739,/5xrbnulJKpxtD2pCN1cdN0TXrMn.jpg,0.0,0.1739,0.0,0.0,1,0,no
+40338,Naked Massacre,/ok7WHby5ATCRjil9amoiblWZMNA.jpg,0.0,0.1667,/eXE7aKB0EokJlrt4sm0MhT86htQ.jpg,1.0,1.0,1.0,0.8333,5,1,overlap_gain
+45511,Teacher's Pet,/6tP0SNBPUWEFd4dz77p4JH2S574.jpg,0.0,0.2963,/rQp1gPdjPoUPTWZmnrrXpVZkt0G.jpg,1.0,1.0,1.0,0.7037,3,1,overlap_gain
+47431,To Make a Killing,/3V9jxF3ZHE3KLSyU6QytBo4NPaE.jpg,0.0,0.1905,/1qQ3tiBTDTLSMzEk0X6NVfdacoL.jpg,1.0,1.0,1.0,0.8095,4,1,overlap_gain
+48808,Closet Space,/1iXF33dWixSj6Q0hRIN1NYaFnvi.jpg,0.0,0.2222,/1iXF33dWixSj6Q0hRIN1NYaFnvi.jpg,0.0,0.2222,0.0,0.0,1,0,no
+50604,Dark Woods,/5KjHJKWsfwssN1YCPo7u4Tl4l2x.jpg,0.0,0.2857,/5KjHJKWsfwssN1YCPo7u4Tl4l2x.jpg,0.0,0.2857,0.0,0.0,1,0,no
+51176,Hellborn,/u5VdDoyXLuMSA193Jalh03FfrD3.jpg,0.0,0.24,/j67a01b7pSRKD5JMDBzqUYaOLj2.jpg,1.0,1.0,1.0,0.76,4,1,overlap_gain
+56383,"Lisa, Lisa",/fj2PR0EnAakr9F0VhUe2uwESmII.jpg,0.0,0.3448,/rV6Irmd9RD0HZXhD7H8ucZceo3V.jpg,1.0,1.0,1.0,0.6552,5,1,overlap_gain
+58796,Canes,/9tq55sjFuJ2NNt0IPrigFKSJ0u6.jpg,0.0,0.375,/5xCEKaeX0TBNDmXqFlJHA1kKYPG.jpg,0.0,0.375,0.0,0.0,4,0,no
+64623,Vendetta,/zdH82Fvty1AzjgS0s33q70Hrflj.jpg,0.0,0.25,/3kL2yacKNzPZ6IrxFI8dHJqu6lx.jpg,1.0,1.0,1.0,0.75,1,1,overlap_gain
+69117,Unseen Evil 2,/p13XVpFphqj2Dc92ZRUeYdKBWAf.jpg,0.0,0.2,/p13XVpFphqj2Dc92ZRUeYdKBWAf.jpg,0.0,0.2,0.0,0.0,1,0,no
+69142,The Wrath,/i58d2YSlyrN8yWjncS3UQEqZSCm.jpg,0.0,0.5,/ciVxIxEBWr14uNl5nLbjKux8QSj.jpg,0.0,0.5,0.0,0.0,4,0,no
+71234,Greed,/iMraYCxCyB4s0IwlLkPtxrbSt2v.jpg,0.0,0.25,/iMraYCxCyB4s0IwlLkPtxrbSt2v.jpg,0.0,0.25,0.0,0.0,1,0,no
+72654,Parents,/lRsB3AeYdbT3LhEGnIr8GF2rhx0.jpg,0.0,0.4,/6cSYVV21o7T1iMclovdKqnLqy2d.jpg,1.0,1.0,1.0,0.6,2,1,overlap_gain
+74650,Fantasmi,/vKMfMV1vPsRTiM4YQk603rMTdMh.jpg,0.0,0.32,/8ykbl5Ax5LRg5UjJu2vlmngXjmg.jpg,0.0,0.875,0.0,0.555,2,0,no
+76659,Beautiful Swordswomen: Double Seppuku,/bLXl3iBAUoDAVK7z3m8kXd7AAye.jpg,0.0,0.1463,/bLXl3iBAUoDAVK7z3m8kXd7AAye.jpg,0.0,0.1463,0.0,0.0,2,0,no
+80528,The Darkening,/wicP7cM37z3uhNdV5SwoPBZfib6.jpg,0.5,0.5,/wicP7cM37z3uhNdV5SwoPBZfib6.jpg,0.5,0.5,0.0,0.0,1,0,no
+81489,Carnivorous,/uJw5Tb7oCoBoalWKfvTxwt9zVZE.jpg,0.0,0.24,/uJw5Tb7oCoBoalWKfvTxwt9zVZE.jpg,0.0,0.24,0.0,0.0,1,0,no
+82972,Curio,/fLD3a9bc24ioDcPb2VVwat9HO00.jpg,0.0,0.1538,/pFupZQWYGKBaMg9dZhcfj88BZ4A.jpg,1.0,1.0,1.0,0.8462,2,1,overlap_gain
+83833,Nostrum,/y33jBhkZAX8hw5WYwze44WCT2CE.jpg,0.0,0.2353,/y33jBhkZAX8hw5WYwze44WCT2CE.jpg,0.0,0.2353,0.0,0.0,1,0,no
+84233,Don't Hang Up,/1vVhbo2yoVdoxIdkQWPifQtYfaN.jpg,0.3333,0.4,/fccbAyx3DcSHwlR6iwEfwVFhvyD.jpg,1.0,1.0,0.6667,0.6,5,1,overlap_gain
+92312,Django the Bastard,/lM9kTdGGSOTkSIHLbXX0SeZRQGr.jpg,0.3333,0.3429,/mEgACOh9FGP9g9XoAp8T4kYVK96.jpg,1.0,1.0,0.6667,0.6571,5,1,overlap_gain
+95008,Scream... and Die!,/34LrQxQMDUboPHwEuy2lTL6R8BQ.jpg,0.0,0.375,/lASZNs0GbkObV1ErUhzwgfIpNj9.jpg,1.0,1.0,1.0,0.625,5,1,overlap_gain
+100467,The Hand That Feeds the Dead,/xoE8nwmet7eQMQRTZ2rRJQmMJ86.jpg,0.0,0.2759,/wijtfpys0hHRi9ZGSYh7T3aJxCt.jpg,1.0,1.0,1.0,0.7241,2,1,overlap_gain
+101730,Henge,/6lWQjl6cQwBT8lF0a5g52S6n2lb.jpg,0.0,0.1111,/g1273UI7b05AxfIifNoW17oX5cf.jpg,1.0,1.0,1.0,0.8889,2,1,overlap_gain
+102762,Awakening,/jUvlPAF8vCYtkmpus3LvwsQGwwd.jpg,0.0,0.3636,/jUvlPAF8vCYtkmpus3LvwsQGwwd.jpg,0.0,0.3636,0.0,0.0,1,0,no
+109703,Cadaver Bay,/nzADzqDkgkilCPaQf1sNsR4X2cB.jpg,0.0,0.125,/nzADzqDkgkilCPaQf1sNsR4X2cB.jpg,0.0,0.125,0.0,0.0,1,0,no
+109707,Flora,/jgofwLTLMVt2Xp4aPSqly7Nnmm6.jpg,0.0,0.2105,/mgHbHHaclA8YfPvQBi6wRb8q1EY.jpg,1.0,1.0,1.0,0.7895,5,1,overlap_gain
+110772,Stille Nacht IV: Can't Go Wrong Without You,/cgQCJZaVoeCkdt13eh9ot8acZqd.jpg,0.0,0.2308,/1CHe4IOSHYoZzb7oV7eh4lVUH1x.jpg,0.375,0.5532,0.375,0.3224,3,1,fuzzy_gain
+122742,El asesino del parking,/gEi29ztmZ5G8qvDn5MdYwYd4tpC.jpg,0.0,0.0741,/gEi29ztmZ5G8qvDn5MdYwYd4tpC.jpg,0.0,0.0741,0.0,0.0,1,0,no
+124046,B.O.R.N.,/trUBdVKkA3K2G1czud2hejVlYGl.jpg,0.0,0.1,/eP4EzCF17EEerXMQGCPlqHtdYAV.jpg,0.0,1.0,0.0,0.9,2,0,no
+125294,Rough Draft,/eYgvetyNQK3paZqZ1UvPjbvRuHy.jpg,0.0,0.2667,/w46brjapQYaZon6GHtiVeehmJ4T.jpg,1.0,1.0,1.0,0.7333,2,1,overlap_gain
+128655,Haunted High,/vvBldMlCmq7WDI6eoWIHSAe1JfE.jpg,0.0,0.1905,/ajyIf0vd4yxtC8l1bbwIbi16BKm.jpg,0.0,0.1905,0.0,0.0,3,0,no
+131575,Fear Has 1000 Eyes,/z3lzHWlGRs5pD3qgDlIDtFAMojH.jpg,0.0,0.2703,/vwz6fTY8YFkouYjeTMJY9l4pEwq.jpg,0.75,1.0,0.75,0.7297,2,1,overlap_gain
+131815,The Sea Serpent,/u04cvzPQTmz60zxTbXFCgPH3ncO.jpg,0.0,0.2222,/u04cvzPQTmz60zxTbXFCgPH3ncO.jpg,0.0,0.2222,0.0,0.0,1,0,no
+135973,Pennhurst,/mFjoBkzeDbBmxM8jVfYcHOmmIac.jpg,0.0,0.2609,/mFjoBkzeDbBmxM8jVfYcHOmmIac.jpg,0.0,0.2609,0.0,0.0,2,0,no
+144839,Evil Stalks This House,/e79AoyQhHzuzFR4yPY5ewQqhAFp.jpg,0.0,0.5,/62F7aEOKyqmfkDtG4fN9YZasGsY.jpg,1.0,1.0,1.0,0.5,2,1,overlap_gain
+144909,Charm,/pS9d7Qz5IjbOzJr1XJPNhuaUm4r.jpg,0.0,0.08,/pS9d7Qz5IjbOzJr1XJPNhuaUm4r.jpg,0.0,0.08,0.0,0.0,1,0,no
+163543,Shelf Life,/mCwnXpiPIyCMeWnIGVzsdRs6PqW.jpg,0.0,0.2353,/75jaF5REzdTuGUTs4fZoNkk0iHZ.jpg,1.0,1.0,1.0,0.7647,2,1,overlap_gain
+164423,Ghost of the Needle,/1LS2hvSXLx7T8CWUgpcUwwBHC46.jpg,0.0,0.1739,/1LS2hvSXLx7T8CWUgpcUwwBHC46.jpg,0.0,0.1739,0.0,0.0,1,0,no
+192252,The Princess and Toxicant,/lGlYpE4BX691WjjvoKCSFtspKg7.jpg,0.0,0.3636,/es37DEHY8Kx6SxXZrwGdhnKvVLe.jpg,0.0,0.0667,0.0,-0.2969,1,0,no
+192573,Zapatlela,/r7lWqWPUXJ3gqjNQubgaOCSI0tR.jpg,0.0,0.2759,/w4GMCJhPbrJN681t6UiaoQgsxo7.jpg,1.0,1.0,1.0,0.7241,1,1,overlap_gain
+200377,The Evolution of Snuff,/8o6H3httwOtAWQPOIXHm9qUKKbd.jpg,0.25,0.3111,/8o6H3httwOtAWQPOIXHm9qUKKbd.jpg,0.25,0.3111,0.0,0.0,1,0,no
+200672,Torro. Torro. Torro!,/3sCzrtgWaimNKVXk9FHRPx0Q2I4.jpg,0.0,0.1818,/3sCzrtgWaimNKVXk9FHRPx0Q2I4.jpg,0.0,0.087,0.0,-0.0948,1,0,no
+200803,Altered Species,/1ki6TnBxlKG81ZbaXvaxEa7BXcK.jpg,0.0,0.0952,/18zduK9buWIrOjTaZeE5xc91uUE.jpg,1.0,1.0,1.0,0.9048,3,1,overlap_gain
+204611,The McPherson Tape,/Ap6zknBoIHaioieVfOLd5qaWd4X.jpg,0.0,0.2143,/7HT0pnqdIejrjciSnYDvVGL4rXB.jpg,1.0,1.0,1.0,0.7857,5,1,overlap_gain
+208703,Rufus,/aL7Lqv1iyZ6HAulWDjJvhwJNeIA.jpg,0.0,0.1818,/4HaHva32h3bZ7UfbQmOhzbGJ0Gb.jpg,1.0,1.0,1.0,0.8182,4,1,overlap_gain
+210587,Yellow,/3olg9GQuC7xtym6H1gEVHznm8ee.jpg,0.0,0.25,/3olg9GQuC7xtym6H1gEVHznm8ee.jpg,0.0,0.25,0.0,0.0,2,0,no
+210734,Battlefield Death Tales,/z453yQUIEXI5mG695ZfeEMkDZnx.jpg,0.0,0.2162,/z453yQUIEXI5mG695ZfeEMkDZnx.jpg,0.0,0.2162,0.0,0.0,1,0,no
+214680,Convergence,/b15UobERIODyWwjuIGVRKLBLBkO.jpg,0.0,0.2727,/b15UobERIODyWwjuIGVRKLBLBkO.jpg,0.0,0.2727,0.0,0.0,1,0,no
+215280,Billy Badd,/zJwP5epnNOuna569g2fI9QZeeJ1.jpg,0.0,0.1,/zJwP5epnNOuna569g2fI9QZeeJ1.jpg,0.0,0.1,0.0,0.0,1,0,no
+216139,Burned at the Stake,/qmMaHJxlcOG7ZByHbO3DPR2KUVD.jpg,0.25,0.24,/3Bf7YXI9d8cCjMznG71lN62tmqQ.jpg,0.25,0.24,0.0,0.0,5,0,no
+217903,El virus del poder,/piCRFtp2MdmL1UgCCkVM6I6AEK1.jpg,0.25,0.3243,/wnx0OxIJiWfChDJ2GuGsKqk4RWS.jpg,1.0,1.0,0.75,0.6757,1,1,overlap_gain
+219961,Sonata,/A1C6UkDJudXNeTRjB33J9iJASQg.jpg,0.0,0.2,/A1C6UkDJudXNeTRjB33J9iJASQg.jpg,0.0,0.2,0.0,0.0,1,0,no
+223281,The Unspeakable,/ApCMWR2jg45lZTGMjN2JIpIwePj.jpg,0.0,0.2759,/k3QdOgPjhJsjbd4xjM96gGzPcxr.jpg,1.0,1.0,1.0,0.7241,2,1,overlap_gain
+223344,Maxie,/b8oVCFTxDwF2m5CQwgqzdpppkIp.jpg,0.0,0.125,/b8oVCFTxDwF2m5CQwgqzdpppkIp.jpg,0.0,0.125,0.0,0.0,1,0,no
+226023,The Men Who Fell,/qUnmfvrrmn1BFcc7KkXyzwwRrHi.jpg,0.0,0.3125,/qUnmfvrrmn1BFcc7KkXyzwwRrHi.jpg,0.0,0.3125,0.0,0.0,1,0,no
+227433,Hong-Do Mirror,/tFyHHxAMmwA76jTb9YRQoocFRmw.jpg,0.0,0.375,/kOUieBvzEb10n6nFA4HjfZ6WZag.jpg,0.0,0.375,0.0,0.0,2,0,no
+244305,The Ice House,/tnaaNtJ6x9Es6nErSIoK9Y5izI2.jpg,0.3333,0.4167,/x0SzhzlHaOL0oJXo0NkXjPpF9aN.jpg,1.0,1.0,0.6667,0.5833,2,1,overlap_gain
+250788,Savage Encounter,/fyHhjGJkTYCIIoRFM1v0YvuW50Q.jpg,0.0,0.1667,/4Y2Kmg6NLLy4KX9egc5D4Zb2O5I.jpg,1.0,1.0,1.0,0.8333,2,1,overlap_gain
+251526,The Mutagen,/ezpSbTs0epele0tkVKSRkhS7mco.jpg,0.0,0.2609,/ezpSbTs0epele0tkVKSRkhS7mco.jpg,0.0,0.2609,0.0,0.0,1,0,no
+254701,The Mask of Love,/laWI93XRbbI2qEnAFPETLUkNwD5.jpg,0.0,0.0,/laWI93XRbbI2qEnAFPETLUkNwD5.jpg,0.0,0.0,0.0,0.0,1,0,no
+257275,The Night Comes Too Soon,/5cbhJNkBnonH6qJQgMDyc2qf0Eb.jpg,0.2,0.5854,/5cbhJNkBnonH6qJQgMDyc2qf0Eb.jpg,0.2,0.5854,0.0,0.0,3,0,no
+258726,The Game,/cdyvTnRAOxVbQfRtV7pT6rhzHkK.jpg,0.0,0.3158,/4i7VaKbVaZImYmokFSD05KQTo1v.jpg,0.0,0.3158,0.0,0.0,3,0,no
+259828,Bloodless,/474HmunD3keIwtapMuRdTKB2pPF.jpg,0.0,0.2353,/474HmunD3keIwtapMuRdTKB2pPF.jpg,0.0,0.2353,0.0,0.0,1,0,no
+260824,Under Surveillance,/kdgMFG1sY3oXPDoYelHCgKa8qqP.jpg,0.0,0.2143,/kdgMFG1sY3oXPDoYelHCgKa8qqP.jpg,0.0,0.2143,0.0,0.0,1,0,no
+262919,Catacombs,/jaMF5hgc9U11vrbVEdFmsHA2nVJ.jpg,0.0,0.2,/4XCKGjc7prSSij4WmV5pKkmwfRe.jpg,0.0,0.2,0.0,0.0,4,0,no
+265321,A Shred Of Mist,/1cy71eeNjdhbTZSVkOa24fsAHyQ.jpg,0.0,0.0833,/1cy71eeNjdhbTZSVkOa24fsAHyQ.jpg,0.0,0.0833,0.0,0.0,1,0,no
+272100,Supernatural,/u56mJuKMXK9adQYv1PxZlo8r1mi.jpg,0.0,0.3529,/53KU5vgHQtjh5xwFqbRmDUVZYqj.jpg,1.0,1.0,1.0,0.6471,5,1,overlap_gain
+273418,Killer Dead,/mYuEWRvrxGKHGPzdxXY00rGRJHC.jpg,0.0,0.1818,/mYuEWRvrxGKHGPzdxXY00rGRJHC.jpg,0.0,0.1818,0.0,0.0,1,0,no
+275203,Locked in a Room,/jdlC72Q6uD5ZaowkxUYpjxYwaKp.jpg,0.0,0.32,/qCVl8zow8BuYhPrIeXExTnGE7pm.jpg,1.0,1.0,1.0,0.68,2,1,overlap_gain
+276692,Natural Selection,/kmK64pGj3qJov5PHzA5wlcy1KNG.jpg,0.0,0.6667,/kmK64pGj3qJov5PHzA5wlcy1KNG.jpg,0.0,0.6667,0.0,0.0,1,0,no
+277506,Invicta,/kaGpoLrYh8EOVu16zJA7iiwXSPw.jpg,0.0,0.3529,/kaGpoLrYh8EOVu16zJA7iiwXSPw.jpg,0.0,0.3529,0.0,0.0,1,0,no
+280928,A Chilling Cosplay,/o9ROr30gNeL8dRWZSMwyvR9SWw7.jpg,0.0,0.0769,/o9ROr30gNeL8dRWZSMwyvR9SWw7.jpg,0.0,0.0769,0.0,0.0,1,0,no
+286681,Vayanadan Thampan,/boYm1heIyLu0p2E335z3DPiNc49.jpg,0.0,0.3571,/342UTLrU2GF2gCkDGfBKbj5R6Hn.jpg,1.0,1.0,1.0,0.6429,1,1,overlap_gain
+289476,Kill Me Tomorrow,/dnLLx5mJ536VEH6YgnFUNAlyJiP.jpg,0.0,0.2105,/dnLLx5mJ536VEH6YgnFUNAlyJiP.jpg,0.0,0.2105,0.0,0.0,1,0,no
+290696,Dysmorphia,/eUvwLaOeMRdau1UNdGCB2Jngpyz.jpg,0.0,0.1818,/2ljxAHBIQKNBgSuLGamPwPKGYBU.jpg,1.0,1.0,1.0,0.8182,5,1,overlap_gain
+290732,VIViD,/rRe20MjzhWKVBZMUolgpkEiq4ym.jpg,0.0,0.1333,/VirWpx8UbFlKk2LuUIPJrCcBbn.jpg,1.0,1.0,1.0,0.8667,5,1,overlap_gain
+292227,Night is the Time For Killing,/mqkxympXKa2gsHfQ6KCRPY8Ts92.jpg,0.1667,0.24,/jGdLkoAHk3gZgUWziYAY39FZNmo.jpg,0.1667,0.4,0.0,0.16,2,0,no
+294488,Maniac Too!,/uwWcnJvOi3e6y3n1kv6pt0GP9lQ.jpg,0.0,0.2857,/uwWcnJvOi3e6y3n1kv6pt0GP9lQ.jpg,0.0,0.2857,0.0,0.0,1,0,no
+300817,Graves & Bones,/gA2YuVt24Hfm0ihFMC1hcmcIBjj.jpg,0.0,0.0,/cXnLR3frbI1ZrEuy2j7Ub7xic0.jpg,1.0,1.0,1.0,1.0,1,1,overlap_gain
+302038,An Erotic Tale of Ms. Dracula,/rrZ4NBhe9auBM4FB02t51koz4Xq.jpg,0.3333,0.5714,/fGfx64kW8Nf4yoav4xUZVTxlVUu.jpg,1.0,1.0,0.6667,0.4286,3,1,overlap_gain
+302512,Awaken the Devil,/uducCd6iOb5eBaQm18ouZ6aRlmM.jpg,0.0,0.4286,/uducCd6iOb5eBaQm18ouZ6aRlmM.jpg,0.0,0.4286,0.0,0.0,1,0,no
+303898,Cut Throat,/xNnmuiypUYphkSQRXWAeKDBGfNl.jpg,0.0,0.2667,/xtxOdFj4yUZdGMYaTNHaA7VOEaT.jpg,1.0,1.0,1.0,0.7333,4,1,overlap_gain
+308135,Cryptid,/wSODkEM8hm952IXZI73mwBVdJmL.jpg,0.0,0.375,/wSODkEM8hm952IXZI73mwBVdJmL.jpg,0.0,0.375,0.0,0.0,1,0,no
+308421,Somebody's There,/7jV3PYF3sQ2CVRDsIlpUdtNsUUg.jpg,0.0,0.3333,/7jV3PYF3sQ2CVRDsIlpUdtNsUUg.jpg,0.0,0.3333,0.0,0.0,1,0,no
+309063,The Ouija Experiment 2: Theatre of Death,/o3VMaDXxXc8VwvvX82sd418HCcx.jpg,0.3333,0.4151,/oqOvK0nyUCA32qp4xsNONzgMKkR.jpg,0.5,0.7308,0.1667,0.3157,3,1,fuzzy_gain
+321768,Captive,/fJByYakjLIt9X2pQJtRDqStkMmQ.jpg,0.0,0.3158,/Amqdt4zL6wt5StJNxR4blfyMFu8.jpg,1.0,1.0,1.0,0.6842,2,1,overlap_gain
+322858,The Third Sex,/snzSFKPWUMFONxYbhivnDkEXnIO.jpg,0.0,0.2581,/snzSFKPWUMFONxYbhivnDkEXnIO.jpg,0.0,0.2581,0.0,0.0,1,0,no
+328939,Cheerleader Camp 2 the Death,/pfvC8rWfo2disdbV6PpdEAwSCm4.jpg,0.0,0.2727,/ka2rXpuvPURcLmc0pYLIXOI63pY.jpg,1.0,1.0,1.0,0.7273,5,1,overlap_gain
+332689,Playing with Dolls,/3ZkvAVrjhaYgdf0T1e8Hcqq3AQE.jpg,0.0,0.16,/9mTZw5FG99Qnb6KeSZ6clSJ73wm.jpg,1.0,1.0,1.0,0.84,5,1,overlap_gain
+336107,Meat the Jones,/rOVg9nIwjwcfNqEdGrfN331D8XT.jpg,0.3333,0.5,/rOVg9nIwjwcfNqEdGrfN331D8XT.jpg,0.3333,0.5,0.0,0.0,2,0,no
+347438,Kamara Kattu,/jOrmemeTahRUISXsif2eq4LJUAB.jpg,1.0,1.0,/jOrmemeTahRUISXsif2eq4LJUAB.jpg,1.0,1.0,0.0,0.0,1,0,no
+347855,Curtain,/qVoBlKoBg4xfnBP6lIuozzQPAsi.jpg,0.0,0.2353,/qVoBlKoBg4xfnBP6lIuozzQPAsi.jpg,0.0,0.2353,0.0,0.0,1,0,no
+359056,Primordial,/bwXwUdpBsB5rav8ij0cMDsjppNx.jpg,0.0,0.24,/2QKQUDFtL50Cj9IwUu6HnPr7NAU.jpg,1.0,1.0,1.0,0.76,4,1,overlap_gain
+362807,Paranoid,/cM7MXLsK2wCBPOaS0Kx4lGF3GwO.jpg,0.0,0.2222,/cM7MXLsK2wCBPOaS0Kx4lGF3GwO.jpg,0.0,0.2222,0.0,0.0,1,0,no
+366071,Enchiridion,/g4vuzLgXCsQkv81NSuIZGtj3msf.jpg,0.0,0.2581,/g4vuzLgXCsQkv81NSuIZGtj3msf.jpg,0.0,0.2581,0.0,0.0,1,0,no
+373027,Geheimnisvolle Freundinnen,/74f7Rw352pLOy5SINVfZ77HnfTy.jpg,0.0,0.1905,/fRSAhijgMYl8xnYgfEuvkVicVx2.jpg,1.0,1.0,1.0,0.8095,1,1,overlap_gain
+379100,M is for Merry Christmas,/dQED4TeHOkZ5MXV7ipMRkqkssYO.jpg,0.0,0.2353,/2UyzD2h6buxQeYGcmOZS1RfyXFS.jpg,0.0,0.2353,0.0,0.0,2,0,no
+382052,Not Alone,/6WJGrYga0zshLeu5QkZ5r4EJadm.jpg,0.0,0.3333,/6WJGrYga0zshLeu5QkZ5r4EJadm.jpg,0.0,0.3333,0.0,0.0,2,0,no
+385378,Gemini,/bzqJHC48CWmGEJ0CemZ2co9jNSx.jpg,0.0,0.2222,/7evAzh0JTESI6xlvXx4LW1kimwt.jpg,0.0,0.2222,0.0,0.0,2,0,no
+392051,The Damned Thing,/sBFrsu3rkozZvJTdJMwtbCr0VM2.jpg,0.0,0.2609,/vbvnKjnH4uDvYcnhe9yb6BOnAXd.jpg,1.0,1.0,1.0,0.7391,2,1,overlap_gain
+398656,Possessed,/yPE1T5O4COQ9nN2iHVLsPctzYqf.jpg,1.0,1.0,/yPE1T5O4COQ9nN2iHVLsPctzYqf.jpg,1.0,1.0,0.0,0.0,1,0,no
+404206,The Music of Jo Hyeja,/1aL2kLtwpFHN59Y5jtE3Yn4gT7D.jpg,0.0,0.2535,/1aL2kLtwpFHN59Y5jtE3Yn4gT7D.jpg,0.0,0.2535,0.0,0.0,1,0,no
+404713,Downhill,/4tEdLXx2lW3w8SBnsgRyLIwqF0l.jpg,0.0,0.4444,/mhEzwO6HbYwifOoqe5NUIx2YmAT.jpg,1.0,1.0,1.0,0.5556,1,1,overlap_gain
+406582,Delirium,/pTRhNMh7ndYFVfG4Qhjqgu7WDqb.jpg,0.0,0.1538,/pTRhNMh7ndYFVfG4Qhjqgu7WDqb.jpg,0.0,0.1538,0.0,0.0,1,0,no
+412471,Dark Silence,/pBP8eWb66SGbWtDMAMYghrqrJId.jpg,0.0,0.3478,/pnZDyaoo9OSm2tAHMqf03z9YNWz.jpg,1.0,1.0,1.0,0.6522,4,1,overlap_gain
+412998,Mo,/cY71cdcxk3GWIFrRDnEkUt9ysX6.jpg,0.0,0.4,/cY71cdcxk3GWIFrRDnEkUt9ysX6.jpg,0.0,0.4,0.0,0.0,1,0,no
+415852,Blood Church,/zlIa027GbOplbDef65B8dqRKowy.jpg,0.0,0.2667,/luXFqlhYSqsF7nihfEd3Uw4olf7.jpg,0.0,0.2667,0.0,0.0,5,0,no
+417180,Vacant House,/ewu8e5WyLE91426VmqgQaoePlRI.jpg,0.0,0.2703,/jNwRbjsHBDDaYqUOqYUMogRx86R.jpg,1.0,1.0,1.0,0.7297,2,1,overlap_gain
+421490,Tall Men,/7UIPssW5B21uBAtQ2mojAJpm7oJ.jpg,0.0,0.3333,/cnDsdEtR1rGJBMrAuQbzBbzWkqC.jpg,1.0,1.0,1.0,0.6667,5,1,overlap_gain
+424078,Spirits,/22aTJitI74odsnxVr9uIsuuA55V.jpg,0.0,0.0952,/22aTJitI74odsnxVr9uIsuuA55V.jpg,0.0,0.0952,0.0,0.0,1,0,no
+459220,Shockwave,/csqybkX4q5PcJTkkjmsUpWCdiYU.jpg,0.0,0.2857,/csqybkX4q5PcJTkkjmsUpWCdiYU.jpg,0.0,0.2857,0.0,0.0,1,0,no
+461724,The Spirits of Jupiter,/73LRallDsuMPYspHJyxffssqK7b.jpg,0.0,0.125,/n6RU8hnuKE7WuapS5xSjfiKyR5T.jpg,1.0,1.0,1.0,0.875,3,1,overlap_gain
+465177,Meltdown,/xRtyCI1AcI2igXC0rX2pzm0j1b5.jpg,0.0,0.1111,/nLhdYJBGmNzS3FpaH5m5M4R2hsq.jpg,1.0,1.0,1.0,0.8889,3,1,overlap_gain
+466677,Dead South,/tSWIERDkhExNRGhg1rZYm6R8hJX.jpg,0.0,0.3,/tSWIERDkhExNRGhg1rZYm6R8hJX.jpg,0.0,0.3,0.0,0.0,2,0,no
+477115,Rasathi Varum Naal,/5Sfaq4pa2KjUZUXg5Fk4h7TFAjX.jpg,0.0,0.3571,/5Sfaq4pa2KjUZUXg5Fk4h7TFAjX.jpg,0.0,0.3571,0.0,0.0,1,0,no
+477576,DeadThirsty,/yHKu3ntOnRyt8qZdeU35otnviIC.jpg,0.0,0.3571,/5IvHHunMpvMCLhtUB2nrB6XuVru.jpg,1.0,1.0,1.0,0.6429,5,1,overlap_gain
+486684,Aux,/6jPaPjzgbSUwfkyJKV4SpzWMJWH.jpg,0.0,0.1333,/9iIPJLeV1zQwqJonbUbgKazyEhh.jpg,1.0,1.0,1.0,0.8667,5,1,overlap_gain
+489454,The Devil's Warehouse,/3z647nj8eUPBRpNZaBvy6W3cJCF.jpg,0.0,0.1905,/3z647nj8eUPBRpNZaBvy6W3cJCF.jpg,0.0,0.1905,0.0,0.0,1,0,no
+492535,Darkness Wakes,/2FX9OYyzASYXmwzyKyd7sHDVtpZ.jpg,0.0,0.2727,/92zuEUzJEvuPTnGCY0BGuXyYxb5.jpg,1.0,1.0,1.0,0.7273,5,1,overlap_gain
+495015,Post Human: An Event,/1zWAZQfZenHUlLvkC3ojQyT1b8V.jpg,0.0,0.48,/1zWAZQfZenHUlLvkC3ojQyT1b8V.jpg,0.0,0.48,0.0,0.0,3,0,no
+496586,The Call Girls,/wwxySfIEL0TzNMFXuWCvzM559W5.jpg,0.0,0.0,/wwxySfIEL0TzNMFXuWCvzM559W5.jpg,0.0,0.0,0.0,0.0,1,0,no
+502613,M Is for Manure,/7EzEoCRIFNVDwpWRt18xVg1sxrm.jpg,0.0,0.2609,/7EzEoCRIFNVDwpWRt18xVg1sxrm.jpg,0.0,0.2609,0.0,0.0,2,0,no
+526144,Prisoners of the Dead,/3loFRaNrsrvBSaVICYpbtXJd4GB.jpg,0.25,0.2703,/3loFRaNrsrvBSaVICYpbtXJd4GB.jpg,0.25,0.2703,0.0,0.0,1,0,no
+527782,Mushroom,/gyueC9h9dkPCmSu5uI9JUcqyrMR.jpg,0.0,0.1905,/gyueC9h9dkPCmSu5uI9JUcqyrMR.jpg,0.0,0.1905,0.0,0.0,1,0,no
+529744,Princess: Voices from Hell,/gig9VBz0jtxU2DPlbEscHq2pEY4.jpg,0.0,0.2745,/JHAjSybxVduzcbwzrfymt4chh.jpg,0.0,0.2857,0.0,0.0112,3,0,no
+531393,Reindeer Games,/39owLICTyBVgXqwkruapLT6tStr.jpg,0.0,0.4242,/39owLICTyBVgXqwkruapLT6tStr.jpg,0.0,0.4242,0.0,0.0,1,0,no
+532813,Sublimate,/Ak9hs6yU4QksKPA2RmBAAwjRq0A.jpg,0.0,0.2222,/Ak9hs6yU4QksKPA2RmBAAwjRq0A.jpg,0.0,0.2222,0.0,0.0,1,0,no
+543901,P.O.E. Pieces of Eldritch (P.O.E. 3),/ifx0vnVrnl5XXLn7phxaXAiXq4i.jpg,0.3333,0.2778,/c098e6tUfrQMFDgBLBpYD5CaC0W.jpg,1.0,0.8444,0.6667,0.5666,2,1,overlap_gain
+549646,Diggerz: Black Lung Rises,/9FMzuQORECkh8rDHCYbQCWoUySo.jpg,0.0,0.1429,/1Qz3GbFT9Ge0ZIlMJCYw6mt0N95.jpg,1.0,1.0,1.0,0.8571,3,1,overlap_gain
+549703,Girls Just Wanna Have Blood,/2k0XzSVlT4MF3HnuMS85LNCWKsU.jpg,0.0,0.383,/aaNadgdzHvSxGz4o2IB0AsE12nq.jpg,1.0,1.0,1.0,0.617,3,1,overlap_gain
+559928,Heaven's War,/wEKHTGJ5Vc8fKPQXQSOd8egLt0w.jpg,0.0,0.2963,/5styoxyGlxoms3QiSxBW6rhTdvf.jpg,1.0,1.0,1.0,0.7037,3,1,overlap_gain
+560038,The Occultist 2: Demons,/nvUUpeR44SeBmlHURKaKziwf1BC.jpg,0.0,0.2143,/nvUUpeR44SeBmlHURKaKziwf1BC.jpg,0.0,0.2143,0.0,0.0,1,0,no
+561466,Veendum Lisa,/zbQxMuDTRGAa9ZSMMXAx0jJA6ot.jpg,0.0,0.2308,/zbQxMuDTRGAa9ZSMMXAx0jJA6ot.jpg,0.0,0.2308,0.0,0.0,1,0,no
+564394,Crypto (Animated Short),/lRdBbwJu6LY5FXP9RdvcNaYyvUU.jpg,0.3333,0.48,/lRdBbwJu6LY5FXP9RdvcNaYyvUU.jpg,0.3333,0.48,0.0,0.0,1,0,no
+567331,The Killing House,/3nYNWeluTlZ7MER9LSdxbYH0Kts.jpg,0.0,0.2857,/6R0fGcGwlkU6ujNeWNXStyFLMUy.jpg,1.0,1.0,1.0,0.7143,2,1,overlap_gain
+573966,The Mysterious Uncle Silas,/eZUIGvYJElZbbQ8JSUFbBENocws.jpg,0.0,0.3448,/eZUIGvYJElZbbQ8JSUFbBENocws.jpg,0.0,0.3448,0.0,0.0,1,0,no
+583525,65th,/f30saP9z5ZVJOYfiPV94iB37egS.jpg,0.0,0.0,/aBSAO587RMHsFOUDfYPoniuLJEo.jpg,1.0,1.0,1.0,1.0,3,1,overlap_gain
+595951,Scare BNB,/1b03sF8mTobgMog1oJkXF8j1gBg.jpg,0.0,0.2,/1b03sF8mTobgMog1oJkXF8j1gBg.jpg,0.0,0.2,0.0,0.0,1,0,no
+601369,The Way She Used to Be,/x4v3mPNgDDI3RZaL1eR5bdSVG1U.jpg,0.0,0.1538,/x4v3mPNgDDI3RZaL1eR5bdSVG1U.jpg,0.0,0.1538,0.0,0.0,1,0,no
+609616,American Freakshow,/aBQNzx4jr9PraOtglaGR1r8r643.jpg,0.0,0.0741,/aBQNzx4jr9PraOtglaGR1r8r643.jpg,0.0,0.0741,0.0,0.0,1,0,no
+609627,A Few Screws Loose,/kdgWhdrf1LKyGf0QltoI4IrE1ZJ.jpg,0.0,0.2143,/kdgWhdrf1LKyGf0QltoI4IrE1ZJ.jpg,0.0,0.2143,0.0,0.0,1,0,no
+618128,Scavenger Hunt,/fCoG2xrGz4KdxeINmKptoH2CPfJ.jpg,0.0,0.3158,/fCoG2xrGz4KdxeINmKptoH2CPfJ.jpg,0.0,0.3158,0.0,0.0,1,0,no
+638544,The Vault,/5T1H07gcu8o1SOwMpjD3HBOTWfo.jpg,0.0,0.0,/vmonhc4ZU1hvfE3MJcTyYSCCPnv.jpg,1.0,1.0,1.0,1.0,2,1,overlap_gain
+651273,The Pulley by Steven Kwang,/axzbceDYHR2Yf4Ffhna5h1bnJRt.jpg,0.2,0.2778,/axzbceDYHR2Yf4Ffhna5h1bnJRt.jpg,0.2,0.2778,0.0,0.0,2,0,no
+651448,Darkslide,/tBrm4WCJu2Pybdw63qi2hoQtBSl.jpg,0.0,0.3333,/oqAdz9Xz4yBtsLyNJL70PtXbEoF.jpg,1.0,1.0,1.0,0.6667,2,1,overlap_gain
+657343,The Evil Inside Me,/l3brxESYVpBM0i8QbvmkrDwwX6J.jpg,0.0,0.2222,/l3brxESYVpBM0i8QbvmkrDwwX6J.jpg,0.0,0.2222,0.0,0.0,1,0,no
+663240,America the Violent,/sYwCpwKIlMPIZsUoCuQXH5yOgsn.jpg,0.0,0.303,/sYwCpwKIlMPIZsUoCuQXH5yOgsn.jpg,0.0,0.303,0.0,0.0,1,0,no
+664168,Fat Ass Zombies,/d2UCD7xwWFKucozkKcKBiCayJC6.jpg,0.0,0.5161,/btrers8SNujMJhxjLvjh7AJpN3T.jpg,1.0,1.0,1.0,0.4839,5,1,overlap_gain
+678697,Ghosts Who Love Too Much,/kh869R9LSbjqeMTnNyeMlprJjtz.jpg,0.0,0.2703,/kh869R9LSbjqeMTnNyeMlprJjtz.jpg,0.0,0.2703,0.0,0.0,1,0,no
+682779,They Are Here: The Real World of the Poltergeists,/u1pj7A4GRMfWbdbkKYJNkjUKe8c.jpg,0.25,0.4068,/u1pj7A4GRMfWbdbkKYJNkjUKe8c.jpg,0.25,0.4068,0.0,0.0,1,0,no
+705912,Bottled Vulva: High School Girl Yuriko,/Ajqd6HJZGAuRCI8dX7quXgg4e8n.jpg,0.0,0.3175,/xRARFRFPdYAr0Gi74p63XM8iRxe.jpg,1.0,1.0,1.0,0.6825,1,1,overlap_gain
+708706,Feed Your Head! Lose Your Head!,/3OQ7PgAkum1AxqZfLjjhbvSVDas.jpg,0.0,0.1333,/3OQ7PgAkum1AxqZfLjjhbvSVDas.jpg,0.0,0.1333,0.0,0.0,1,0,no
+719829,Dark:30,/3Ojqjn3moQPKbqwXMyTAPS5tmxB.jpg,0.0,0.16,/3Ojqjn3moQPKbqwXMyTAPS5tmxB.jpg,0.0,0.16,0.0,0.0,2,0,no
+721952,Homecoming Massacre,/wkXu5COdeiBHN7LhYC8aQVeZ0qM.jpg,0.0,0.3077,/8HpywW0JJHv0pjmZmcbkO3fky7Q.jpg,1.0,1.0,1.0,0.6923,3,1,overlap_gain
+724492,Blood Tales,/caendMq5RpkoxJ81jNhGPogz7bd.jpg,0.0,0.3077,/caendMq5RpkoxJ81jNhGPogz7bd.jpg,0.0,0.3158,0.0,0.0081,1,0,no
+725842,Старуха 2,/aFUssdPtU1BNWammo8bf1RSUBr9.jpg,0.0,0.0,/aFUssdPtU1BNWammo8bf1RSUBr9.jpg,0.0,0.0,0.0,0.0,1,0,no
+726741,The Tree Bark Romance,/xAjxlou0qVl0PvwfUBLLXmiCoBc.jpg,0.0,0.3043,/xAjxlou0qVl0PvwfUBLLXmiCoBc.jpg,0.0,0.3043,0.0,0.0,1,0,no
+729722,Afterward,/2NbFGccdKdhxaO97hKTegMt02yg.jpg,0.0,0.32,/7NQGFCtwbpU3bGdnpdmd4IeIChr.jpg,1.0,1.0,1.0,0.68,3,1,overlap_gain
+730407,Bohemian Moon,/tD3lKQ9lk17uON5WS2hDYuo2ijl.jpg,0.0,0.4167,/tD3lKQ9lk17uON5WS2hDYuo2ijl.jpg,0.0,0.4167,0.0,0.0,1,0,no
+731799,The Kiss of Death: Creepy Tales,/qwFwZhW93sgMQJMQOpHaq1auq6Z.jpg,0.0,0.3636,/qwFwZhW93sgMQJMQOpHaq1auq6Z.jpg,0.0,0.3636,0.0,0.0,1,0,no
+737885,The Test,/jmf80I2U92OVjnLIetUDzt1X7a4.jpg,0.0,0.25,/6z61XlAL1NW7gzalbr7CaTyzihv.jpg,1.0,1.0,1.0,0.75,5,1,overlap_gain
+744388,Verdict,/b6fsNVSNzdAcLbnuVFdX4GVuV9A.jpg,0.0,0.3077,/b6fsNVSNzdAcLbnuVFdX4GVuV9A.jpg,0.0,0.3077,0.0,0.0,1,0,no
+746729,The Darkest Sorrows,/qly1AEg9j9PvnvxBNs776i7g0cN.jpg,0.0,0.4118,/qly1AEg9j9PvnvxBNs776i7g0cN.jpg,0.0,0.4118,0.0,0.0,1,0,no
+749611,Blood of the Undead: The Final Chapter,/x0SspX4nSIetpI2dEBuHa3pwr2L.jpg,0.1667,0.1395,/wLxEqNvNew4VEflmT3f23SHj6zN.jpg,0.1667,0.1395,0.0,0.0,2,0,no
+753443,Investigation of Indian Cabin Rd,/aZq00khyL1uZ7aLXhUVwBIFGka2.jpg,0.2,0.5098,/aZq00khyL1uZ7aLXhUVwBIFGka2.jpg,0.2,0.5098,0.0,0.0,1,0,no
+757686,Tupilak,/kf0nFy4A8gbCluX7E99CkRdYmgZ.jpg,0.0,0.2,/kf0nFy4A8gbCluX7E99CkRdYmgZ.jpg,0.0,0.2,0.0,0.0,1,0,no
+757709,M is for Mermaid,/xJvx567uXfSpLsRfb3Yhtuueh5V.jpg,0.0,0.3333,/7EzEoCRIFNVDwpWRt18xVg1sxrm.jpg,0.0,0.3333,0.0,0.0,2,0,no
+764813,The Project,/n7iDnvaiVCb5rYTPko79B1DPTgn.jpg,0.0,0.0952,/jMf8wMbciFZh7hK5MceCTMOHnnO.jpg,0.0,0.0952,0.0,0.0,3,0,no
+790856,Love's a Killer: Rellik's Revenge,/nPRJTZRargnF6Pw4PEFILHZLQMd.jpg,0.0,0.0,/nPRJTZRargnF6Pw4PEFILHZLQMd.jpg,0.0,0.0,0.0,0.0,1,0,no
+801830,NEIN,/1w5g6GafIeqKsPIJFul5wiTkBMo.jpg,0.0,0.1667,/1w5g6GafIeqKsPIJFul5wiTkBMo.jpg,0.0,0.1667,0.0,0.0,2,0,no
+827144,The Corruption of Divine Providence,/u0pPj7tSpfISawJCCWrwpob5IWj.jpg,0.2,0.3111,/12HnoZek9DWAawyk1rco8Byx2SV.jpg,1.0,1.0,0.8,0.6889,5,1,overlap_gain
+853155,Bad Blood,/ndChza4196zQcg7rmwy6sU1ebAM.jpg,0.0,0.3333,/tEYO75bZZAPCNOmJoSFcJmZQdLQ.jpg,1.0,1.0,1.0,0.6667,3,1,overlap_gain
+865502,All Catacombs Are Grey,/cEvFyCq2YFThAhyIksD7WXu05pv.jpg,0.0,0.2593,/cEvFyCq2YFThAhyIksD7WXu05pv.jpg,0.0,0.2593,0.0,0.0,1,0,no
+887751,Der Wolf und die 7 Geißlein,/AapMK1JYU6Z2xOREXU6TD0T7Qep.jpg,0.3333,0.5,/AapMK1JYU6Z2xOREXU6TD0T7Qep.jpg,0.3333,0.5,0.0,0.0,1,0,no
+922848,Deadly Doula,/saZ1NgVXiPveHFiMQmpTCFCoD1M.jpg,0.0,0.1379,/5Q1Nq658LxtTcqRKgDMOixX02WS.jpg,1.0,1.0,1.0,0.8621,3,1,overlap_gain
+924618,Tardy Terror,/6XbXTw5aqXpllE3OrsdYzt6kvvo.jpg,0.0,0.381,/pjv2n6OhEr3oewUmVEdjI8t3PkH.jpg,1.0,1.0,1.0,0.619,3,1,overlap_gain
+927771,Guiltless,/2GV86puP0Ny1SnhyLd9vnU8DSps.jpg,0.0,0.4,/1peOEwz3dbXUCEXABJukWykCbpT.jpg,1.0,1.0,1.0,0.6,4,1,overlap_gain
+928529,Kappa no Sanpei: Ghost Operation,/qPCbxlTzlr4nTQSucldwVGzDOmd.jpg,0.0,0.1538,/uT8TsRBOQoNbdVC0YOHCmmqRnz0.jpg,0.0,0.1538,0.0,0.0,2,0,no
+956056,,/xgcm023crvd1KVP0rIbGYlYa37N.jpg,1.0,1.0,/xgcm023crvd1KVP0rIbGYlYa37N.jpg,1.0,1.0,0.0,0.0,1,0,no
+956491,Facies,/2BcYFWo7xw1WVoGAEvbR60jP1ux.jpg,0.0,0.2353,/2BcYFWo7xw1WVoGAEvbR60jP1ux.jpg,0.0,0.2353,0.0,0.0,1,0,no
+964250,Sheng Goes to Taiwan,/55Dk0wvloNQEfn9jYTmOBCHKHXA.jpg,0.0,0.2703,/55Dk0wvloNQEfn9jYTmOBCHKHXA.jpg,0.0,0.2703,0.0,0.0,1,0,no
+964991,Trapped in the System,/g7W3zBk1LBW1KgHs2j07XJJ1tRi.jpg,0.0,0.087,/g7W3zBk1LBW1KgHs2j07XJJ1tRi.jpg,0.0,0.087,0.0,0.0,1,0,no
+971152,Shockumentary,/2Oj16C4N7WWd58qeGs5NO49vIvx.jpg,0.0,0.08,/2Oj16C4N7WWd58qeGs5NO49vIvx.jpg,0.0,0.08,0.0,0.0,1,0,no
+1012007,Aspiralux,/hfBwbxXahRgGe0NBDnlCg1v3QVP.jpg,0.0,0.2326,/hfBwbxXahRgGe0NBDnlCg1v3QVP.jpg,0.0,0.2326,0.0,0.0,1,0,no
+1012014,Terrore,/nPoTpVrFttKBxK4AYD3UqYcBGC5.jpg,0.0,0.2609,/nPoTpVrFttKBxK4AYD3UqYcBGC5.jpg,0.0,0.2609,0.0,0.0,1,0,no
+1027859,The Hidden,/4sBIvoLbJl6J0RHlhGccI44s4ae.jpg,0.0,0.1176,/4sBIvoLbJl6J0RHlhGccI44s4ae.jpg,0.0,0.1176,0.0,0.0,1,0,no
+1029452,Moliile,/oHPd4Tz2VCTVX68JRl6yU4UXvib.jpg,0.0,0.2667,/oHPd4Tz2VCTVX68JRl6yU4UXvib.jpg,0.0,0.2667,0.0,0.0,2,0,no
+1032403,A Place Called Clayhill,/ycV7ZzsoyPeJzYZJMgDWwwQnNyT.jpg,0.0,0.2703,/bKiJbw2AD3i5Uem1qt7ZMuJgMaM.jpg,0.0,0.2703,0.0,0.0,2,0,no
+1037355,Wickedly Evil,/qQoDIwscVbS5ea99nvcxHI7vdF8.jpg,0.0,0.2439,/evspW8hqJlsdm766YLiIphocvQh.jpg,0.0,0.2439,0.0,0.0,3,0,no
+1038887,Paws,/vk5pdAd8jrebSz31RYkpmOgJj0e.jpg,0.0,0.1818,/vk5pdAd8jrebSz31RYkpmOgJj0e.jpg,0.0,0.1818,0.0,0.0,1,0,no
+1042644,,/aMCGMJ7LMdTa156VKCC8mAHQu8z.jpg,0.0,0.0,/aMCGMJ7LMdTa156VKCC8mAHQu8z.jpg,0.0,0.0,0.0,0.0,1,0,no
+1047662,Baobhan Sith,/cXJapyK94iEAJUCTvZ8LZPMVaEI.jpg,0.0,0.2264,/cXJapyK94iEAJUCTvZ8LZPMVaEI.jpg,0.0,0.2264,0.0,0.0,1,0,no
+1048127,Lets fuck part 2,/d24IitY2c7YPjlcLLD4AdrIER6k.jpg,0.0,0.3333,/iYcK9UghFZUrEVbq1aCELALcXs7.jpg,0.3333,0.4211,0.3333,0.0878,3,0,no
+1070867,,/sPYvQyQpYWUSEFLEyOKobr9xboK.jpg,0.0,0.1905,/sPYvQyQpYWUSEFLEyOKobr9xboK.jpg,0.0,0.1905,0.0,0.0,1,0,no
+1072680,Mark,/wp7VRPV3ej1lCu7FG513IOZTucx.jpg,0.0,0.1818,/wp7VRPV3ej1lCu7FG513IOZTucx.jpg,0.0,0.1818,0.0,0.0,1,0,no
+1073077,Mortified,/m4FB5rpouG1CynwTH4WNX1nJv1w.jpg,0.0,0.2857,/m4FB5rpouG1CynwTH4WNX1nJv1w.jpg,0.0,0.2857,0.0,0.0,1,0,no
+1079725,5G: The Reckoning,/2Vo6gIzZ9Lbh7UshNYiRiCzhG3R.jpg,0.0,0.2609,/2Vo6gIzZ9Lbh7UshNYiRiCzhG3R.jpg,0.0,0.2609,0.0,0.0,1,0,no
+1156820,Meat's Meat... And Man's Gotta Eat,/j6qVsEvsrpkkfdqem305Ssew727.jpg,0.0,0.1395,/77Mk88px0IbCQefe9JqY4l4say7.jpg,1.0,1.0,1.0,0.8605,2,1,overlap_gain
+1156834,The Smell of Death,/j6qVsEvsrpkkfdqem305Ssew727.jpg,0.0,0.2963,/j6qVsEvsrpkkfdqem305Ssew727.jpg,0.0,0.2963,0.0,0.0,1,0,no
+1160134,Strange Stories,/jAWQfvRiAW5z3tH3dxC4RzdMb0F.jpg,0.0,0.2667,/jAWQfvRiAW5z3tH3dxC4RzdMb0F.jpg,0.0,0.2667,0.0,0.0,1,0,no
+1167306,A Maid's Bitter Story,/xTxKg3LF8lDATEj1EIQXVXAterh.jpg,0.0,0.25,/xTxKg3LF8lDATEj1EIQXVXAterh.jpg,0.0,0.25,0.0,0.0,1,0,no
+1236920,Blood Fear,/kjxgu2fY0FBTd7uFqTksBsGm2zm.jpg,0.0,0.2143,/v8jvq07ZOBIg8n3uhaCLsbzOwPk.jpg,1.0,1.0,1.0,0.7857,2,1,overlap_gain
+1244525,Deathkeeper,/2yzSBxg93wPgNPJFZXr4MZ9fdDw.jpg,0.0,0.2667,/2yzSBxg93wPgNPJFZXr4MZ9fdDw.jpg,0.0,0.2667,0.0,0.0,1,0,no
+1257204,Mary Magdalene,/gpP2wGka0QmI1yjaRkYRkQuEBRp.jpg,0.0,0.2963,/gpP2wGka0QmI1yjaRkYRkQuEBRp.jpg,0.0,0.2963,0.0,0.0,1,0,no
+1261552,Those Who Dare,/w09A4ry343LJawDOSpUh1i6siRU.jpg,0.0,0.1667,/w09A4ry343LJawDOSpUh1i6siRU.jpg,0.0,0.1667,0.0,0.0,1,0,no
+1289680,Horsey,/8K1Pp2xpblUwcK9xuA81005dBJr.jpg,0.0,0.1905,/8K1Pp2xpblUwcK9xuA81005dBJr.jpg,0.0,0.1905,0.0,0.0,1,0,no
+1290214,Fantastic Features - Season Preview,/7e3hE2s4BhAfpOr8wnMv67QkpT6.jpg,0.0,0.0571,/7e3hE2s4BhAfpOr8wnMv67QkpT6.jpg,0.0,0.0571,0.0,0.0,1,0,no
+1356360,Upside Down Polaroid,/CnDRprSy28X46biPcMWihCYGYY.jpg,0.0,0.1875,/hT4CDNVTIcUHPfalwv2rCtgyg5i.jpg,0.0,0.3704,0.0,0.1829,4,0,no
+1379372,Moving Out,/9KqUuDOztKIqF8tcr8mm8lKOsbL.jpg,0.0,0.2353,/9KqUuDOztKIqF8tcr8mm8lKOsbL.jpg,0.0,0.2353,0.0,0.0,1,0,no
+1379718,Coming Attractions,/82Dnb5naDkwh1oB9PHD066WiW0N.jpg,0.0,0.2424,/82Dnb5naDkwh1oB9PHD066WiW0N.jpg,0.0,0.2424,0.0,0.0,1,0,no
+1381878,The Day of Reckoning,/3HaIA51A0Cbkch1QYedq6SeeUy8.jpg,0.0,0.24,/3HaIA51A0Cbkch1QYedq6SeeUy8.jpg,0.0,0.24,0.0,0.0,1,0,no
+1390997,Brayden's Adventures Nature Walk - Tackling Wainuiomata Hill,/vHkRqQP7CklWocrJZeAYYPFZQ9g.jpg,0.0,0.125,/vHkRqQP7CklWocrJZeAYYPFZQ9g.jpg,0.2857,0.5217,0.2857,0.3967,1,0,no
+1395245,Gruesome,/oTP9wq2OKG7l9vD4Sq6cRlcVE4o.jpg,0.0,0.3243,/oTP9wq2OKG7l9vD4Sq6cRlcVE4o.jpg,0.0,0.3243,0.0,0.0,1,0,no
+1424947,By the Throat,/gogMju5zzVINnuMCiDPbutYPMWr.jpg,0.3333,0.5,/94LEtDFFr0PgcP5MJYrhLJnD6FT.jpg,1.0,1.0,0.6667,0.5,2,1,overlap_gain
+1437479,Remember To Enjoy The Light Before It’s Gone,/iHWSekKhzCLKnOrwoaVzsKWeihk.jpg,0.0,0.2745,/23QqbNuhDyWcBEe0HhNLs2Oc3YU.jpg,0.375,0.6071,0.375,0.3326,5,1,fuzzy_gain
+1447316,Smoke Alarm,/5Icj2Mx6gmVR4qmysAlIP8MXBud.jpg,0.0,0.2222,/5Icj2Mx6gmVR4qmysAlIP8MXBud.jpg,0.0,0.2222,0.0,0.0,1,0,no
+1451359,Heavily Pregnant Susan,/ouDzi7K4CJSPFR7klhdfQElziDr.jpg,0.0,0.1935,/ouDzi7K4CJSPFR7klhdfQElziDr.jpg,0.0,0.1935,0.0,0.0,1,0,no
+1453542,The Ghost Story.,/vindgdsxQIxnAgjEKDIIw9nBsiT.jpg,0.0,0.3125,/vindgdsxQIxnAgjEKDIIw9nBsiT.jpg,0.0,0.3125,0.0,0.0,1,0,no
+1466771,Welcome To Fredbear's,/eqDiQr5Oso9FuE6rrTRijsbEBil.jpg,0.0,0.3684,/eqDiQr5Oso9FuE6rrTRijsbEBil.jpg,0.0,0.3684,0.0,0.0,1,0,no
+1498452,Edmonton To Milan,/IaPwL5ur1XDJ66aVJYOD07HZBL.jpg,0.0,0.0,/IaPwL5ur1XDJ66aVJYOD07HZBL.jpg,0.0,0.0,0.0,0.0,1,0,no
+1505601,Blair's Craft Projects,/1rT3ByUpBHvXdWMvIaiRIc6DV03.jpg,0.0,0.0,/qSidLnWuHWmPksFuvpmCpvDasb9.jpg,1.0,1.0,1.0,1.0,2,1,overlap_gain
+1532507,"Shearling - May 24, 2025",/mHDfo6OC2z6S0OqfCIabxZvQDSA.jpg,0.0,0.0,/mHDfo6OC2z6S0OqfCIabxZvQDSA.jpg,0.0,0.0,0.0,0.0,2,0,no
+1535311,spectre girl tries stand up,/gf37nv7jD0wTZLCn5pOqfzrKzme.jpg,0.0,0.2222,/gf37nv7jD0wTZLCn5pOqfzrKzme.jpg,0.0,0.2222,0.0,0.0,1,0,no
+1577501,The Long Walk Back to the Bed,/rByzoxElBCMXHxn3jdACMnnnjTH.jpg,0.1667,0.2791,/jVfk5oRgGHIvVPeQtArxBhoLnPL.jpg,0.1667,0.2791,0.0,0.0,2,0,no
+1588271,Phyllis,/e9iWGP7H8RotarTT47CEg87WpIG.jpg,0.0,0.1,/e9iWGP7H8RotarTT47CEg87WpIG.jpg,0.0,0.1,0.0,0.0,2,0,no
+1594713,The BirdMan,/6Q92uwbJlA1dwdmjCQsH2nApUOB.jpg,0.0,0.0,/6Q92uwbJlA1dwdmjCQsH2nApUOB.jpg,0.0,0.0,0.0,0.0,1,0,no
+1597529,Saint Lucy's Day,/31Ifp8EbaFIOLqDrypPFgUcgU8x.jpg,0.0,0.3478,/31Ifp8EbaFIOLqDrypPFgUcgU8x.jpg,0.0,0.3478,0.0,0.0,1,0,no
+1602352,Malevolent,/pcdVTwbXkOtUhk62I4ppCHJFzhl.jpg,0.0,0.1111,/pcdVTwbXkOtUhk62I4ppCHJFzhl.jpg,0.0,0.1111,0.0,0.0,1,0,no
+1608753,Crisis Actress,/b46BXsdp8XRPeKAosHHSX792khI.jpg,0.0,0.1111,/b46BXsdp8XRPeKAosHHSX792khI.jpg,0.0,0.0,0.0,-0.1111,1,0,no
+1611636,Goosebumps: Don't Wake Mummy,/9EU2G7YI02aZgdaM5HiXcXXomiH.jpg,0.25,0.4878,/jrjuMtxEWtkm8rbqTDBVeNFJwjz.jpg,0.25,0.6061,0.0,0.1183,2,0,no
+1638821,Asphalt Inferno,/2oQtrZUc51grwFdXASNsbghWc26.jpg,0.0,0.3333,/2oQtrZUc51grwFdXASNsbghWc26.jpg,0.0,0.3333,0.0,0.0,1,0,no
+1651814,,/b3y5llqGeMZn6fO0XNs0w4PFiY7.jpg,1.0,0.9231,/b3y5llqGeMZn6fO0XNs0w4PFiY7.jpg,1.0,0.9231,0.0,0.0,1,0,no
+1676162,Who Are You,/m0jiJTcsEem5L1YHYIbYRwdpxtv.jpg,0.0,0.3,/m0jiJTcsEem5L1YHYIbYRwdpxtv.jpg,0.0,0.3,0.0,0.0,1,0,no
+1681289,BREATHE,/nECL5SPSqafT97ksU4a38imULmr.jpg,0.0,0.1667,/kOarl6QPALJmB3nwiYhl8ajBHOl.jpg,0.0,0.1667,0.0,0.0,4,0,no
+1711077,Hiding in Plain Sight,/gasSNSmnrUw51dNqDosYx8C2Yu6.jpg,0.0,0.2439,/gasSNSmnrUw51dNqDosYx8C2Yu6.jpg,0.0,0.2439,0.0,0.0,1,0,no
+1712166,PRETTY KIND,/2Xy31H397Tv7O8Vm601TtZysFL3.jpg,0.0,0.1818,/2Xy31H397Tv7O8Vm601TtZysFL3.jpg,0.0,0.1818,0.0,0.0,1,0,no
+1736276,Nasty,/1mtGntTrrWL3EEg9VinfEqKMs6D.jpg,0.0,0.3,/1mtGntTrrWL3EEg9VinfEqKMs6D.jpg,0.0,0.3,0.0,0.0,1,0,no
+1736717,Back from the Dead,/cGXAVl4a6efuIzackPaLLBtiMef.jpg,0.0,0.2,/cGXAVl4a6efuIzackPaLLBtiMef.jpg,0.0,0.2,0.0,0.0,1,0,no
