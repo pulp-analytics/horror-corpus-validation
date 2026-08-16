@@ -58,7 +58,7 @@ import requests
 sys.path.insert(0, str(Path(__file__).parent))
 from utils.aws_config import get_tmdb_key
 from utils.logging_setup import get_logger
-from utils.resumable import load_done_ids, open_for_append, write_csv_rows
+from utils.resumable import load_done_ids, open_for_append, shard_rows, write_csv_rows
 from utils.tmdb_client import IMAGE_BASE_URL
 from utils.tmdb_completeness import completeness_key, get_completeness_signals
 
@@ -94,6 +94,15 @@ def main():
     ap.add_argument("--verified", default="data/sample_output/poster_verification.csv",
                      help="output of 02_verify_poster_exists.py; ids not marked verified=1 there "
                           "are skipped here without attempting a download. Pass '' to disable.")
+    ap.add_argument("--shard-index", type=int, default=0)
+    ap.add_argument("--shard-count", type=int, default=1,
+                     help="split --in across N parallel shards for the download+hash phase "
+                          "(default 1: no sharding). The final group-by-md5 step needs the "
+                          "*global* set of hashes, so it only sees what's in --cache -- run N "
+                          "shards each with their own --cache, merge the cache files, then run "
+                          "once more with --shard-count 1 and --cache pointed at the merged file "
+                          "to get a correct final grouping (todo will be empty, so it goes "
+                          "straight to grouping).")
     args = ap.parse_args()
 
     api_key = get_tmdb_key()
@@ -101,6 +110,7 @@ def main():
 
     with open(args.in_path, newline="", encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
+    rows = shard_rows(rows, args.shard_index, args.shard_count)
 
     verified_ids = load_verified_ids(Path(args.verified)) if args.verified else None
     if verified_ids is not None:
