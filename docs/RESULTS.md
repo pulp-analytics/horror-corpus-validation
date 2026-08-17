@@ -1127,3 +1127,64 @@ into `10_collapse_compilations.py` itself as a second resolution label
 (e.g. `confirmed_not_compilation` vs. a real remaining
 `ambiguous_needs_review`) rather than leaving everything under one
 `no_compilation_entry_found` bucket.
+
+## Gate 2 (isAdult): the deterministic signal IS the ground truth, plus a real join spot-check
+
+Re-examined the framing from the section above: IMDb's `isAdult` flag
+isn't a signal we compute that needs an independent human-judgment
+ground-truth leg the way CLIP similarity or a zero-OCR heuristic do --
+it's a direct pull from a real, editorially-curated external database,
+the same epistemic status `alt_titles_imdb` already has as ground truth
+elsewhere in this document. A human reviewer looking only at a poster
+has *less* information than IMDb's own classification, so there's
+nothing for a blind poster review to add here. What's actually worth
+checking instead is data-pipeline integrity: did we join each id to the
+*correct* IMDb `tconst`, not whether IMDb's own judgment is right.
+
+**Join spot-check (live, 2026-08-17)**: recomputed the full isAdult hit
+set fresh against `master_dataset.csv` (164 ids this time, up slightly
+from the earlier 160 -- imdb_id coverage grew a bit from this session's
+other residual fills) and cross-referenced each hit's TMDB title/year
+against its own IMDb `tconst`'s `primaryTitle`/`startYear` from
+`title.basics.tsv.gz`, using the same `title_overlap_score`/fuzzy-match
+logic as gate 5-6.
+
+| result | n | % |
+|---|---|---|
+| title matches well (score >= 0.5) -- join confirmed correct | 149 | 90.9% |
+| title looks different | 15 | 9.1% |
+
+Of the 15 title-different cases, inspecting them individually shows
+**12 are real translated-title pairs, not join errors** -- same pattern
+as the Nova-mismatch/IMDb-AKA finding above, now showing up in a
+completely different check: e.g. `"Oltre La Follia"` (TMDB, Italian) vs
+`"Beyond Madness"` (IMDb) is a literal translation, same year (2016);
+`"Hakujitsumu 2"` vs `"Daydream 2"` -- "hakujitsumu" literally means
+daydream in Japanese, same year, same sequel number. All 12 have
+matching or near-matching release years despite the title divergence,
+which is what actually confirms them as correct joins, not the title
+text. **Only 3 of 164 (1.8%) remain genuinely uncertain** -- these have
+no TMDB year at all to cross-check against, so title divergence can't be
+resolved either way without a manual look: ids `834437`, `395650`,
+`846004`.
+
+**Gate 14 cross-check, completed (was 60/160, now scored against all
+available data)**: of the 164 isAdult hits, 114 (69.5%) have moderation
+scores already computed (`nova_blood_gore`/`violence`/`sexual_content`,
+`rek_gore`/`violence` -- the real project's own historical enrichment,
+not re-run live this session); 50 don't have this data yet. Of the 114
+scored, **85 (74.6%) cross gate 14's own flagging thresholds** (Nova
+fields >= 0.5, Rekognition fields >= 0.4) -- up from the earlier
+36.7% partial read, and now confirmed as a real ~3.75x lift over gate
+14's overall ~11% flag rate on the general corpus. `nova_sexual_content`
+is by far the dominant reason (74 of 114), which makes sense --
+exploitation/erotic content is exactly what `isAdult` is meant to catch,
+and exactly the axis gate 14's Nova prompt should catch it on too. The
+remaining 25.4% not flagged reconfirms the finding above: `isAdult` is
+film-level (explicit content in the actual runtime), gate 14's visual
+signals are poster-level -- plenty of adult films use non-explicit
+poster art, so full agreement was never expected.
+
+Built with ad-hoc scripts in scratchpad (not yet ported): the title/
+year join spot-check reuses `scripts/utils/text_match.py` directly, no
+new logic needed.
