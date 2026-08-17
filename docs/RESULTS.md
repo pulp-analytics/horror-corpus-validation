@@ -550,6 +550,63 @@ exploitation films use suggestive-but-not-explicit poster art. The two
 signals are complementary, not redundant; neither should stand in for
 the other.
 
+## Isolated prompts vs. one combined mega-prompt — resolved with real human review
+
+Real design question raised mid-session: this repo's gates ask Nova one
+narrow question per call (04 = title text only, 13 = moderation only).
+The real project's `nova_poster_enrich.py` asks 15+ things in one call
+instead. Does the isolated design actually produce better results, or is
+it just extra API calls for no real gain? Tested live 2026-08-16, same
+model (Nova Pro), same 672 posters, only the prompt structure differs
+(`scripts/qa/nova_mega_prompt_comparison.py`, `ENRICH_PROMPT` copied
+verbatim from the real project).
+
+**Title reading** (real ground truth: catalog title overlap score):
+isolated 0.497 mean overlap vs. combined 0.269 — isolated wins on 181/658
+posters, combined on 11, the rest ties (mostly cases neither engine could
+read at all). Isolated reads titles roughly twice as accurately.
+
+**Moderation** (blood_gore/violence/sexual_content): the two prompts
+disagreed on the >=0.5 flag decision for 155/658 posters. No ground
+truth existed for this, so a blind human-review tool was built
+(`scripts/qa/build_mega_prompt_review_page.py` — shows only the poster
+and a direct yes/no/unsure question per disputed axis, without revealing
+either system's score, to avoid anchoring the reviewer) and reviewed by
+hand. Important calibration note from that review: "yes" was judged as
+*does this look genuinely photorealistic/extreme*, not *does the artwork
+contain any stylized reference to blood/violence* — horror poster art
+routinely includes illustrated blood as a normal genre convention, and
+that's specifically not what this project wants flagged (see the
+gore/snuff-exclusion goal this whole gate 13 effort started from).
+Result, matched against that human judgment:
+
+| axis | isolated (gate 13) correct | combined (mega-prompt) correct |
+|---|---|---|
+| blood_gore | 85.5% (65/76) | 14.5% (11/76) |
+| violence | 87.9% (94/107) | 12.1% (13/107) |
+| sexual_content | 72.2% (39/54) | 27.8% (15/54) |
+
+Since every row here is a disagreement by construction (one engine says
+flagged, the other doesn't), exactly one side matches the human verdict
+per row -- these percentages are directly complementary, not independent
+error rates. **Isolated wins by 3-6x across every axis tested.** A
+plausible mechanism: AWS's own moderation labels (Rekognition, inside
+gate 13's isolated design) are trained on real photographs, so they
+already skew toward flagging photorealistic content over stylized
+illustration; Nova given one narrow question per call seems to inherit
+that same discipline, while the same model asked 15 things in one call
+appears to interpret "blood_gore likelihood" more literally, catching
+stylized genre-typical horror art the human reviewer correctly didn't
+want flagged.
+
+Side finding: the real `ENRICH_PROMPT`, copied verbatim for this test,
+reproduces the exact "literal 'none' echoed as a sensitive-content tag"
+bug this repo found and fixed in its own early gate 13 draft (see
+`13_content_moderation.py`'s prompt-wording fix, live-verified
+2026-08-15) — meaning that noise is likely present in the real corpus's
+actual historical moderation data too, not just an artifact of this
+repo's first attempt.
+
 ## OMDb enrichment — a new, independent data source (not a re-port)
 
 Unlike the gates above, OMDb was never part of the real project's
