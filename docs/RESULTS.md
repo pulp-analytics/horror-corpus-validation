@@ -1338,3 +1338,32 @@ checked for before assuming new compute was needed) plus today's
 `overlap_against_all_titles` -- zero new Bedrock/Pixtral calls, entirely
 Comprehend+Translate quota that would otherwise have sat idle while the
 Pixtral OCR retry runs.
+
+## Gate 4 on scifi/mystery/thriller: real per-genre variation, not noise
+
+Ran live 2026-08-17 (Nova, a separate Bedrock quota pool from the Pixtral
+job running concurrently -- confirmed safe at this concurrency earlier
+this session): the same free zero-OCR-candidate extraction from existing
+Rekognition OCR (above) found 1,048/896/1,235 zero-text candidates for
+scifi/mystery/thriller, and gate 4's actual two-stage logic ran on all of
+them (0 errors across 3,179 calls).
+
+| genre | not poster | is poster |
+|---|---|---|
+| horror (human-reviewed reference) | 73.1% | 26.5% |
+| scifi | 78.5% | 21.5% |
+| mystery | 61.5% | 38.5% |
+| thriller | 50.0% | 50.0% |
+
+Scifi tracks horror's pattern closely. Mystery and especially thriller
+are genuinely different -- half of thriller's zero-OCR-text candidates
+are real posters, not junk. Plausible and worth a human spot-check
+before trusting fully: prestige/arthouse thrillers and mysteries lean
+more on minimalist, deliberately textless key art than horror's often
+cheaper/more obscure catalog does, so a real, lower "not-a-poster" base
+rate for those genres is a defensible finding rather than a gate-4
+miscalibration. No human ground truth exists yet for these 3 genres to
+confirm the 91.5% accuracy carries over exactly -- flagged as a real
+follow-up, not silently assumed.
+
+Built with `gate4_multigenre.py` (scratchpad).
