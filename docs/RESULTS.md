@@ -1188,3 +1188,16 @@ poster art, so full agreement was never expected.
 Built with ad-hoc scripts in scratchpad (not yet ported): the title/
 year join spot-check reuses `scripts/utils/text_match.py` directly, no
 new logic needed.
+
+**A third corroborating signal, checked and found weak**: OMDb's
+`Rated` field already shows a real, corpus-wide monotonic gradient
+against gate 14's visual flags (above) -- worth checking specifically
+against these 164 isAdult ids too. Result: only **8/164 (4.9%) carry an
+explicit X rating**, and the field is mostly empty for this specific
+subset -- 131/164 (79.9%) are `N/A` (OMDb has no rating data at all),
+another 19 are formally `Unrated`/`Not Rated`. Unlike the corpus-wide
+check (103,625/103,625 coverage), MPAA rating data is sparse
+specifically for obscure 1970s-90s exploitation titles -- most were
+never formally submitted for rating. Real but weak: a genuine, if small,
+corroborating signal (8 explicit X hits), not a third full-strength
+pillar the way gate 14's 74.6% cross-check is.
