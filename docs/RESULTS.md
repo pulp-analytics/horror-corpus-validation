@@ -803,3 +803,54 @@ Not yet changed in `multi_poster_pipeline.py` itself (that's the real
 project's own file, ported as-is elsewhere in this repo); worth raising
 upstream. Any future gate in this repo that ports the `select` /
 clustering step should default to `--sim 0.90`, not `0.96`.
+
+## Alt-poster classification: refining `has_credits_text` against human ground truth
+
+A Nova Pro classifier judges each alt-poster variant against a movie's
+primary poster on two axes -- `same_artwork` (is it the same underlying
+illustration, just cropped/recolored/re-lettered?) and `has_credits_text`
+(does the variant carry a real credits block that would disqualify it as
+a clean canonical poster?). This is a candidate signal for a future
+canonical-poster-selection gate, so before trusting it, it needed the
+same treatment as the CLIP threshold above: blind human review on a real
+100-pair sample, ground truth the classifier never saw.
+
+The first pass (`same_artwork` 78% precision / 100% recall,
+`has_credits_text` only 52% precision / 96.3% recall) showed a specific,
+diagnosable failure mode on inspecting the false positives: Nova was
+flagging a movie's own stylized title wordmark/logo as a "credits
+block" whenever it was large, stacked, or artistically rendered (e.g.
+*Spider-Man 3*'s title treatment) -- a title logo is not a credits
+block, but the original prompt never said so explicitly.
+
+Fix: rewrote the `has_credits_text` half of the prompt to positively
+describe what a real credits block looks like (small print, several of
+cast/crew/studio-logo/date/rating/copyright, individually hard to read
+at a glance) and explicitly exclude title wordmarks, taglines, and "no
+text at all" as `false` regardless of size or styling. Re-ran on the
+exact same 100 human-reviewed pairs for a clean before/after against the
+same ground truth (`same_artwork` logic untouched, so its numbers are
+the noise floor):
+
+| signal | version | accuracy | precision | recall |
+|---|---|---|---|---|
+| `same_artwork` | v1 | 89.0% | 78.0% | 100% |
+| `same_artwork` | v2 (unchanged logic, re-run) | 88.0% | 76.5% | 100% |
+| `has_credits_text` | v1 | 75.0% | **52.0%** | 96.3% |
+| `has_credits_text` | v2 (refined prompt) | **91.0%** | **80.0%** | 88.9% |
+
+`has_credits_text` went from barely-better-than-a-coin-flip precision
+(24 false positives out of 100, mostly title-logo confusion) to 80%
+precision with a small, acceptable recall cost (3 new false negatives).
+`same_artwork`'s ~1pt swing between v1/v2 is just re-run noise -- its
+prompt half wasn't touched, confirming the fix was isolated to the
+signal it targeted. This reconfirms the session's repeated finding that
+narrow, single-purpose prompts beat combined ones: the original mega-
+prompt's `has_credits_text` question was being pulled off-target by the
+same image region the `same_artwork` question was also looking at.
+
+Not yet ported into a numbered gate script in this repo -- this was
+scored against a hand-picked 100-pair sample, not the full corpus, and
+no canonical-poster-selection gate exists yet to consume it. Worth
+building as a future gate once the multi-genre CLIP re-cluster (see
+above, `--sim 0.90`) lands, using v2's prompt from the start.
