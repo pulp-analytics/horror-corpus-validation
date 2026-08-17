@@ -622,6 +622,18 @@ bug this repo found and fixed in its own early gate 14 draft (see
 actual historical moderation data too, not just an artifact of this
 repo's first attempt.
 
+**This is also gate 14's ground-truth leg**, not just an isolated-vs-
+mega-prompt comparison — the 85.5%/87.9%/72.2% numbers above are real
+human judgment scored directly against gate 14's own Nova fields
+(`nova_blood_gore`/`nova_violence`/`nova_sexual_content`). Scope caveat:
+the 155 reviewed rows are the *disagreement* set between isolated and
+mega-prompt, not a random sample of everything gate 14 flags — it
+answers "when Nova's isolated call and Rekognition/mega-prompt
+disagree, which is right" (isolated, clearly), not "is the 11% gate 14
+flagged in the full run correct." A random-sample review of gate 14's
+final combined verdict (not just the disagreement subset) is the
+remaining gap, not a full absence of ground truth.
+
 ## Gate 10 (compilation collapse) at real scale — 67/110 groups rescued
 
 Rather than wait for the full-corpus Nova OCR cascade (hours away),
@@ -934,3 +946,78 @@ Built with `verify_mismatch_against_imdb_akas.py` (scratchpad, not yet
 ported into this repo as a numbered script -- worth doing once/if a
 title-match gate here starts consuming `alt_titles_imdb` directly rather
 than just the single catalog title it uses today).
+
+## Before filtering "not a real poster": check every other poster TMDB has
+
+The poster-type finding above (73.1% of zero-OCR posters really aren't
+movie posters) is a candidate for an actual filter gate -- but a movie's
+`poster_path` is just whichever image TMDB happens to have set as
+primary. Filtering the movie outright on that one image being bad would
+be wrong if a real, valid poster exists among that movie's OTHER TMDB
+image entries. Live-checked 2026-08-17: for all 1,856 ids confirmed
+`no_es_poster` by human review, fetched every poster variant TMDB has
+(broad multi-language search, `include_image_language` across 26
+language codes -- TMDB's default image list silently drops most non-
+English/non-original-language posters) and ran Rekognition `DetectText`
+on each one not already reviewed.
+
+| outcome | n | % |
+|---|---|---|
+| no other poster exists at all -- stays rejected | 1,597 | 86.0% |
+| has alternates, but none has real text -- confirmed reject | 94 | 5.1% |
+| **has an alternate WITH real text -- rescued** | **165** | **8.9%** |
+
+**8.9% of the "not a real poster" set would have been wrongly discarded**
+by filtering on the primary `poster_path` alone -- these are real movies
+with a real poster, just not the one TMDB happened to mark primary (a
+sequel/franchise entry where TMDB defaulted to a generic reused image is
+the common pattern here). The other 259 ids that had alternates split
+roughly 64%/36% rescued vs. confirmed -- alternates existing is not
+itself a signal the movie has a real poster, they still had to be OCR'd
+individually. Zero errors across all 1,856 checks (0 TMDB failures, 0
+Rekognition throttling).
+
+**Conclusion for any future poster-type filter gate**: never reject on
+the primary `poster_path`'s OCR result alone. The correct check is "does
+ANY poster variant for this movie have real text" -- reject only when
+that's false across every image TMDB has. Built with
+`check_alt_posters_before_reject.py` (scratchpad); not yet a numbered
+gate in this repo, since (per the finding above) an OCR-only filter still
+needs an LLM leg before it's trustworthy enough to actually drop rows.
+
+## A free deterministic proxy for `has_credits_text` -- the missing third leg
+
+The alt-poster `has_credits_text` signal (above) had an LLM leg (Nova
+v2, 80% precision) and a human ground-truth leg (100 pairs), but no
+deterministic one -- unlike `same_artwork`, which has CLIP's cosine
+similarity as an independent, free, non-LLM signal. A real credits block
+is geometrically distinctive: several lines of SMALL text clustered near
+the bottom edge, distinct from a title logo (which is usually large and
+higher up). That's directly measurable from Rekognition `DetectText`'s
+own bounding-box geometry (`Top`/`Height`, normalized 0-1) -- no model
+call, already computed as a byproduct of OCR gates this repo runs
+anyway.
+
+Heuristic: count LINE detections with `Top >= 0.75` (bottom quarter) AND
+`Height <= 0.035` (small font, relative to image height); flag
+`has_credits_text` if that count is >= a threshold. Scored live
+2026-08-17 against the same 100-pair human ground truth used for the
+Nova v2 result, sweeping the line-count threshold:
+
+| threshold (n small bottom lines) | accuracy | precision | recall |
+|---|---|---|---|
+| >= 1 | 79.0% | 60.0% | 66.7% |
+| **>= 2** | **84.0%** | **76.2%** | 59.3% |
+| >= 3 | 83.0% | 81.2% | 48.1% |
+| >= 4 | 84.0% | 86.7% | 48.1% |
+
+Best point (>=2) is real but clearly behind Nova v2 (91% acc / 80% prec
+/ 88.9% recall) -- geometry alone can't tell a genuine credits block from
+e.g. a small foreign-language tagline sitting low on the poster, which
+Nova's semantic reading can. Still useful: it's free (no LLM call,
+reuses OCR data other gates already produce), so it's a legitimate cheap
+pre-filter (route only geometry-flagged candidates to Nova, skip the
+LLM call entirely on posters with no small bottom-clustered text at all)
+or a second-opinion cross-check, not a replacement for the LLM leg.
+Built with `detect_credits_block_deterministic.py` (scratchpad); not yet
+wired into any gate.
