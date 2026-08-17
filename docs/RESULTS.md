@@ -1307,5 +1307,34 @@ today's `overlap_against_all_titles`) against this existing OCR text:
 from the Bedrock/Pixtral work running concurrently (confirmed via `aws
 service-quotas`: Comprehend `DetectDominantLanguage` is 200 TPS
 per-account, Rekognition `DetectText`/`DetectModerationLabels` 50 TPS
-each -- nowhere near saturated by this volume). Results pending at time
-of writing; see the next entry for the full breakdown once it completes.
+each -- nowhere near saturated by this volume).
+
+**Results, complete 2026-08-17**, compared against horror's original
+20,168-row run:
+
+| reclassified | horror | scifi | mystery | thriller |
+|---|---|---|---|---|
+| `false_mismatch_language` | 21.9% | 10.6% | 15.0% | 11.6% |
+| `true_mismatch` | 36.6% | 32.0% | 36.8% | 34.1% |
+| `true_mismatch_english` | 40.8% | 56.1% | 46.2% | 52.5% |
+| `translate_failed` | 0.75% | 1.4% | 2.0% | 1.8% |
+
+Scifi and thriller show markedly *less* language-driven false-mismatch
+than horror (10.6%/11.6% vs. 21.9%) and correspondingly more
+`true_mismatch_english` -- a real, sensible genre difference, not noise:
+horror skews toward more international/lower-budget titles with foreign-
+market posters, while scifi/thriller blockbusters skew English-dominant
+mainstream releases. Mystery sits closest to horror's pattern (15.0%
+false-language, closer international-title mix). All 3 genres'
+`translate_failed` rates are consistent with horror's (1-2%, same short-
+OCR-text ceiling documented above -- Translate's own `auto` detection
+fails identically to Comprehend's guess on very short strings, confirmed
+live rather than assumed this session).
+
+Built with `genre_mismatch_translate_check.py` (scratchpad); the mismatch
+candidates themselves came free from existing local Rekognition OCR
+(`poster_ocr_rek_text_{scifi,mystery,thriller}.csv`, already run,
+checked for before assuming new compute was needed) plus today's
+`overlap_against_all_titles` -- zero new Bedrock/Pixtral calls, entirely
+Comprehend+Translate quota that would otherwise have sat idle while the
+Pixtral OCR retry runs.
