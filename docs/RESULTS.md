@@ -607,6 +607,29 @@ bug this repo found and fixed in its own early gate 13 draft (see
 actual historical moderation data too, not just an artifact of this
 repo's first attempt.
 
+## OMDb's Rated (MPAA/TV) vs. gate 13's visual flag — a clean, monotonic gradient
+
+With OMDb enrichment complete (103,625/103,625 ids) and gate 13's full-
+corpus run 59% done (77,825/131,644 as of this check), cross-referenced
+`Rated` against `flagged` for the 28,800 ids with both a real rating and
+a gate 13 result:
+
+| Rated | flagged % |
+|---|---|
+| G / TV-G / TV-PG (children's) | 3.1-7.7% |
+| PG / PG-13 / TV-14 / Approved | 10.8-14.6% |
+| R / TV-MA / Unrated / Not Rated | 21.5-26.9% |
+| X / NC-17 | 36.7-37.5% |
+
+A clean, close-to-monotonic gradient across the real severity scale --
+about 5x higher flag rate at X/NC-17 than at G-rated. Unlike the
+`isAdult` check (binary, 0.155% of the corpus, hard to use as a
+continuous signal), MPAA/TV ratings span the full severity range and
+line up sensibly with gate 13's own visual scoring, a real independent
+validation that the visual moderation gate is measuring something real
+and coherent, not noise. Will get more complete as gate 13's full run
+finishes.
+
 ## Refining gate 13's prompt with the photorealism-vs-stylized distinction
 
 Given the human review above explicitly judged "genuinely photorealistic/
