@@ -38,6 +38,8 @@ import sys
 import time
 from pathlib import Path
 
+from botocore.exceptions import ClientError
+
 sys.path.insert(0, str(Path(__file__).parent))
 from utils.aws_config import get_client
 from utils.constants import TRANSLATE_BELOW, TRANSLATE_MIN_CHARS
@@ -77,7 +79,7 @@ def main():
         titles = {r["id"]: r.get("title", "") for r in csv.DictReader(f)}
 
     out_path = Path(args.out)
-    fields = ["id", "lang_code", "text", "translated", "overlap_before", "overlap_after"]
+    fields = ["id", "lang_code", "text", "translated", "overlap_before", "overlap_after", "error"]
 
     done = load_done_ids(out_path)
     todo_ids = [mid for mid in lang_rows if mid not in done]
@@ -94,16 +96,26 @@ def main():
             lang = row.get("lang_code", "")
             overlap_before = title_overlap_score(text, title)
 
-            translated, overlap_after = "", overlap_before
+            translated, overlap_after, error = "", overlap_before, ""
             needs_translate = lang and lang != "en" and len(text) >= args.min_chars and overlap_before < TRANSLATE_BELOW
             if needs_translate:
-                translated = translate_to_en(translate, text)
-                overlap_after = title_overlap_score(translated, title)
-                n_translated += 1
+                try:
+                    translated = translate_to_en(translate, text)
+                    overlap_after = title_overlap_score(translated, title)
+                    n_translated += 1
+                except ClientError as e:
+                    # Real example: Comprehend detects a language Translate
+                    # itself doesn't support translating FROM (e.g. Odia,
+                    # "or") -- UnsupportedLanguagePairException. Not
+                    # retryable by trying again; record it and move on
+                    # instead of crashing the whole (possibly hours-long)
+                    # run on one unsupported id.
+                    error = str(e)[:200]
+                    log.info(f"  {mid}: translate failed ({error})")
                 time.sleep(0.1)
 
             w.writerow({"id": mid, "lang_code": lang, "text": text, "translated": translated,
-                        "overlap_before": overlap_before, "overlap_after": overlap_after})
+                        "overlap_before": overlap_before, "overlap_after": overlap_after, "error": error})
             if i % 25 == 0:
                 log.info(f"{i}/{len(todo_ids)} (translated so far: {n_translated})")
     finally:
