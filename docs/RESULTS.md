@@ -691,3 +691,115 @@ against real titles (e.g. *Star Wars*: Rated PG, RT 93%, Metacritic
 90/100, imdbRating 8.6) before running at full scale. Results pending as
 of this write-up; see `pipeline/data/qa/omdb_enrichment.csv` once the
 background run completes.
+
+## Bedrock throttling: Pixtral's real per-account limit is much lower than Nova's
+
+Live-discovered (2026-08-17, `sandbox_bedrock` profile) running gate 5's
+full-corpus cascade with both engines: Nova Pro tolerated 20 parallel
+shards cleanly (480 real errors / 131,644 = 0.4%). Pixtral Large did not
+-- the identical 20-shard pattern produced 91% `ThrottlingException`.
+Reducing to 4 shards still produced 84-92% throttling in the most
+recently-written rows (not just stale rows from the first attempt --
+confirmed via a dedicated recent-error-rate check, see below). A direct
+rate probe settled it: serial (1 request at a time), `--delay 1.5`
+still throttled ~84% of calls; `--delay 2.5` and `--delay 5.0` both ran
+clean (0/30 and 0/12 errors). This isn't a concurrency bug in this repo's
+code -- `utils/aws_config.get_client()` already configures
+`Config(retries={"max_attempts": 5, "mode": "adaptive"})` -- it's a real,
+low, per-account Bedrock quota for this specific model in this specific
+sandbox, well below what a naive "spread the same delay across N
+parallel shards" assumption would predict. Anyone running gate 5 with
+`--model` pointed at Pixtral (or any model without a known-good
+concurrency budget) should rate-probe with a small `--limit`-equivalent
+sample first rather than assuming Nova's tolerance carries over.
+
+**A stall-only watchdog missed this for a full run's worth of wall-clock
+time.** The failure mode -- a process alive and steadily writing output,
+where most of what it writes is an error row -- looks identical to a
+healthy run to any monitor that only checks "is it still writing?" (log
+mtime, row-count-increasing). It was only caught by manually inspecting
+the `error` column after a run finished. The fix: a monitor that
+periodically re-reads the actual output and computes the error rate
+among the most-recently-written rows (not cumulative-since-start, which
+stays polluted by an earlier failed attempt long after a fix lands) and
+alerts on a threshold crossing -- the same class of check `--retry-errors`
+already assumes exists somewhere, just automated instead of manual.
+
+## Session credentials expiring mid-run
+
+A `sandbox_bedrock` STS session expired partway through the Pixtral
+retry above, producing a second wave of `ExpiredTokenException` errors
+indistinguishable in the output CSV from the throttling errors already
+there. `--retry-errors`'s existing contract (treat any row with a
+non-empty `error` as not-done, append a fresh attempt on the next run)
+absorbed this correctly with zero data loss once the session was
+refreshed (`aws configure set ... --profile sandbox_bedrock` from a
+fresh Workshop Studio credential export, verified with
+`aws sts get-caller-identity` before resuming) -- worth calling out
+explicitly as the reason no gate in this repo should ever overwrite
+existing output rows in place instead of appending.
+
+## Coverage-audit methodology: catching a silent partial-merge bug
+
+Found live in the private pipeline's `build_master_dataset.py` (not
+this repo, but the same class of bug this repo's own scripts are
+equally exposed to): the OCR merge step correctly looped over every
+genre-coverage variant file (`poster_ocr_rek_text{_scifi,_mystery,
+_thriller,_alllang}.csv`), but two sibling merge steps (`faces_v2.csv`,
+`poster_title_match.csv`) only ever read the base (horror-only) file --
+an oversight, not a deliberate scope decision, that silently left
+~52% of a multi-genre corpus's `faces_*`/`title_match_*` columns empty
+without ever raising an error, because every individual read succeeded;
+the loop just never widened. It surfaced by computing average+minimum
+fill-rate per column-name-prefix and flagging any group whose coverage
+was suspiciously below the corpus's `poster_path`-verified universe,
+then cross-tabulating the missing rows against `sources` (the genre-tag
+column) -- the exact-alignment with one tag value (a 99.99%+ match rate)
+is what distinguished "silent merge bug" from "intentional scope"
+(compare `celeb_*`/`pose_*`, which showed a similarly partial fill rate
+but zero correlation with any single tag -- those are correctly scoped
+to `n_faces > 0`, not bugged). Worth a standing QA script in any repo
+merging several genre/source-tagged variant files into one wide table.
+
+## CLIP same-artwork threshold: the real project's 0.96 was never validated, and it's wrong
+
+`multi_poster_pipeline.py`'s `select` command clusters a movie's TMDB
+poster variants by CLIP cosine similarity, `--sim 0.96` by default --
+above that, two images are the same underlying artwork (just cropped/
+color-adjusted/re-touched); below it, distinct. This default had never
+been checked against real human judgment before -- it was ported as-is
+from the real project on the assumption it was already correct.
+
+Live human review (2026-08-17), two rounds, 85 real pairs total from
+this repo's own real horror-corpus embeddings
+(`data/multi_poster_embeddings.npz`, fetched fresh from TMDB for
+review): 60 pairs stratified across the 0.94-0.98 boundary plus
+clearly-same/clearly-different anchors, then 25 more filling the
+untested 0.75-0.94 gap once the first round showed the boundary itself
+was miscalibrated. Blind review -- the human reviewer never saw the
+similarity score or which side of any threshold a pair fell on.
+
+| threshold | accuracy | precision | recall | false positives | false negatives |
+|---|---|---|---|---|---|
+| 0.85 | 92.9% | 93.3% | 96.6% | 4 | 2 |
+| 0.88 | 94.0% | 98.2% | 93.1% | 1 | 4 |
+| **0.90** | 91.7% | **100%** | 87.9% | **0** | 7 |
+| **0.96 (real project's default)** | 65.5% | 100% | **50.0%** | 0 | **29** |
+
+**0.96 misses half of all genuinely-same-artwork pairs** -- it never
+produces a false positive (never wrongly merges two different posters),
+but it wrongly treats a coin-flip's worth of real same-artwork variants
+as distinct, inflating `n_clusters`/`n_discarded_variants` and, more
+importantly, missing real duplicate-artwork detections a canonical-
+poster-selection step exists specifically to catch. **0.90 is the
+better default**: still zero measured false positives across the full
+85-pair sample (the failure mode this project cares most about avoiding
+-- silently merging two actually-different posters), while catching 38%
+more of the real matches (87.9% vs. 50.0% recall). Below ~0.85 real
+false positives start appearing, so this isn't "lower is just better" --
+0.90 is a measured floor, not a guess.
+
+Not yet changed in `multi_poster_pipeline.py` itself (that's the real
+project's own file, ported as-is elsewhere in this repo); worth raising
+upstream. Any future gate in this repo that ports the `select` /
+clustering step should default to `--sim 0.90`, not `0.96`.
