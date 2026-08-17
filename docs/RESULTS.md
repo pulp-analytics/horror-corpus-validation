@@ -607,6 +607,28 @@ bug this repo found and fixed in its own early gate 13 draft (see
 actual historical moderation data too, not just an artifact of this
 repo's first attempt.
 
+## Gate 09 (compilation collapse) at real scale — 67/110 groups rescued
+
+Rather than wait for the full-corpus Nova OCR cascade (hours away),
+gate 09 was fed the exact real universe of shared-poster candidates
+already known with certainty from the full-corpus MD5 dedup (113
+groups/366 ids) — ran `04_bedrock_ocr.py` fresh on just those 366 (a few
+minutes) to get real OCR text, merged it back with `poster_path` (gate
+4's own output doesn't carry that column through — a real chaining bug
+caught live: first attempt found "0 groups, 0 ids" because of it), then
+ran `09_collapse_compilations.py` for real.
+
+Live result 2026-08-16: **110 groups, 362 ids** (close to but not
+identical to the MD5 dedup's 113/366 -- a handful of ids' OCR text came
+back empty/errored and slightly changed grouping, not investigated
+further given the close match). Of those, **67 groups (61%) had a
+rescuable compilation entry in TMDB** -- confirms the "Fake Documentary Q"-
+style pattern (segments sharing a poster, collapsible into one real
+compilation/anthology entry) generalizes real. The other 43 groups have
+no compilation entry in TMDB and are reported unresolved, same as the
+script's own documented behavior -- needs a human call (exclude vs.
+leave as-is), not something to auto-resolve.
+
 ## OMDb's Rated (MPAA/TV) vs. gate 13's visual flag — a clean, monotonic gradient
 
 With OMDb enrichment complete (103,625/103,625 ids) and gate 13's full-
