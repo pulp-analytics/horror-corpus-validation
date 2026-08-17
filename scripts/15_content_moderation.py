@@ -31,7 +31,7 @@ as rek_nudity/rek_suggestive -- the signal was already being paid for.
 Deliberately narrower than nova_poster_enrich.py's real prompt: the real
 call also returns title_text/credits_text/mood/fear_labels/weapon/monster/
 etc in one shared pass -- this gate only asks for the moderation-relevant
-fields, since OCR is already this repo's gate 5 and duplicating it here
+fields, since OCR is already this repo's gate 6 and duplicating it here
 would waste tokens on a question this gate doesn't need answered.
 
 Model/region default to this repo's own already-verified Bedrock setup
@@ -41,7 +41,7 @@ available in every account/region, and this repo standardized on Nova Pro
 already. --model/--region override both if you want the real script's
 exact model instead.
 
-  TMDB_API_KEY=... AWS_PROFILE=... python3 14_content_moderation.py \\
+  TMDB_API_KEY=... AWS_PROFILE=... python3 15_content_moderation.py \\
       --in data/ground_truth/poster_type_sample.csv --workers 16
 
 Resumable + concurrent: --out is the checkpoint (one row per id, written

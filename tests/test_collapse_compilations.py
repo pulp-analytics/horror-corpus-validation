@@ -1,4 +1,4 @@
-"""Pure-function tests for scripts/10_collapse_compilations.py's
+"""Pure-function tests for scripts/11_collapse_compilations.py's
 best_compilation_match() -- picks the best-scoring TMDB search result for
 a shared-poster compilation. No network needed.
 
@@ -14,11 +14,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 _spec = importlib.util.spec_from_file_location(
-    "collapse_compilations", Path(__file__).resolve().parents[1] / "scripts" / "10_collapse_compilations.py")
+    "collapse_compilations", Path(__file__).resolve().parents[1] / "scripts" / "11_collapse_compilations.py")
 mod = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(mod)
 
 best_compilation_match = mod.best_compilation_match
+has_distinct_segment_titles = mod.has_distinct_segment_titles
 
 
 def test_picks_best_scoring_candidate_among_several():
@@ -58,3 +59,39 @@ def test_does_not_require_exactly_one_search_result():
     ]
     match = best_compilation_match("sheets of gore", candidates)
     assert match["canonical_id"] == "1"
+
+
+def test_distinct_real_series_titles_confirmed_not_compilation():
+    """Real 2026-08-17 case: The Hazards of Helen -- 106 individually-
+    titled 1915-1916 silent-serial episodes sharing one generic poster.
+    Distinct segment titles are real evidence this isn't a mis-split
+    compilation, just a series reusing stock art."""
+    titles = [
+        "The Hazards of Helen: Episode13, The Escape on the Fast Freight",
+        "The Hazards of Helen Ep26: The Wild Engine",
+        "The Leap from the Water Tower",
+        "The Death Train",
+        "The Capture of Red Stanley",
+    ]
+    assert has_distinct_segment_titles(titles) is True
+
+
+def test_near_duplicate_titles_not_confirmed():
+    """Real 2026-08-17 case: 'Kamen Rider BiBiBi no Bibill Geiz' vs
+    '...BibillGeiz' -- a spacing-only duplicate of the same title, not a
+    compilation case at all. Should NOT be confirmed as a real series."""
+    titles = ["Kamen Rider BiBiBi no Bibill Geiz", "Kamen Rider BiBiBi no BibillGeiz"]
+    assert has_distinct_segment_titles(titles) is False
+
+
+def test_single_segment_is_not_distinct():
+    assert has_distinct_segment_titles(["Only One Title"]) is False
+
+
+def test_empty_titles_are_not_distinct():
+    assert has_distinct_segment_titles(["", "", ""]) is False
+
+
+def test_mostly_identical_titles_not_confirmed():
+    titles = ["Same Movie", "Same Movie", "Same Movie", "Different Movie"]
+    assert has_distinct_segment_titles(titles) is False

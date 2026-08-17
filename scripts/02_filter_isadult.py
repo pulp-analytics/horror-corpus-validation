@@ -9,16 +9,16 @@ in this corpus -- TMDB's own per-movie `adult` field is almost always
 false, including on titles that plainly are adult content, so it doesn't
 actually filter anything. The signal that does work is IMDb's own isAdult
 column, from the free title.basics.tsv.gz bulk dataset (a different IMDb
-file than the title.akas.tsv.gz one 04_fetch_alt_titles.py uses, same
+file than the title.akas.tsv.gz one 05_fetch_alt_titles.py uses, same
 non-commercial dataset). On the real corpus, cross-checking against it
 found real hits that this project's own visual content-moderation gate
-(14_content_moderation.py) later independently flagged too -- two unrelated
+(15_content_moderation.py) later independently flagged too -- two unrelated
 signals (title metadata vs. poster pixels) agreeing is what makes this a
 real finding, not a fluke.
 
 IMDb's file is keyed by its own id (a "tt..." tconst), not TMDB's, so this
 fetches each row's imdb_id from TMDB's external_ids endpoint the same way
-04_fetch_alt_titles.py does (one extra API call per id) -- deliberately not
+05_fetch_alt_titles.py does (one extra API call per id) -- deliberately not
 shared/coupled with that script's own fetch, so this gate can run
 standalone, first, before anything downstream needs to exist yet.
 

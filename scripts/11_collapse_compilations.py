@@ -26,7 +26,23 @@ docs/VALIDATION_LOGIC.md's "Deciding whether a shared poster is a
 compilation" for the full story and why an earlier, untested version of
 this function got that backwards).
 
-  TMDB_API_KEY=... python3 10_collapse_compilations.py --in data/sample_output/vision_title_check.csv
+Groups with no TMDB compilation entry get a second look before being left
+as one ambiguous bucket: if the segment ids already have clearly distinct
+real catalog titles, that's real evidence they're a genuine series/
+franchise sharing one piece of stock art (not a mis-split compilation at
+all), not something that needs a human "collapse vs. leave" call --
+confirmed live 2026-08-17 on a real 43-group case (see docs/RESULTS.md,
+"Gate 11's '43 unresolved' closed"): 42/43 had clearly distinct segment
+titles (e.g. 106 real, individually-titled *Hazards of Helen* silent-
+serial episodes sharing one generic title card) and only 1 was a genuine
+title-normalization duplicate, not a compilation case either. Resolution
+is split into `confirmed_not_compilation` (title diversity found --
+correctly stays as separate entries, no review needed) vs.
+`ambiguous_needs_review` (titles too similar/sparse to tell -- the real
+remaining human-call bucket, much smaller than "everything without a
+compilation entry").
+
+  TMDB_API_KEY=... python3 11_collapse_compilations.py --in data/sample_output/vision_title_check.csv
 
 Resumable: the TMDB search per shared-poster group is cached in --cache
 (poster_path -> canonical_id/title/resolution), appended to on each run, so
@@ -52,6 +68,26 @@ from utils.text_match import title_fuzzy_score, title_overlap_score
 from utils.tmdb_client import tmdb_get
 
 log = get_logger("collapse_compilations")
+
+
+def _norm_title(t: str) -> str:
+    return "".join(c for c in (t or "").lower() if c.isalnum())
+
+
+def has_distinct_segment_titles(segment_titles: list[str]) -> bool:
+    """Pure function: True if a shared-poster group's own segment titles
+    are diverse enough to be real, separately-titled catalog entries
+    (a series/franchise reusing stock art) rather than one work
+    incorrectly split, or a title-normalization duplicate of itself.
+    Threshold (>= max(2, 80% distinct)) and live numbers -- 42/43 real
+    groups qualified, the 1 that didn't was a spacing-only duplicate of
+    the same title -- come from docs/RESULTS.md, "Gate 11's '43
+    unresolved' closed"."""
+    titles = [t for t in segment_titles if t]
+    if len(titles) < 2:
+        return False
+    n_distinct = len({_norm_title(t) for t in titles})
+    return n_distinct >= max(2, int(len(titles) * 0.8))
 
 
 def search_movie(session: requests.Session, api_key: str, query: str) -> list[dict]:
@@ -139,22 +175,33 @@ def main():
         cache = {r["poster_path"]: r for r in csv.DictReader(f)}
 
     out_rows = []
+    groups_by_resolution: dict[str, int] = defaultdict(int)
     for poster, items in shared.items():
         c = cache.get(poster, {})
+        resolution = c.get("resolution", "no_compilation_entry_found")
+        if resolution == "no_compilation_entry_found":
+            segment_titles = [r.get("title", "") for r in items]
+            resolution = ("confirmed_not_compilation" if has_distinct_segment_titles(segment_titles)
+                          else "ambiguous_needs_review")
+        groups_by_resolution[resolution] += 1
         for r in items:
             out_rows.append({
                 "poster_path": poster, "segment_id": r["id"], "segment_title": r.get("title", ""),
                 "shared_text": c.get("shared_text", ""), "canonical_id": c.get("canonical_id", ""),
                 "canonical_title": c.get("canonical_title", ""), "match_score": c.get("match_score", ""),
-                "resolution": c.get("resolution", "no_compilation_entry_found"),
+                "resolution": resolution,
             })
 
     out_path = Path(args.out)
     write_csv_rows(out_path, out_rows)
 
-    n_resolved = len({r["poster_path"] for r in out_rows if r["resolution"] == "compilation_entry_found"})
-    log.info(f"wrote {out_path} — {n_resolved}/{len(shared)} groups had a rescuable compilation id in TMDB")
-    log.info("groups with no compilation entry need a human call: exclude, or leave unresolved (see docs/RESULTS.md)")
+    n_resolved = groups_by_resolution.get("compilation_entry_found", 0)
+    n_confirmed_not = groups_by_resolution.get("confirmed_not_compilation", 0)
+    n_ambiguous = groups_by_resolution.get("ambiguous_needs_review", 0)
+    log.info(f"wrote {out_path} — {len(shared)} groups: "
+             f"{n_resolved} had a rescuable compilation id in TMDB, "
+             f"{n_confirmed_not} confirmed NOT a compilation (distinct real segment titles), "
+             f"{n_ambiguous} still ambiguous and need a human call (see docs/RESULTS.md)")
 
 
 if __name__ == "__main__":

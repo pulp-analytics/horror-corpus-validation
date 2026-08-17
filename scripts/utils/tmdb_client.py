@@ -25,10 +25,10 @@ def tmdb_get(session: requests.Session, api_key: str, path: str,
 
     Retries on read timeouts, connection errors, and 429/5xx -- a bare
     `session.get()` with no retry crashed a real, hours-long dedupe run on
-    a single transient TMDB read timeout (see 09_dedupe_poster_md5.py's
+    a single transient TMDB read timeout (see 10_dedupe_poster_md5.py's
     get_completeness_signals() call chain), losing no cached progress but
     forcing a manual restart. Same exponential-backoff shape as this repo's
-    Bedrock/Rekognition retry loops (14_content_moderation.py), just for
+    Bedrock/Rekognition retry loops (15_content_moderation.py), just for
     requests' exception types instead of botocore's."""
     last_exc: Exception | None = None
     for attempt in range(attempts):

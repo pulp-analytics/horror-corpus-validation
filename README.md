@@ -48,16 +48,16 @@ rejects and why.
 scripts/
   01_tmdb_enumerate.py       Pull candidates from TMDB (--genre, default 27=Horror)          [TMDB only]
   03_verify_poster_exists.py Does this row have a reachable poster at all?                   [TMDB only]
-  04_fetch_alt_titles.py     Alternate titles: TMDB API + optional IMDb AKAs                 [TMDB only]
-  05_bedrock_ocr.py          Vision-LLM (Nova Pro) reads the poster directly                 [needs AWS]
-  06_comprehend_language.py  Language of the poster's visible text                           [needs AWS]
-  07_translate_titles.py     Re-score non-English text after translation                     [needs AWS]
-  08_dedupe_tmdb_metadata.py Same title+year+overview, different id?                         [TMDB only]
-  09_dedupe_poster_md5.py    Same exact poster image file used twice?                        [TMDB only]
-  10_collapse_compilations.py Same poster shared across multiple ids?                        [TMDB only]
-  11_validate_corpus.py      Orchestrates 1-9, writes final outputs                    [needs AWS, 04-06]
-  12_find_alternate_posters.py Discover + download TMDB poster variants                      [TMDB only]
-  13_score_alternate_posters.py Score variants vs. catalog title, propose swaps —
+  05_fetch_alt_titles.py     Alternate titles: TMDB API + optional IMDb AKAs                 [TMDB only]
+  06_bedrock_ocr.py          Vision-LLM (Nova Pro) reads the poster directly                 [needs AWS]
+  07_comprehend_language.py  Language of the poster's visible text                           [needs AWS]
+  08_translate_titles.py     Re-score non-English text after translation                     [needs AWS]
+  09_dedupe_tmdb_metadata.py Same title+year+overview, different id?                         [TMDB only]
+  10_dedupe_poster_md5.py    Same exact poster image file used twice?                        [TMDB only]
+  11_collapse_compilations.py Same poster shared across multiple ids?                        [TMDB only]
+  12_validate_corpus.py      Orchestrates 1-9, writes final outputs                    [needs AWS, 04-06]
+  13_find_alternate_posters.py Discover + download TMDB poster variants                      [TMDB only]
+  14_score_alternate_posters.py Score variants vs. catalog title, propose swaps —
                                 see docs/RESULTS.md "Gate 8-9" for an important
                                 caveat: uses Bedrock, not the real project's
                                 Rekognition-based version. --engine rekognition        [needs AWS]
@@ -67,7 +67,7 @@ scripts/
   [TMDB only] steps need just a TMDB_API_KEY -- runnable anytime, no AWS
   account/sandbox required. [needs AWS] steps call Bedrock/Comprehend/
   Translate/Rekognition and need real AWS credentials (see docs/AWS_SETUP.md).
-  11_validate_corpus.py's own gates 7-9 sub-steps are TMDB-only; it needs
+  12_validate_corpus.py's own gates 7-9 sub-steps are TMDB-only; it needs
   AWS only because it also runs 04-06 in its default (non --assemble-only) mode.
 
 data/

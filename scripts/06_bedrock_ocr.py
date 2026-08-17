@@ -14,9 +14,9 @@ image input — swap in Nova Lite (~18x cheaper, less precise), a Claude
 model, or anything else Bedrock exposes, without touching the code.
 
   export AWS_PROFILE=your-bedrock-profile
-  python3 05_bedrock_ocr.py --in data/sample_input/sample_100_ids.csv
-  python3 05_bedrock_ocr.py --model us.amazon.nova-lite-v1:0 --in ...
-  python3 05_bedrock_ocr.py --model us.anthropic.claude-sonnet-4-5-v1:0 --in ...
+  python3 06_bedrock_ocr.py --in data/sample_input/sample_100_ids.csv
+  python3 06_bedrock_ocr.py --model us.amazon.nova-lite-v1:0 --in ...
+  python3 06_bedrock_ocr.py --model us.anthropic.claude-sonnet-4-5-v1:0 --in ...
 
 Resumable: re-running with the same --out skips ids already in that file
 (including ones that errored last time -- add --retry-errors to redo just
@@ -36,7 +36,7 @@ each covering a disjoint slice -- the highest-value script to shard, since
 it's a Bedrock call per row and the slowest/most numerous step in the full
 corpus. Each shard needs its own --out to merge afterward.
 
-  python3 05_bedrock_ocr.py --validate
+  python3 06_bedrock_ocr.py --validate
 
 --validate scores --model live against data/ground_truth/
 bedrock_ocr_ground_truth_human_labels.csv -- 100 real posters a human

@@ -19,7 +19,7 @@ which depends on this codebase's processing history, not on anything TMDB
 itself exposes. Rather than porting a proxy for a mechanism we can't
 reproduce anyway, this script uses `utils/tmdb_completeness.py`'s 4-signal
 cascade built straight from TMDB's own data (imdb_id present -> credits
-count -> trailer present -> popularity), shared with 09_dedupe_poster_md5.py
+count -> trailer present -> popularity), shared with 10_dedupe_poster_md5.py
 so both gates use one canonical definition of "more complete entry" rather
 than each inventing its own proxy.
 
@@ -28,7 +28,7 @@ of this comparison truncated to 60 chars, which silently merged unrelated
 franchise entries whose titles only differ after that point (e.g. numbered
 volumes of the same series) into false "duplicate" groups.
 
-  TMDB_API_KEY=... python3 08_dedupe_tmdb_metadata.py --in data/sample_input/sample_100_ids.csv
+  TMDB_API_KEY=... python3 09_dedupe_tmdb_metadata.py --in data/sample_input/sample_100_ids.csv
 
 Resumable: the per-id TMDB checks (alive/imdb_id/popularity, credits count,
 trailer presence) are cached in --cache, appended to on each run, so an

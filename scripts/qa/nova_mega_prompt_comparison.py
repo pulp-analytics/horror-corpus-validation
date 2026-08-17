@@ -4,8 +4,8 @@ nova_poster_enrich.py ENRICH_PROMPT (one Nova call asking for title text,
 credits, mood, fear labels, weapon/monster/person/animal, blood_gore,
 violence, sexual_content, sensitive tags, and a description all at once)
 against the same 672 posters this repo already scored with ISOLATED
-per-task prompts (05_bedrock_ocr.py for title text only,
-14_content_moderation.py for moderation scores only) -- same model
+per-task prompts (06_bedrock_ocr.py for title text only,
+15_content_moderation.py for moderation scores only) -- same model
 (us.amazon.nova-pro-v1:0), same images, only the prompt structure differs.
 
 Answers a real design question: does asking Nova one narrow question per

@@ -48,7 +48,7 @@ def main() -> int:
     session = requests.Session()
     lines = ["# Live drift check\n"]
 
-    lines.append("## Gate 8's Omegle example (docs/VALIDATION_LOGIC.md)\n")
+    lines.append("## Gate 9's Omegle example (docs/VALIDATION_LOGIC.md)\n")
     # As currently documented (2026-08-16): 1009049 already went dead
     # (phantom_duplicate_dead_id), 1743173 is still alive. If 1009049 ever
     # comes back, or 1743173 ever dies too, that's worth a doc update.
@@ -58,7 +58,7 @@ def main() -> int:
         note = "" if alive == expect_alive_when_documented else "  **DRIFTED from what's documented**"
         lines.append(f"- {movie_id} ({title or 'no title -- dead'}): {status}{note}")
 
-    lines.append("\n## Gate 10's Sheets of Gore example (docs/VALIDATION_LOGIC.md)\n")
+    lines.append("\n## Gate 11's Sheets of Gore example (docs/VALIDATION_LOGIC.md)\n")
     result = check_compilation_search(session, api_key, "Sheets of Gore", "934611")
     lines.append(f"- search results: {result['n_results']}")
     lines.append(f"- id 934611 present: {result['expected_id_present']}")

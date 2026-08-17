@@ -22,37 +22,37 @@ know what image, if any, a prior process actually looked at. Easy to
 overlook because it's the least interesting-sounding check — worth running
 first, before spending any vision-LLM budget.
 
-## Gate 4 — `04_fetch_alt_titles.py`
+## Gate 5 — `05_fetch_alt_titles.py`
 
 **Input**: candidate rows. **Output**: alternate titles per id (doesn't
 remove rows). This gate doesn't reject anything by itself — it produces the
 evidence (`alt_titles_tmdb`, `alt_titles_imdb`) that later gates use to
 decide whether a "different title on the poster" is actually wrong.
 
-## Gate 5 — `05_bedrock_ocr.py`
+## Gate 6 — `06_bedrock_ocr.py`
 
 **Input**: candidate rows. **Output**: `verdict` (`match` / `mismatch` /
 `no_title_on_poster`) per id, from a vision-LLM reading the poster directly.
 This is the single most important content gate — it's the only one that
 actually looks at the image itself rather than metadata. Doesn't reject
-anything by itself; feeds gate 10's logic and the manual mismatch review.
+anything by itself; feeds gate 11's logic and the manual mismatch review.
 
-## Gate 6 — `06_comprehend_language.py`
+## Gate 7 — `07_comprehend_language.py`
 
-**Input**: the text gate 5 read off each poster. **Output**: language code.
+**Input**: the text gate 6 read off each poster. **Output**: language code.
 Informational only — language mismatch vs. `original_language` is expected
 for ~79% of cases (international releases) and is never used alone to
 reject a row.
 
-## Gate 7 — `07_translate_titles.py`
+## Gate 8 — `08_translate_titles.py`
 
-**Input**: gate 6's language + gate 5's text. **Gate condition**: only
+**Input**: gate 7's language + gate 6's text. **Gate condition**: only
 translates when `lang != en` AND `len(text) >= TRANSLATE_MIN_CHARS` AND
 `overlap_before < TRANSLATE_BELOW` (see `utils/constants.py`). Re-scores
 overlap after translation — this is what separates "foreign title, needs
 translating to see it matches" from "genuinely doesn't match."
 
-## Gate 8 — `08_dedupe_tmdb_metadata.py`
+## Gate 9 — `09_dedupe_tmdb_metadata.py`
 
 **Reject condition**: same `title` + `year` + `overview` (first 60 chars) as
 another row, AND both ids independently confirmed live in TMDB (a
@@ -60,23 +60,23 @@ candidate pair with one dead id is not a real duplicate — see
 [VALIDATION_LOGIC.md](VALIDATION_LOGIC.md)). Of a real pair, the weaker id
 (by imdb_id → cast/crew → trailer → popularity, in that order) is excluded.
 
-## Gate 9 — `09_dedupe_poster_md5.py`
+## Gate 10 — `10_dedupe_poster_md5.py`
 
 **Reject condition**: byte-identical poster file (MD5 hash) shared with
-another id. Independent of gate 8 — catches image reuse even when title/
-year/overview don't match closely enough for gate 8 to group them. Keeps
+another id. Independent of gate 9 — catches image reuse even when title/
+year/overview don't match closely enough for gate 9 to group them. Keeps
 the highest-`vote_count` id per MD5 group.
 
-## Gate 10 — `10_collapse_compilations.py`
+## Gate 11 — `11_collapse_compilations.py`
 
-**Reject condition**: poster shared across 2+ ids (same signal as gate 9,
+**Reject condition**: poster shared across 2+ ids (same signal as gate 10,
 but here the ids are otherwise unrelated in title/year — not a metadata
 duplicate, a shared *cover*) AND a distinct compilation/anthology entry for
 that cover exists in TMDB. If no such entry exists, this gate does **not**
 auto-resolve — it reports the group and leaves it for a human decision
 (see `docs/RESULTS.md` for the two real cases we left un-collapsed).
 
-## `11_validate_corpus.py`
+## `12_validate_corpus.py`
 
 Not a gate itself — runs gates 1-9 in order and merges every rejection
 (with its reason string) into `excluded_ids.csv`, everything else into

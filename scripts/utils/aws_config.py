@@ -5,7 +5,7 @@ or AWS credentials imports get_tmdb_key() or get_client() from here (or
 transitively via a script that does), so loading it once at import time
 here covers all of them. Points at the repo root's .env explicitly (not
 python-dotenv's default cwd/frame search) so it works the same whether a
-script is run directly, via 11_validate_corpus.py's subprocess calls, via
+script is run directly, via 12_validate_corpus.py's subprocess calls, via
 pytest, or from a different working directory inside Docker.
 `override=False` (python-dotenv's default) means a real environment
 variable -- e.g. TMDB_API_KEY set as a GitHub Actions secret in CI --

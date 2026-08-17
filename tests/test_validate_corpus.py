@@ -12,7 +12,7 @@ from utils.resumable import shard_rows  # noqa: E402
 from utils.text_match import best_overlap, strip_accents, title_overlap_score  # noqa: E402
 
 _spec = importlib.util.spec_from_file_location(
-    "validate_corpus", Path(__file__).resolve().parents[1] / "scripts" / "11_validate_corpus.py")
+    "validate_corpus", Path(__file__).resolve().parents[1] / "scripts" / "12_validate_corpus.py")
 _validate_corpus = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(_validate_corpus)
 compute_dedup_exclusions = _validate_corpus.compute_dedup_exclusions
@@ -56,7 +56,7 @@ def test_best_overlap_empty_inputs():
     assert best_overlap([""], [""]) == 0.0
 
 
-# 11_validate_corpus.py auto-excludes an unresolved 04 "mismatch" verdict
+# 12_validate_corpus.py auto-excludes an unresolved 04 "mismatch" verdict
 # when best_overlap(poster texts, [catalog title, *alt titles]) doesn't clear
 # ALT_TITLE_OVERLAP_THRESHOLD. These pin the real cases that decision covers.
 
@@ -101,10 +101,10 @@ def test_shard_rows_rejects_out_of_range_index():
 
 
 # compute_dedup_exclusions -- merges gates 7/8/9's independent verdicts,
-# gate 10 (compilation, TMDB-search-confirmed) taking precedence over 7/8
+# gate 11 (compilation, TMDB-search-confirmed) taking precedence over 7/8
 # (generic completeness proxies). test_gate9_overrides_gate8_on_the_real_case
 # pins the real bug found live 2026-08-16: on the real Sheets of Gore pair,
-# gate 9 alone kept the wrong id (749611, a segment) over the correct one
+# gate 10 alone kept the wrong id (749611, a segment) over the correct one
 # (934611, the canonical compilation entry) because 749611 happens to have
 # an imdb_id and 934611 doesn't -- backwards from data/excluded_compilation.csv.
 
@@ -115,14 +115,14 @@ def test_gate9_overrides_gate8_on_the_real_case():
         {"segment_id": "934611", "canonical_id": "934611", "canonical_title": "Sheets of Gore",
          "resolution": "compilation_entry_found"},
     ]
-    # gate 9's real (wrong, in isolation) verdict: keeps the segment, drops the canonical entry
+    # gate 10's real (wrong, in isolation) verdict: keeps the segment, drops the canonical entry
     md5_rows = [
         {"id": "749611", "keep": "1", "reason": "exact_poster_md5_dup"},
         {"id": "934611", "keep": "0", "reason": "exact_poster_md5_dup"},
     ]
     excluded = compute_dedup_exclusions(comp_rows, [], md5_rows)
     assert excluded == {"749611": "collapsed_into_compilation:Sheets of Gore"}
-    assert "934611" not in excluded  # protected: it's the canonical entry, gate 9 doesn't get a say
+    assert "934611" not in excluded  # protected: it's the canonical entry, gate 10 doesn't get a say
 
 
 def test_gate8_still_applies_when_gate9_has_no_opinion():
@@ -156,7 +156,7 @@ def test_unresolved_compilation_group_excluded_as_before():
 
 
 def test_gate9_silent_on_ids_it_never_saw():
-    # a poster no gate 10 group even covers -- gates 7/8 decide normally
+    # a poster no gate 11 group even covers -- gates 7/8 decide normally
     dup_rows = [{"id": "5", "keep": "0", "resolution": "duplicate_resolved_by_completeness_cascade"}]
     excluded = compute_dedup_exclusions([], dup_rows, [])
     assert excluded == {"5": "tmdb_duplicate:duplicate_resolved_by_completeness_cascade"}

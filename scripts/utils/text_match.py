@@ -45,8 +45,18 @@ def strip_accents(s: str) -> str:
 
 
 def best_overlap(texts: list[str], candidates: list[str]) -> float:
-    """Max title_overlap_score across every (text, candidate) pair, trying
-    raw / accent-stripped / space-stripped / both variants of each side."""
+    """Max of title_overlap_score (token sets) AND title_fuzzy_score
+    (character-sequence ratio) across every (text, candidate) pair, trying
+    raw / accent-stripped / space-stripped / both variants of each side.
+    Both scorers matter, not just one: token overlap catches word-level
+    matches; fuzzy ratio catches single-word titles that differ by only a
+    couple of characters (real 2026-08-17 case: OCR text "Oyenstikker"
+    vs. the real Danish AKA "Øjenstikker" -- 0.0 token overlap since
+    neither shares a token with the other verbatim, but 0.86 fuzzy ratio,
+    because normalize_alnum's ASCII-only strip incidentally drops "Ø" and
+    the two 10-11 char strings are otherwise nearly identical). See
+    docs/RESULTS.md, "Validating the Nova-mismatch/Translate
+    reclassification without a polyglot reviewer"."""
     best = 0.0
     for text in texts:
         if not text:
@@ -58,5 +68,5 @@ def best_overlap(texts: list[str], candidates: list[str]) -> float:
             variants_c = [cand, strip_accents(cand), cand.replace(" ", ""), strip_accents(cand).replace(" ", "")]
             for t in variants_t:
                 for c in variants_c:
-                    best = max(best, title_overlap_score(t, c))
+                    best = max(best, title_overlap_score(t, c), title_fuzzy_score(t, c))
     return best

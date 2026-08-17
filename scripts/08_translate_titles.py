@@ -20,8 +20,24 @@ logic itself is faithful once given comparable input text — see
 docs/RESULTS.md, "Language detection & translation (gates 5-6),
 live-verified."
 
+Overlap is scored against the catalog title AND, when `--titles` has an
+`alt_titles_imdb` column (pipe-delimited, IMDb's real recorded regional
+titles), every one of those too -- taking the best match across all of
+them. Live-verified 2026-08-17 this matters a lot: checking only the
+single primary title (the original behavior) makes `true_mismatch`
+overcount real matches by close to half -- a movie can have dozens of
+real regional titles, and a foreign poster's real title translating
+loosely (or not at all) against just the ENGLISH catalog title doesn't
+mean it's wrong, it can still match a *different* recorded AKA directly.
+See docs/RESULTS.md, "Validating the Nova-mismatch/Translate
+reclassification without a polyglot reviewer" for the live numbers
+(`true_mismatch` was 48.5% independently confirmed once checked against
+the full AKA list instead of one title). `--titles` without that column
+still works exactly as before -- this is additive, not a behavior change
+when AKA data isn't available.
+
   export AWS_PROFILE=your-translate-profile
-  python3 07_translate_titles.py --in data/sample_output/language_detection.csv
+  python3 08_translate_titles.py --in data/sample_output/language_detection.csv
 
 Resumable: re-running with the same --out skips ids already processed.
 
@@ -45,7 +61,7 @@ from utils.aws_config import get_client
 from utils.constants import TRANSLATE_BELOW, TRANSLATE_MIN_CHARS
 from utils.logging_setup import get_logger
 from utils.resumable import load_done_ids, open_for_append, shard_rows
-from utils.text_match import title_overlap_score
+from utils.text_match import best_overlap, title_overlap_score
 
 log = get_logger("translate_titles")
 
@@ -55,17 +71,31 @@ def translate_to_en(client, text: str) -> str:
     return (resp.get("TranslatedText") or "").strip()
 
 
+def overlap_against_all_titles(text: str, title: str, alt_titles: list[str]) -> float:
+    """Best overlap score against the catalog title plus every known real
+    IMDb AKA -- not just the single primary title. Falls back to plain
+    title_overlap_score(text, title) when there are no alt titles, so this
+    is a strict superset of the old single-title behavior, never worse."""
+    if not alt_titles:
+        return title_overlap_score(text, title)
+    return best_overlap([text], [title] + alt_titles)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--in", dest="in_path", default="data/sample_output/language_detection.csv")
     ap.add_argument("--titles", default="data/sample_input/sample_100_ids.csv", help="csv with id,title for the overlap check")
+    ap.add_argument("--alt-titles-col", default="alt_titles_imdb",
+                     help="optional column in --titles with pipe-delimited real IMDb AKA titles "
+                          "(master_dataset.csv's alt_titles_imdb format); missing/empty is fine, "
+                          "overlap just falls back to the single title")
     ap.add_argument("--out", default="data/sample_output/translated_titles.csv")
     ap.add_argument("--shard-index", type=int, default=0)
     ap.add_argument("--shard-count", type=int, default=1, help="split --in across N parallel shards (default 1: no sharding)")
     ap.add_argument("--min-chars", type=int, default=TRANSLATE_MIN_CHARS,
                      help=f"override TRANSLATE_MIN_CHARS (default {TRANSLATE_MIN_CHARS}, calibrated "
                           "for the real project's long multi-field full_ocr text -- a short "
-                          "title-only OCR source like 05_bedrock_ocr.py's text_you_read never "
+                          "title-only OCR source like 06_bedrock_ocr.py's text_you_read never "
                           "reaches it, so 0 rows ever qualify chained from that input. Pass a "
                           "small value (e.g. 1) when --in's text is just a title.")
     args = ap.parse_args()
@@ -76,7 +106,10 @@ def main():
         lang_rows_list = shard_rows(list(csv.DictReader(f)), args.shard_index, args.shard_count)
     lang_rows = {r["id"]: r for r in lang_rows_list}
     with open(args.titles, newline="", encoding="utf-8") as f:
-        titles = {r["id"]: r.get("title", "") for r in csv.DictReader(f)}
+        title_rows = list(csv.DictReader(f))
+    titles = {r["id"]: r.get("title", "") for r in title_rows}
+    alt_titles = {r["id"]: [t.strip() for t in (r.get(args.alt_titles_col) or "").split("|") if t.strip()]
+                  for r in title_rows}
 
     out_path = Path(args.out)
     fields = ["id", "lang_code", "text", "translated", "overlap_before", "overlap_after", "error"]
@@ -92,16 +125,17 @@ def main():
         for i, mid in enumerate(todo_ids, 1):
             row = lang_rows[mid]
             title = titles.get(mid, "")
+            alts = alt_titles.get(mid, [])
             text = row.get("text", "")
             lang = row.get("lang_code", "")
-            overlap_before = title_overlap_score(text, title)
+            overlap_before = overlap_against_all_titles(text, title, alts)
 
             translated, overlap_after, error = "", overlap_before, ""
             needs_translate = lang and lang != "en" and len(text) >= args.min_chars and overlap_before < TRANSLATE_BELOW
             if needs_translate:
                 try:
                     translated = translate_to_en(translate, text)
-                    overlap_after = title_overlap_score(translated, title)
+                    overlap_after = overlap_against_all_titles(translated, title, alts)
                     n_translated += 1
                 except ClientError as e:
                     # Real example: Comprehend detects a language Translate

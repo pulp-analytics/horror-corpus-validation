@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Builds a local, self-contained HTML page for blind human review of the
-155 posters (of 658 comparable) where the isolated-prompt gate 14 score
+155 posters (of 658 comparable) where the isolated-prompt gate15 score
 and the combined-mega-prompt score disagree on the flag decision
 (>=0.5 threshold) for at least one of blood_gore/violence/sexual_content.
 
@@ -32,7 +32,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from utils.tmdb_client import IMAGE_BASE_URL  # noqa: E402
 
-GATE14_CSV = ROOT / "data" / "ground_truth" / "content_moderation_es_poster.csv"
+GATE15_CSV = ROOT / "data" / "ground_truth" / "content_moderation_es_poster.csv"
 MEGA_CSV = ROOT / "data" / "qa" / "nova_mega_prompt_comparison.csv"
 OUT_HTML = ROOT / "data" / "qa" / "mega_prompt_review.html"
 POSTER_CACHE = ROOT / "data" / "qa" / ".mega_prompt_review_cache"
@@ -94,7 +94,7 @@ HTML_TEMPLATE = """<!doctype html>
 <body>
 
 <h1>Revisi&oacute;n ciega: prompt aislado vs. combinado</h1>
-<div class="sub">155 posters donde gate 14 (prompt aislado) y el mega-prompt (prompt combinado,
+<div class="sub">155 posters donde gate15 (prompt aislado) y el mega-prompt (prompt combinado,
 15+ campos) no coinciden en si el poster cruza el umbral de 0.5 en gore, violencia o
 contenido sexual. No se muestra que dijo cada sistema -- solo respond&eacute; lo que ves
 en el poster. Cada poster muestra solo los ejes donde realmente discrepan (1 a 3).
@@ -320,10 +320,10 @@ def fetch_one(row: dict) -> tuple[str, str]:
 
 
 def main():
-    gate14 = {r["id"]: r for r in csv.DictReader(GATE14_CSV.open(newline="", encoding="utf-8"))}
+    gate15 = {r["id"]: r for r in csv.DictReader(GATE15_CSV.open(newline="", encoding="utf-8"))}
     mega = {r["id"]: r for r in csv.DictReader(MEGA_CSV.open(newline="", encoding="utf-8"))}
 
-    ids = sorted(set(gate14) & set(mega))
+    ids = sorted(set(gate15) & set(mega))
     rows = []
     for i in ids:
         if mega[i].get("error"):
@@ -331,12 +331,12 @@ def main():
         disagree = []
         for field, iso_field in [("blood_gore", "nova_blood_gore"), ("violence", "nova_violence"),
                                   ("sexual_content", "nova_sexual_content")]:
-            iso_v = float(gate14[i].get(iso_field) or 0)
+            iso_v = float(gate15[i].get(iso_field) or 0)
             mega_v = float(mega[i].get(f"mega_{field}") or 0)
             if (iso_v >= 0.5) != (mega_v >= 0.5):
                 disagree.append(field)
         if disagree:
-            rows.append({"id": i, "title": gate14[i]["title"], "poster_path": gate14[i]["poster_path"],
+            rows.append({"id": i, "title": gate15[i]["title"], "poster_path": gate15[i]["poster_path"],
                           "disagree_fields": "|".join(disagree)})
 
     print(f"{len(rows)} disputed posters to review")

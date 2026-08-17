@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Find exact-duplicate poster images by MD5 hash of the downloaded file.
 
-Different from 08_dedupe_tmdb_metadata.py: that script catches the same
+Different from 09_dedupe_tmdb_metadata.py: that script catches the same
 *film* listed twice under different ids (possibly with different posters).
 This one catches the same *image file* used for two different catalog ids
 -- often a franchise/series that reused stock art, sometimes a genuine
@@ -11,7 +11,7 @@ poster art, the rest stubbed with a placeholder -- see docs/RESULTS.md).
 Where two or more ids share an MD5, keeps whichever entry is more
 complete/curated, using `utils/tmdb_completeness.py`'s 4-signal cascade
 (imdb_id present -> credits count -> trailer present -> popularity) -- the
-same canonical "more complete entry" signal 08_dedupe_tmdb_metadata.py
+same canonical "more complete entry" signal 09_dedupe_tmdb_metadata.py
 uses, rather than a separate, weaker proxy invented just for this gate.
 See docs/VALIDATION_LOGIC.md ("Deciding whether two ids are really
 duplicates") for why this cascade exists instead of trying to reproduce
@@ -20,9 +20,9 @@ the real project's own (unreproducible) tiebreaker.
 This gate's cascade is a generic "which entry is richer" answer, and
 that's the wrong question when the shared poster is actually a
 compilation rather than a franchise reusing stock art -- it has no way to
-know that from MD5 + completeness alone. 10_collapse_compilations.py's
+know that from MD5 + completeness alone. 11_collapse_compilations.py's
 TMDB-search-verified resolution is the more-informed answer for that
-case; 11_validate_corpus.py's compute_dedup_exclusions() is what actually
+case; 12_validate_corpus.py's compute_dedup_exclusions() is what actually
 arbitrates between the two gates when both fire on the same poster_path.
 Full story (a real bug this found and how it was fixed) in
 docs/VALIDATION_LOGIC.md.
@@ -41,7 +41,7 @@ of wasting a download attempt on a poster already known to be unreachable.
 If --verified doesn't exist, falls back to just checking poster_path is
 non-empty.
 
-  TMDB_API_KEY=... python3 09_dedupe_poster_md5.py --in data/sample_input/sample_100_ids.csv
+  TMDB_API_KEY=... python3 10_dedupe_poster_md5.py --in data/sample_input/sample_100_ids.csv
 """
 from __future__ import annotations
 
@@ -79,7 +79,7 @@ def load_done_ids(path: Path, retry_errors: bool = False) -> set[str]:
     permanently un-hashed -- a real transient TMDB image-CDN timeout did
     exactly this to one id in a live run, silently under-counting its
     duplicate group by one until the row was cleared and rehashed by
-    hand. Same --retry-errors pattern as 05_bedrock_ocr.py."""
+    hand. Same --retry-errors pattern as 06_bedrock_ocr.py."""
     if not path.exists():
         return set()
     done = set()

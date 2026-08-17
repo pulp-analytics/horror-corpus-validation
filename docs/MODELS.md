@@ -5,7 +5,7 @@ Companion to the sibling [poster-metrics-pipeline](https://github.com/pulp-analy
 This repo only has one model dependency, and it's a different kind of
 problem: it can't be pinned the same way.
 
-## Amazon Bedrock (`us.amazon.nova-pro-v1:0`) -- 05_bedrock_ocr.py
+## Amazon Bedrock (`us.amazon.nova-pro-v1:0`) -- 06_bedrock_ocr.py
 
 Not pinnable from the caller's side. `us.amazon.nova-pro-v1:0` looks like
 a version (the `v1:0` suffix), but it names a managed, hosted model --
@@ -18,7 +18,7 @@ controls (and can freeze) exactly which artifact loads.
 What's captured instead, as the closest available substitute for a real
 pin:
 
-- **`05_bedrock_ocr.py`'s output CSV records `model` per row** (the
+- **`06_bedrock_ocr.py`'s output CSV records `model` per row** (the
   `--model` value used for that call, e.g. `us.amazon.nova-pro-v1:0` vs.
   `us.amazon.nova-lite-v1:0` -- see `fields` in that script). Necessary
   but not sufficient: two rows can carry the identical `model` string
@@ -41,7 +41,7 @@ pin:
 Version pinning answers "did the artifact change." It says nothing about
 whether the model's *answer* is actually correct -- for a managed model
 like Nova that can't be pinned at all, that question matters more, not
-less. `05_bedrock_ocr.py` had no ground-truth check of any kind before
+less. `06_bedrock_ocr.py` had no ground-truth check of any kind before
 this: no hand-labeled set to compare its match/mismatch/no_title_on_poster
 verdict against, unlike the sibling repo's `--validate` sanity checks for
 CLIP/SigLIP.
@@ -126,7 +126,7 @@ actually a match (a false reject), versus only 3 false accepts. Nova's
 **`--validate` mode, run live (2026-08-15):**
 ```bash
 export AWS_PROFILE=your-bedrock-profile
-python3 05_bedrock_ocr.py --validate
+python3 06_bedrock_ocr.py --validate
 ```
 Runs `--model` live against all 75 judged ground-truth rows (skipping
 `unjudgeable` ones -- they never reach Bedrock at all), writes the raw
