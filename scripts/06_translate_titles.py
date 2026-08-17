@@ -60,6 +60,12 @@ def main():
     ap.add_argument("--out", default="data/sample_output/translated_titles.csv")
     ap.add_argument("--shard-index", type=int, default=0)
     ap.add_argument("--shard-count", type=int, default=1, help="split --in across N parallel shards (default 1: no sharding)")
+    ap.add_argument("--min-chars", type=int, default=TRANSLATE_MIN_CHARS,
+                     help=f"override TRANSLATE_MIN_CHARS (default {TRANSLATE_MIN_CHARS}, calibrated "
+                          "for the real project's long multi-field full_ocr text -- a short "
+                          "title-only OCR source like 04_bedrock_ocr.py's text_you_read never "
+                          "reaches it, so 0 rows ever qualify chained from that input. Pass a "
+                          "small value (e.g. 1) when --in's text is just a title.")
     args = ap.parse_args()
 
     translate = get_client("translate")
@@ -89,7 +95,7 @@ def main():
             overlap_before = title_overlap_score(text, title)
 
             translated, overlap_after = "", overlap_before
-            needs_translate = lang and lang != "en" and len(text) >= TRANSLATE_MIN_CHARS and overlap_before < TRANSLATE_BELOW
+            needs_translate = lang and lang != "en" and len(text) >= args.min_chars and overlap_before < TRANSLATE_BELOW
             if needs_translate:
                 translated = translate_to_en(translate, text)
                 overlap_after = title_overlap_score(translated, title)
