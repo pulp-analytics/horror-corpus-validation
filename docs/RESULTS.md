@@ -607,6 +607,32 @@ bug this repo found and fixed in its own early gate 13 draft (see
 actual historical moderation data too, not just an artifact of this
 repo's first attempt.
 
+## Refining gate 13's prompt with the photorealism-vs-stylized distinction
+
+Given the human review above explicitly judged "genuinely photorealistic/
+extreme," not "any stylized reference to blood/violence" (illustrated
+horror-poster gore is normal genre convention this project doesn't want
+flagged), `MODERATION_PROMPT` in `13_content_moderation.py` was rewritten
+to say that explicitly: score low for illustrated/stylized art, high only
+for photorealistic/graphic depiction. Live-verified 2026-08-16 by
+re-scoring the same 155 human-reviewed posters with only the prompt
+changed (Nova-only, same model, Rekognition untouched):
+
+| axis | old prompt | new prompt |
+|---|---|---|
+| blood_gore | 85.5% (65/76) | 85.5% (65/76) |
+| violence | 87.9% (94/107) | 89.7% (96/107) |
+| sexual_content | 72.2% (39/54) | 72.2% (39/54) |
+
+Honest result: barely moved the needle -- no regression, a marginal
++1.8pp on violence, flat elsewhere. The isolated prompt was already
+implicitly good at this distinction even without saying so explicitly,
+consistent with the finding above: asking about only 3 things per call
+(vs. the mega-prompt's 15) appears to be what actually drives the
+discernment, not this specific wording. Kept as the new default anyway
+-- no downside, and the intent is now explicit in the prompt for future
+maintainers instead of relying on the model happening to infer it.
+
 ## OMDb enrichment — a new, independent data source (not a re-port)
 
 Unlike the gates above, OMDb was never part of the real project's

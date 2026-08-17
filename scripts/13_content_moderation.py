@@ -92,7 +92,19 @@ Return ONLY valid JSON (no markdown), matching this exact shape:
   "moderation_notes": "one short sentence on sensitive content, or empty"
 }
 blood_gore/violence/sexual_content: likelihood 0..1 that the poster artwork
-itself (not the film's reputation or genre) actually depicts that content.
+ITSELF genuinely depicts that content in a realistic, graphic way -- not
+merely whether it references or stylizes it.
+
+Score LOW (below 0.3): illustrated/painted blood splatter, cartoonish or
+silhouetted violence, stylized horror-genre artwork, designed poster art
+that reads as art rather than a real depiction. This is normal, expected
+content for a horror movie poster -- do not flag it just for being
+present.
+
+Score HIGH (0.5 or above) only when the depiction looks photorealistic or
+graphically explicit -- like it could be a real photograph of real gore,
+violence, or nudity, not clearly stylized/illustrated artwork.
+
 "sensitive": a list of zero or more tags from this exact set that apply --
 violence, gore, nudity, sexual, occult, self-harm -- and [] if none apply.
 Never include the word "none" as a tag; use an empty list instead.
