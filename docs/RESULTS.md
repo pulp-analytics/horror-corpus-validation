@@ -362,6 +362,21 @@ art. And Japanese-language titles are disproportionately `es_poster`
 (26.8% of that group) vs. `no_es_poster` (6.9%) — consistent with
 Rekognition's OCR miss rate being worse on non-Latin scripts specifically.
 
+**Still an open gap** (confirmed live, 2026-08-17, spot-checking a
+different sample entirely): no gate in this repo actually filters on
+this signal. [Gate 3](../scripts/03_verify_poster_exists.py) only checks
+that `poster_path` resolves with an HTTP 200 -- it verifies the image is
+*reachable*, not that it depicts real poster art. A concrete example
+from this session's `id=1459576` ("hey,"): `ocr_n_lines=0`,
+`title_ocr_qa_verdict=no_title_on_poster`, and it's already labeled
+`no_es_poster` in this exact human-reviewed ground-truth file -- yet it
+passes gate 3 (and every gate after it) cleanly, because none of them
+check poster *type*, only existence/dedup/moderation. Building a gate
+that acts on this would need to accept the tradeoff quantified above (a
+hard zero-OCR filter costs the 26.5% of zero-OCR posters that are real,
+legitimately textless releases) -- not done yet, flagged here as a real,
+already-quantified gap rather than a new one.
+
 ## Gate 14: content moderation, live-verified
 
 Found while manually reviewing the poster-type sample (above): some real
@@ -854,3 +869,68 @@ scored against a hand-picked 100-pair sample, not the full corpus, and
 no canonical-poster-selection gate exists yet to consume it. Worth
 building as a future gate once the multi-genre CLIP re-cluster (see
 above, `--sim 0.90`) lands, using v2's prompt from the start.
+
+## Validating the Nova-mismatch/Translate reclassification without a polyglot reviewer
+
+The Comprehend+Translate check above (20,168 real "mismatch" verdicts
+from the full-corpus Nova OCR run, reclassified as
+`false_mismatch_language` / `true_mismatch` / `true_mismatch_english` /
+`translate_failed`) needed a ground-truth check of its own -- but a
+single human reviewer can't personally verify Danish, Turkish, Cyrillic,
+or CJK title matches. Rather than restrict review to languages one
+person happens to read (which would silently skip validating the exact
+cases -- foreign-script titles -- this signal exists to handle),
+cross-checked every row against something better than one person's
+language knowledge: IMDb's own curated alternate-title data
+(`alt_titles_imdb`, already merged into `master_dataset.csv` from
+`title.akas.tsv.gz`, populated for 102,891 ids). If the OCR text Nova
+read matches ANY of a movie's real, IMDb-recorded regional titles (token
+or character-set Jaccard >= 0.5, whichever scores higher -- character
+overlap covers CJK, which has no whitespace word boundaries), that's
+independent corroboration, checked via a completely different mechanism
+than Amazon Translate.
+
+| reclassified bucket | n | confirmed by a real IMDb AKA |
+|---|---|---|
+| `true_mismatch_english` | 8,219 | 78.4% |
+| `false_mismatch_language` | 4,425 | 75.5% |
+| `true_mismatch` | 7,372 | **48.5%** |
+| `translate_failed` | 152 | 42.1% |
+
+`false_mismatch_language`'s rescue mostly holds up: three-quarters of
+the pairs Comprehend+Translate flagged as "actually the real title, just
+untranslated" do match a real recorded AKA independently. But the bigger
+finding is in `true_mismatch`: **48.5% of the rows kept as genuine
+mismatches also match a real IMDb AKA** -- nearly half. This isn't a
+contradiction of the original check so much as a scope gap in it: the
+Translate step only ever compared the translated OCR text against the
+catalog's single primary title, but a movie can have dozens of real
+regional titles, and a Danish poster's real Danish title translating
+loosely (or not being a literal translation at all) doesn't mean it's
+wrong -- it can still match a *different* recorded AKA directly, no
+translation needed (e.g. `Dragonflies`'s OCR text `Oyenstikker` scores
+0.0 against the English catalog title but 0.8 directly against the
+Danish AKA "Øjenstikker" once case/diacritic-folded). Checking against
+the full AKA list catches matches that checking against one title can't.
+
+Caveat this cuts both ways: absence of an AKA match isn't proof of a
+real mismatch either -- IMDb's AKA list isn't exhaustive, and OCR misreads
+reduce token overlap even for genuinely correct titles (spot-checking
+the highest-scoring `false_mismatch_language` non-matches shows several
+near-misses sitting just under the 0.5 threshold, e.g. `"HASTA LA
+PRÓXIMA LUZ del DÍA"` for *Until The Next Daylight* at 0.474 -- almost
+certainly a real match the threshold is just barely excluding). This is
+directional evidence, not a perfect oracle -- but it's real, independent,
+deterministic, doesn't require any reviewer to know 20 languages, and
+scales to the full 20,168 rows for near-zero cost (no LLM calls).
+
+**Actionable finding**: any future re-run of this reclassification
+should compare translated/OCR text against the FULL `alt_titles_imdb`
+list for that movie, not just the catalog's primary title -- the current
+`true_mismatch` bucket is very likely overcounting real mismatches by
+close to half.
+
+Built with `verify_mismatch_against_imdb_akas.py` (scratchpad, not yet
+ported into this repo as a numbered script -- worth doing once/if a
+title-match gate here starts consuming `alt_titles_imdb` directly rather
+than just the single catalog title it uses today).
