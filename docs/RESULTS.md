@@ -26,7 +26,7 @@ are simplified, portable versions of.
 
 \* MD5 dedup ran earlier in the project, as part of initial corpus filtering
 rather than this specific review pass — included here because it's the same
-kind of check ([08_dedupe_poster_md5.py](../scripts/08_dedupe_poster_md5.py))
+kind of check ([09_dedupe_poster_md5.py](../scripts/09_dedupe_poster_md5.py))
 and belongs in the same accounting.
 
 ## Duplicate detection funnel
@@ -77,8 +77,8 @@ demonstrate each rejection category, plus 94 random ones. Running the full
 gate sequence against them is a good illustration of why gate order
 matters: **"Castle Ghosts of England/Ireland"** (a real MD5-duplicate pair —
 see above) both turned out to *also* have an empty `poster_path` in the
-primary metadata, so gate 2 excludes both before gate 8 (MD5 dedup) ever
-gets to run on them. Gate 8's own output
+primary metadata, so gate 3 excludes both before gate 9 (MD5 dedup) ever
+gets to run on them. Gate 9's own output
 (`poster_md5_duplicates.csv`) still shows it correctly detected the
 duplicate — it just never became the *final* reason in `excluded_ids.csv`,
 because an earlier gate already caught the same row for an unrelated cause.
@@ -112,12 +112,12 @@ Parker, Castle Ghosts of England, Castle Ghosts of Ireland, and Grudge (all
 
 ## Language detection & translation (gates 5-6), live-verified
 
-`05_comprehend_language.py`/`06_translate_titles.py` chain from
-`04_bedrock_ocr.py`'s `text_you_read` — Bedrock's own short title
+`06_comprehend_language.py`/`07_translate_titles.py` chain from
+`05_bedrock_ocr.py`'s `text_you_read` — Bedrock's own short title
 extraction — not from the real project's `full_ocr` (the longer,
 multi-engine OCR blob `poster_title_match.py` actually gates and
 translates on). This repo never ported the Textract/EasyOCR/Rekognition
-engines that produce `full_ocr` in the first place (`04` is Bedrock-only
+engines that produce `full_ocr` in the first place (`05` is Bedrock-only
 by design), so the two pipelines run on genuinely different text, not
 just a different model version.
 
@@ -132,7 +132,7 @@ were made on `full_ocr` text (much longer, much less ambiguous for a
 language-ID model) than what Bedrock's title-only extraction gives
 Comprehend to work with.
 
-**Re-ran feeding the same `05`/`06` functions the real historical
+**Re-ran feeding the same `06`/`07` functions the real historical
 `ocr_full_text` instead** (no new engines ported — this is
 `master_dataset.csv`'s own already-computed column, just plugged into
 this repo's live logic in place of Bedrock's shorter extraction): 8/10
@@ -153,17 +153,17 @@ column — the same "original bytes aren't reproducible months later"
 caveat this project already documents for other scripts (see
 poster-metrics-pipeline's docs/RESULTS.md), not a bug in this port.
 
-**Bottom line:** running `04_bedrock_ocr.py` → `05` → `06` chained by
+**Bottom line:** running `05_bedrock_ocr.py` → `05` → `06` chained by
 default in this repo validates Bedrock's title reads against
 Comprehend/Translate — a real and useful check — but it's a narrower
 question than the real project's `full_ocr`-based gates 5-6, and won't
 reproduce the "~3,700 of ~65,000 translated" historical count (see
-`06_translate_titles.py`'s docstring). Point `--text-col`/`--in` at a
+`07_translate_titles.py`'s docstring). Point `--text-col`/`--in` at a
 fuller OCR text source if you want the closer comparison; this repo
 doesn't provide one by default since it never ported
 Textract/EasyOCR/Rekognition.
 
-## Gate 8-9: alternate poster scoring (`11`/`12`) — a correction
+## Gate 8-9: alternate poster scoring (`12`/`13`) — a correction
 
 The real project's own version of this gate,
 `score_multi_poster_variants_ocr.py`, scores TMDB alternate-poster
@@ -176,11 +176,11 @@ wrong; searched both the local pipeline checkout and the author's
 personal GitHub repo (`juanpduque/what-fear-looks-like`) for a
 Nova/Bedrock-based version of this specific gate and found none.
 
-`11_find_alternate_posters.py` (TMDB discovery + download, no AWS,
+`12_find_alternate_posters.py` (TMDB discovery + download, no AWS,
 ports `multi_poster_pipeline.py`'s discover/download commands) and
-`12_score_alternate_posters.py` (scoring + swap proposal) are this
-repo's port — but `12` sources its OCR read from **Bedrock/Nova Pro**,
-not Rekognition, since that's what this repo's gate 5 already uses and
+`13_score_alternate_posters.py` (scoring + swap proposal) are this
+repo's port — but `13` sources its OCR read from **Bedrock/Nova Pro**,
+not Rekognition, since that's what this repo's gate 6 already uses and
 no Rekognition-based alternate-poster script could be located to port
 faithfully instead. The *decision logic* is ported as-is from the real
 script (same `title_overlap_score`/`title_fuzzy_score` thresholds:
@@ -194,7 +194,7 @@ profile): ran end-to-end against *The Exorcist* (id 9552) and *A
 Nightmare on Elm Street* (id 377), 4 real alternate posters each
 discovered via TMDB's `images` endpoint. All 8 variants plus both
 primaries scored a perfect 1.0 overlap/fuzzy against the catalog title
-— expected, not a bug: `11`'s discovery defaults to `en,null` language
+— expected, not a bug: `12`'s discovery defaults to `en,null` language
 posters only (matching the real project's own default), so every
 candidate already reads the English title cleanly. 0 swaps proposed for
 either film, correctly, since both already had a matching primary
@@ -204,10 +204,10 @@ poster.
 retracted -- see correction below).** Ran both engines against the
 actual `id`/`title`/`poster_path` rows from the real
 `data/qa/multi_poster_variant_ocr_swaps.csv`, TMDB variant discovery via
-`11`. Result: real historical run 78 proposed swaps; this port's
+`12`. Result: real historical run 78 proposed swaps; this port's
 `--engine rekognition` 1; `--engine bedrock` 9 -- with **zero ids in
 common** between the two engines' proposals. First read: "the discovery
-step (`11`) must be finding a narrower set of candidate posters than
+step (`12`) must be finding a narrower set of candidate posters than
 the real project's own `multi_poster_pipeline.py`."
 
 **That read was wrong, and the actual bug is worth documenting.** The
@@ -261,12 +261,12 @@ already-corrected poster against itself.
 
 The remaining disagreement (9 Bedrock-only, 5 Rekognition-only, out of
 252) is exactly the kind of engine-specific drift this document already
-found directly in gate 5's 4-engine comparison -- not a new finding, a
+found directly in gate 6's 4-engine comparison -- not a new finding, a
 consistent one.
 
-## Gate 5's 4-engine example, re-run live: OCR engines drift too
+## Gate 6's 4-engine example, re-run live: OCR engines drift too
 
-The article's gate 5 case study ("don't trust a single OCR engine")
+The article's gate 6 case study ("don't trust a single OCR engine")
 compares four real engines' historical reads of three real posters —
 *Who Goes There?* (id 752443), *Dykefoot* (644460), *Living
 Arrangements* (751497). Live-checked (2026-08-16, real AWS calls) what
@@ -314,7 +314,7 @@ lesson extends to "don't trust that any given engine's *historical*
 read still describes what it does today."
 
 **Separately:** live-checking this surfaced that Bedrock's real output
-schema (`text_you_read`/`verdict`/`reason`, see 04_bedrock_ocr.py's
+schema (`text_you_read`/`verdict`/`reason`, see 05_bedrock_ocr.py's
 PROMPT) has no numeric confidence field at all. If an article draft
 cites a specific "Bedrock confidence" score, that number isn't coming
 from this call — worth tracing to its actual source before publishing.
@@ -342,7 +342,7 @@ result. **2,538 of 2,539 reviewed:**
 The "zero OCR text" signal holds up: nearly three-quarters of this sample
 really aren't movie posters. The other real thing it surfaces: of the 672
 confirmed real posters, **670 (99.7%) were also marked as having visible
-text Rekognition missed entirely** — reinforcing gate 5's "don't trust a
+text Rekognition missed entirely** — reinforcing gate 6's "don't trust a
 single OCR engine" finding at a different scale (Rekognition's
 `DetectText` specifically, not just "OCR in general," and specifically on
 its false-*negative* rate, not just misreads).
@@ -362,7 +362,7 @@ art. And Japanese-language titles are disproportionately `es_poster`
 (26.8% of that group) vs. `no_es_poster` (6.9%) — consistent with
 Rekognition's OCR miss rate being worse on non-Latin scripts specifically.
 
-## Gate 13: content moderation, live-verified
+## Gate 14: content moderation, live-verified
 
 Found while manually reviewing the poster-type sample (above): some real
 posters in the corpus sit right at the edge of graphic gore, closer to
@@ -373,7 +373,7 @@ project already built and ran two independent signals for exactly this —
 Rekognition's purpose-built `detect_moderation_labels` API) — both
 present as real columns in `master_dataset.csv` (`nova_blood_gore`,
 `rek_gore`, `rek_mod`, etc.), just never ported into this repo's own gate
-structure until now. `13_content_moderation.py` ports both faithfully,
+structure until now. `14_content_moderation.py` ports both faithfully,
 using the real project's own real thresholds: 0.5 for Nova's fields
 (`nova_enrich_live_summary.py`'s own `pct_ge(col, thr=0.5)` corpus
 reporting), 0.4 for Rekognition's (`rekognition_enrich.py`'s own
@@ -430,8 +430,8 @@ sub-title) → *"INC,"* at 47.5%. "Cadaver" (id 55142, Thai) → a stray *"@"*
 at 15.4%. Any real confidence-threshold filter discards these the same as
 a true miss.
 
-**A general vision-LLM (Nova, via this repo's own `04_bedrock_ocr.py`,
-already built for gate 4) reads 4 of these 5 correctly**, live-verified
+**A general vision-LLM (Nova, via this repo's own `05_bedrock_ocr.py`,
+already built for gate 5) reads 4 of these 5 correctly**, live-verified
 against the identical images: "Mary Reilly" exact match; "Chandramukhi"
 transliterated correctly (`text_you_read: "chandramukhi"`); "Ringu 2" read
 the real printed Latin sub-title "RING" (a legitimate catalog-vs-poster
@@ -442,12 +442,12 @@ Nova's own `verdict` field measures title-*match*, not text-*presence* —
 for a "does Rekognition's zero-OCR mean this genuinely has no text"
 check, read `text_you_read != ""`, not `verdict`.
 
-## Gate 4 (Nova OCR) and gate 13 (moderation), run live at full corpus scale
+## Gate 5 (Nova OCR) and gate 14 (moderation), run live at full corpus scale
 
 Both gates were re-run against all 131,644 `master_dataset.csv` rows with
 a `poster_path` (not just samples), 20-40 parallel workers,
 `sandbox_bedrock` profile, 2026-08-16. Also added the same treatment to
-**Pixtral Large** (`us.mistral.pixtral-large-2502-v1:0`) via gate 4's
+**Pixtral Large** (`us.mistral.pixtral-large-2502-v1:0`) via gate 5's
 `--model` override — this repo's own OCR bake-off (in the real project's
 `pipeline/` root: `pilot_ocr_*.py`, `ocr_metrics.py`,
 `summarize_ocr_pilot_v2.py`) had already declared Pixtral the real winner
@@ -459,13 +459,13 @@ background-task history for final counts.
 
 ## Chaining gates 4→5→6 for a real English translation of what Nova reads
 
-`04_bedrock_ocr.py`'s `text_you_read` is a raw visual reading, not a
+`05_bedrock_ocr.py`'s `text_you_read` is a raw visual reading, not a
 translation — live-verified across the 2,539 `poster_type_sample.csv` set
 that this genuinely varies by case: Tamil got phonetically transliterated
 ("chandramukhi"), a Japanese poster's real printed Latin sub-title got
 read as-is ("RING"), and Thai got transcribed in the original script
-verbatim. None of that is English *meaning*. Chaining `05_comprehend_language.py`
-(language ID) → `06_translate_titles.py` (Amazon Translate, real machine
+verbatim. None of that is English *meaning*. Chaining `06_comprehend_language.py`
+(language ID) → `07_translate_titles.py` (Amazon Translate, real machine
 translation, not an LLM guessing) onto Nova's output gets real English
 translations: e.g. `淫屍戲血` → "Zombie Bloods" (id 40351), `鬼見你` →
 "Ghost See You" (id 145996), `سفير الجحيم` → "The Ambassador of Hell"
@@ -473,7 +473,7 @@ translations: e.g. `淫屍戲血` → "Zombie Bloods" (id 40351), `鬼見你` �
 
 Two real gaps found and fixed getting a clean result from this chain:
 
-1. `06_translate_titles.py`'s `TRANSLATE_MIN_CHARS=60` gate is calibrated
+1. `07_translate_titles.py`'s `TRANSLATE_MIN_CHARS=60` gate is calibrated
    for the real project's long multi-field `full_ocr` text. Chained onto
    Nova's short title-only `text_you_read` instead, it's not just "fewer
    rows qualify" as the module's own docstring anticipated — it's **zero**
@@ -491,7 +491,7 @@ real Translate-side errors (recorded, not crashes), 0 script errors.**
 
 ## Poster MD5 dedup at real full-corpus scale — 113 groups, 366 ids
 
-Live-verified 2026-08-16: `08_dedupe_poster_md5.py` (given `--shard-index`/
+Live-verified 2026-08-16: `09_dedupe_poster_md5.py` (given `--shard-index`/
 `--shard-count`, added this session) run against all 131,644
 `master_dataset.csv` rows with a `poster_path`, 20 parallel shards for the
 download+hash phase, merged, then a single final group-by-md5 pass.
@@ -524,7 +524,7 @@ real MD5, `keep=1` correctly assigned to 1548141 via the completeness
 cascade (imdb_id > credits > trailer > popularity).
 
 Two real bugs found and fixed getting a clean run at this scale (both
-also fixed this session, see git log for `08_dedupe_poster_md5.py` and
+also fixed this session, see git log for `09_dedupe_poster_md5.py` and
 `utils/tmdb_client.py`): `tmdb_get()` had no retry and crashed the whole
 run on one transient TMDB timeout; an errored poster-hash row was
 silently treated as "done" forever on resume instead of being retried,
@@ -540,9 +540,9 @@ API) for all 103,625 `master_dataset.csv` rows with a real `imdb_id`:
 **160 real hits (0.155%)** — genuine exploitation/erotic-horror titles
 (the *Emanuelle* series, *Urotsukidōji*, *La Blue Girl*), not noise.
 
-Cross-checked against gate 13's content-moderation flags as they became
+Cross-checked against gate 14's content-moderation flags as they became
 available (60/160 processed at check time): **22/60 (36.7%) were also
-flagged** by gate 13's own visual poster analysis — meaningfully above
+flagged** by gate 14's own visual poster analysis — meaningfully above
 the corpus's overall flag rate (~20%), a real ~1.8x lift. But most
 (63%) weren't caught visually at all: `isAdult` is a *film-level* flag
 (explicit content in the actual runtime), not a *poster* one — plenty of
@@ -577,10 +577,10 @@ hand. Important calibration note from that review: "yes" was judged as
 contain any stylized reference to blood/violence* — horror poster art
 routinely includes illustrated blood as a normal genre convention, and
 that's specifically not what this project wants flagged (see the
-gore/snuff-exclusion goal this whole gate 13 effort started from).
+gore/snuff-exclusion goal this whole gate 14 effort started from).
 Result, matched against that human judgment:
 
-| axis | isolated (gate 13) correct | combined (mega-prompt) correct |
+| axis | isolated (gate 14) correct | combined (mega-prompt) correct |
 |---|---|---|
 | blood_gore | 85.5% (65/76) | 14.5% (11/76) |
 | violence | 87.9% (94/107) | 12.1% (13/107) |
@@ -591,7 +591,7 @@ flagged, the other doesn't), exactly one side matches the human verdict
 per row -- these percentages are directly complementary, not independent
 error rates. **Isolated wins by 3-6x across every axis tested.** A
 plausible mechanism: AWS's own moderation labels (Rekognition, inside
-gate 13's isolated design) are trained on real photographs, so they
+gate 14's isolated design) are trained on real photographs, so they
 already skew toward flagging photorealistic content over stylized
 illustration; Nova given one narrow question per call seems to inherit
 that same discipline, while the same model asked 15 things in one call
@@ -601,22 +601,21 @@ want flagged.
 
 Side finding: the real `ENRICH_PROMPT`, copied verbatim for this test,
 reproduces the exact "literal 'none' echoed as a sensitive-content tag"
-bug this repo found and fixed in its own early gate 13 draft (see
-`13_content_moderation.py`'s prompt-wording fix, live-verified
+bug this repo found and fixed in its own early gate 14 draft (see
+`14_content_moderation.py`'s prompt-wording fix, live-verified
 2026-08-15) — meaning that noise is likely present in the real corpus's
 actual historical moderation data too, not just an artifact of this
 repo's first attempt.
 
-## Gate 09 (compilation collapse) at real scale — 67/110 groups rescued
+## Gate 10 (compilation collapse) at real scale — 67/110 groups rescued
 
 Rather than wait for the full-corpus Nova OCR cascade (hours away),
-gate 09 was fed the exact real universe of shared-poster candidates
+gate 10 was fed the exact real universe of shared-poster candidates
 already known with certainty from the full-corpus MD5 dedup (113
-groups/366 ids) — ran `04_bedrock_ocr.py` fresh on just those 366 (a few
-minutes) to get real OCR text, merged it back with `poster_path` (gate
-4's own output doesn't carry that column through — a real chaining bug
+groups/366 ids) — ran `05_bedrock_ocr.py` fresh on just those 366 (a few
+minutes) to get real OCR text, merged it back with `poster_path` (gate 5's own output doesn't carry that column through — a real chaining bug
 caught live: first attempt found "0 groups, 0 ids" because of it), then
-ran `09_collapse_compilations.py` for real.
+ran `10_collapse_compilations.py` for real.
 
 Live result 2026-08-16: **110 groups, 362 ids** (close to but not
 identical to the MD5 dedup's 113/366 -- a handful of ids' OCR text came
@@ -629,12 +628,12 @@ no compilation entry in TMDB and are reported unresolved, same as the
 script's own documented behavior -- needs a human call (exclude vs.
 leave as-is), not something to auto-resolve.
 
-## OMDb's Rated (MPAA/TV) vs. gate 13's visual flag — a clean, monotonic gradient
+## OMDb's Rated (MPAA/TV) vs. gate 14's visual flag — a clean, monotonic gradient
 
-With OMDb enrichment complete (103,625/103,625 ids) and gate 13's full-
+With OMDb enrichment complete (103,625/103,625 ids) and gate 14's full-
 corpus run 59% done (77,825/131,644 as of this check), cross-referenced
 `Rated` against `flagged` for the 28,800 ids with both a real rating and
-a gate 13 result:
+a gate 14 result:
 
 | Rated | flagged % |
 |---|---|
@@ -647,17 +646,17 @@ A clean, close-to-monotonic gradient across the real severity scale --
 about 5x higher flag rate at X/NC-17 than at G-rated. Unlike the
 `isAdult` check (binary, 0.155% of the corpus, hard to use as a
 continuous signal), MPAA/TV ratings span the full severity range and
-line up sensibly with gate 13's own visual scoring, a real independent
+line up sensibly with gate 14's own visual scoring, a real independent
 validation that the visual moderation gate is measuring something real
-and coherent, not noise. Will get more complete as gate 13's full run
+and coherent, not noise. Will get more complete as gate 14's full run
 finishes.
 
-## Refining gate 13's prompt with the photorealism-vs-stylized distinction
+## Refining gate 14's prompt with the photorealism-vs-stylized distinction
 
 Given the human review above explicitly judged "genuinely photorealistic/
 extreme," not "any stylized reference to blood/violence" (illustrated
 horror-poster gore is normal genre convention this project doesn't want
-flagged), `MODERATION_PROMPT` in `13_content_moderation.py` was rewritten
+flagged), `MODERATION_PROMPT` in `14_content_moderation.py` was rewritten
 to say that explicitly: score low for illustrated/stylized art, high only
 for photorealistic/graphic depiction. Live-verified 2026-08-16 by
 re-scoring the same 155 human-reviewed posters with only the prompt

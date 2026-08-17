@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Score alternate poster candidates (from 11_find_alternate_posters.py)
+"""Score alternate poster candidates (from 12_find_alternate_posters.py)
 against the catalog title via Bedrock/Nova Pro OCR, and propose swapping
 the primary poster when a variant reads noticeably better -- gate 8-9's
 second half.
@@ -13,7 +13,7 @@ source scores the candidates:
   --engine rekognition  faithful to the real script (DetectText, same
                          LINE-sorting-by-position join, same prepare_bytes
                          resize/re-encode rule)
-  --engine bedrock      (default) this repo's own gate 5 engine instead,
+  --engine bedrock      (default) this repo's own gate 6 engine instead,
                          since that's already ported here and no
                          Rekognition-specific alternate-poster script
                          existed in this repo before this port
@@ -30,8 +30,8 @@ Decision rule (ported as-is from the real script):
     current_overlap < 0.15 AND best_overlap >= --min-best
 
   export AWS_PROFILE=your-bedrock-profile
-  python3 12_score_alternate_posters.py --in data/sample_output/vision_title_check.csv
-  python3 12_score_alternate_posters.py --engine rekognition --in ...
+  python3 13_score_alternate_posters.py --in data/sample_output/vision_title_check.csv
+  python3 13_score_alternate_posters.py --engine rekognition --in ...
 """
 from __future__ import annotations
 
@@ -50,11 +50,11 @@ from utils.resumable import load_done_ids, open_for_append
 from utils.text_match import title_fuzzy_score, title_overlap_score
 from utils.tmdb_client import IMAGE_BASE_URL
 
-# reuse 04_bedrock_ocr.py's resize_jpeg + PROMPT + DEFAULT_MODEL_ID rather
+# reuse 05_bedrock_ocr.py's resize_jpeg + PROMPT + DEFAULT_MODEL_ID rather
 # than duplicating them -- imported by file path since a leading digit
-# makes "04_bedrock_ocr" an invalid module name.
+# makes "05_bedrock_ocr" an invalid module name.
 import importlib.util
-_spec = importlib.util.spec_from_file_location("bedrock_ocr", Path(__file__).parent / "04_bedrock_ocr.py")
+_spec = importlib.util.spec_from_file_location("bedrock_ocr", Path(__file__).parent / "05_bedrock_ocr.py")
 _bedrock_ocr = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(_bedrock_ocr)
 

@@ -1,6 +1,6 @@
 """Pure-function tests for utils/tmdb_completeness.py's completeness_key()
 -- the imdb_id -> credits -> trailer -> popularity cascade tiebreaker
-shared by 07_dedupe_tmdb_metadata.py and 08_dedupe_poster_md5.py. No
+shared by 08_dedupe_tmdb_metadata.py and 09_dedupe_poster_md5.py. No
 network needed."""
 import sys
 from pathlib import Path

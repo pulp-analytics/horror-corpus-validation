@@ -14,16 +14,16 @@ image input — swap in Nova Lite (~18x cheaper, less precise), a Claude
 model, or anything else Bedrock exposes, without touching the code.
 
   export AWS_PROFILE=your-bedrock-profile
-  python3 04_bedrock_ocr.py --in data/sample_input/sample_100_ids.csv
-  python3 04_bedrock_ocr.py --model us.amazon.nova-lite-v1:0 --in ...
-  python3 04_bedrock_ocr.py --model us.anthropic.claude-sonnet-4-5-v1:0 --in ...
+  python3 05_bedrock_ocr.py --in data/sample_input/sample_100_ids.csv
+  python3 05_bedrock_ocr.py --model us.amazon.nova-lite-v1:0 --in ...
+  python3 05_bedrock_ocr.py --model us.anthropic.claude-sonnet-4-5-v1:0 --in ...
 
 Resumable: re-running with the same --out skips ids already in that file
 (including ones that errored last time -- add --retry-errors to redo just
 those) and appends new results, instead of re-spending Bedrock calls on
 work already done.
 
-Depends on 02_verify_poster_exists.py having already run: --verified points
+Depends on 03_verify_poster_exists.py having already run: --verified points
 at its output, and any id it marked unverified (empty poster_path, or a 404
 on the TMDB image URL) is skipped here too, instead of wasting a download
 attempt on a poster we already know is unreachable. If --verified doesn't
@@ -36,7 +36,7 @@ each covering a disjoint slice -- the highest-value script to shard, since
 it's a Bedrock call per row and the slowest/most numerous step in the full
 corpus. Each shard needs its own --out to merge afterward.
 
-  python3 04_bedrock_ocr.py --validate
+  python3 05_bedrock_ocr.py --validate
 
 --validate scores --model live against data/ground_truth/
 bedrock_ocr_ground_truth_human_labels.csv -- 100 real posters a human
@@ -138,7 +138,7 @@ def load_done_ids(path: Path, retry_errors: bool) -> set[str]:
 
 
 def load_verified_ids(path: Path) -> set[str] | None:
-    """Ids that 02_verify_poster_exists.py marked verified=1. Returns None
+    """Ids that 03_verify_poster_exists.py marked verified=1. Returns None
     (meaning "no filter, trust each row's own poster_path") if the file
     doesn't exist -- lets this script still run standalone."""
     if not path.exists():
@@ -247,7 +247,7 @@ def main():
     ap.add_argument("--in", dest="in_path", default="data/sample_input/sample_100_ids.csv")
     ap.add_argument("--out", default="data/sample_output/vision_title_check.csv")
     ap.add_argument("--verified", default="data/sample_output/poster_verification.csv",
-                     help="output of 02_verify_poster_exists.py; ids not marked verified=1 there "
+                     help="output of 03_verify_poster_exists.py; ids not marked verified=1 there "
                           "are skipped here without attempting a download. Pass '' to disable.")
     ap.add_argument("--model", default=DEFAULT_MODEL_ID,
                      help="any Bedrock model id that supports Converse + image input, e.g. "

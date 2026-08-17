@@ -1,4 +1,4 @@
-"""Pure-function tests for scripts/13_content_moderation.py -- the real
+"""Pure-function tests for scripts/14_content_moderation.py -- the real
 thresholds (NOVA_THRESHOLD=0.5, REK_THRESHOLD=0.4) ported from
 nova_enrich_live_summary.py and rekognition_enrich.py's own real usage,
 plus the _score/_mod_score helpers ported as-is from the real project's
@@ -9,7 +9,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 _spec = importlib.util.spec_from_file_location(
-    "content_moderation", Path(__file__).resolve().parents[1] / "scripts" / "13_content_moderation.py")
+    "content_moderation", Path(__file__).resolve().parents[1] / "scripts" / "14_content_moderation.py")
 mod = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(mod)
 

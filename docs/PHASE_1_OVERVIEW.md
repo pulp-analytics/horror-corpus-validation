@@ -33,15 +33,15 @@ our corpus.
 
 ```
 01_tmdb_enumerate       → raw candidate ids
-02_verify_poster_exists → does this row even have a reachable poster?
-03_fetch_alt_titles     → alternate titles (TMDB + optional IMDb) -- used to review 04's mismatches, not a match itself
-04_bedrock_ocr          → what a vision-LLM actually reads on the poster
-05_comprehend_language  → language of that text
-06_translate_titles     → re-score non-English text against the catalog title
-07_dedupe_tmdb_metadata → same title+year+overview, different id?
-08_dedupe_poster_md5    → same exact poster image file used for two ids?
-09_collapse_compilations → same poster shared across several ids?
-10_validate_corpus      → orchestrates 1-9, writes the final validated CSV
+03_verify_poster_exists → does this row even have a reachable poster?
+04_fetch_alt_titles     → alternate titles (TMDB + optional IMDb) -- used to review 04's mismatches, not a match itself
+05_bedrock_ocr          → what a vision-LLM actually reads on the poster
+06_comprehend_language  → language of that text
+07_translate_titles     → re-score non-English text against the catalog title
+08_dedupe_tmdb_metadata → same title+year+overview, different id?
+09_dedupe_poster_md5    → same exact poster image file used for two ids?
+10_collapse_compilations → same poster shared across several ids?
+11_validate_corpus      → orchestrates 1-9, writes the final validated CSV
 ```
 
 Quick start: see the root [README.md](../README.md).

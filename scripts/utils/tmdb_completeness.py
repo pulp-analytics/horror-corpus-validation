@@ -1,7 +1,7 @@
 """Shared "how complete/curated is this TMDB entry" signal.
 
-Used by both 07_dedupe_tmdb_metadata.py (same film under two ids) and
-08_dedupe_poster_md5.py (same poster image under two ids) to decide which
+Used by both 08_dedupe_tmdb_metadata.py (same film under two ids) and
+09_dedupe_poster_md5.py (same poster image under two ids) to decide which
 id to keep once a duplicate group is confirmed real. One canonical
 definition instead of each gate inventing its own proxy: a 4-signal
 cascade built entirely from what TMDB itself exposes, each signal only

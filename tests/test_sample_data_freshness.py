@@ -1,5 +1,5 @@
-"""Guards against the exact bug found 2026-08: 04_bedrock_ocr.py and
-06_translate_titles.py were both refactored (fields renamed) without
+"""Guards against the exact bug found 2026-08: 05_bedrock_ocr.py and
+07_translate_titles.py were both refactored (fields renamed) without
 regenerating their committed data/sample_output/*.csv, so the checked-in
 samples silently drifted out of sync with the scripts that produce them.
 Nothing caught it -- test_bedrock_ocr.py's own docstring says main()'s
@@ -68,13 +68,13 @@ def _out_rows_dict_keys(tree: ast.Module) -> list[str] | None:
 
 # script -> (sample csv filename, how to extract its real fields)
 CASES = {
-    "04_bedrock_ocr.py": ("vision_title_check.csv", lambda t: _literal_list_fields(t, "fields")),
-    "05_comprehend_language.py": ("language_detection.csv", lambda t: _literal_list_fields(t, "fields")),
-    "06_translate_titles.py": ("translated_titles.csv", lambda t: _literal_list_fields(t, "fields")),
-    "07_dedupe_tmdb_metadata.py": ("duplicate_resolution.csv", _out_rows_dict_keys),
-    "08_dedupe_poster_md5.py": ("poster_md5_duplicates.csv", _out_rows_dict_keys),
-    "09_collapse_compilations.py": ("compilation_groups.csv", _out_rows_dict_keys),
-    "02_verify_poster_exists.py": ("poster_verification.csv", lambda t: _literal_list_fields(t, "fields")),
+    "05_bedrock_ocr.py": ("vision_title_check.csv", lambda t: _literal_list_fields(t, "fields")),
+    "06_comprehend_language.py": ("language_detection.csv", lambda t: _literal_list_fields(t, "fields")),
+    "07_translate_titles.py": ("translated_titles.csv", lambda t: _literal_list_fields(t, "fields")),
+    "08_dedupe_tmdb_metadata.py": ("duplicate_resolution.csv", _out_rows_dict_keys),
+    "09_dedupe_poster_md5.py": ("poster_md5_duplicates.csv", _out_rows_dict_keys),
+    "10_collapse_compilations.py": ("compilation_groups.csv", _out_rows_dict_keys),
+    "03_verify_poster_exists.py": ("poster_verification.csv", lambda t: _literal_list_fields(t, "fields")),
 }
 
 

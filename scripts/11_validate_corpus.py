@@ -13,29 +13,29 @@ top of it.
 Fully programmatic: nothing here is left for a human to decide. Two cases
 used to require manual review; both are now auto-excluded if the tools we
 already ran can't resolve them --
-  - a 04_bedrock_ocr.py "mismatch" verdict is kept only if the poster's OCR'd
+  - a 05_bedrock_ocr.py "mismatch" verdict is kept only if the poster's OCR'd
     text (raw, or translated by 06) overlaps a candidate title -- the
-    catalog title itself, or an alt title from 03_fetch_alt_titles.py --
+    catalog title itself, or an alt title from 04_fetch_alt_titles.py --
     above ALT_TITLE_OVERLAP_THRESHOLD; otherwise excluded as
     unresolved_title_mismatch. ("no_title_on_poster" verdicts are NOT
     touched by this -- a title-less poster isn't evidence of anything wrong.)
-  - a 09_collapse_compilations.py group with no rescuable canonical TMDB
+  - a 10_collapse_compilations.py group with no rescuable canonical TMDB
     entry is excluded as unresolved_shared_poster, instead of being left
     unresolved.
 
 Gates 7 (same film, different id), 8 (exact same poster image, different
 id), and 9 (poster shared by 2+ ids -- is it a compilation) can all reach a
-verdict on the same id, and their verdicts can disagree: gate 9's
+verdict on the same id, and their verdicts can disagree: gate 10's
 TMDB-search-confirmed answer is strictly more informed than gates 7/8's
 generic completeness proxies whenever it applies. compute_dedup_exclusions()
-below gives gate 9 first say and protects any id it confirms as a
+below gives gate 10 first say and protects any id it confirms as a
 compilation's canonical entry from being excluded by gates 7/8. This
 precedence was added after a real bug -- see docs/VALIDATION_LOGIC.md
 ("Deciding whether a shared poster is a compilation") for the full story
 and the exact ids involved.
 
-  TMDB_API_KEY=... AWS_PROFILE=your-profile python3 10_validate_corpus.py --limit 100
-  python3 10_validate_corpus.py --genre 878 --limit 100
+  TMDB_API_KEY=... AWS_PROFILE=your-profile python3 11_validate_corpus.py --limit 100
+  python3 11_validate_corpus.py --genre 878 --limit 100
 
 --assemble-only skips running 01-09 and jumps straight to reading their
 outputs and writing the three deliverables. For running each script as its
@@ -73,7 +73,7 @@ def run_step(name: str, args: list[str]) -> None:
 def compute_dedup_exclusions(comp_rows: list[dict], dup_rows: list[dict], md5_rows: list[dict]) -> dict[str, str]:
     """Pure function: merges gates 7 (metadata duplicate), 8 (poster MD5
     duplicate), and 9 (compilation collapse) into one id -> exclusion-reason
-    map. Gate 9 goes first and any id it confirms as a compilation's
+    map. Gate 10 goes first and any id it confirms as a compilation's
     canonical entry (a row where segment_id == canonical_id) is protected
     from exclusion by gates 7/8 -- they have no way to know a poster is
     actually a compilation from their own signals (completeness proxies,
@@ -150,17 +150,17 @@ def main():
                 "--limit", str(args.limit), "--out", ids_path,
             ])
 
-        run_step("02_verify_poster_exists.py", ["--in", ids_path, "--out", ver_path])
-        run_step("03_fetch_alt_titles.py", ["--in", ids_path, "--out", out("alt_titles", "json"),
+        run_step("03_verify_poster_exists.py", ["--in", ids_path, "--out", ver_path])
+        run_step("04_fetch_alt_titles.py", ["--in", ids_path, "--out", out("alt_titles", "json"),
                                        *(["--akas", args.akas] if args.akas else [])])
-        run_step("04_bedrock_ocr.py", ["--in", ids_path, "--out", vision_path, "--verified", ver_path])
-        run_step("05_comprehend_language.py", ["--in", vision_path, "--out", lang_path])
-        run_step("06_translate_titles.py", ["--in", lang_path, "--titles", ids_path, "--out", out("translated_titles")])
-        run_step("07_dedupe_tmdb_metadata.py", ["--in", ids_path, "--out", out("duplicate_resolution"),
+        run_step("05_bedrock_ocr.py", ["--in", ids_path, "--out", vision_path, "--verified", ver_path])
+        run_step("06_comprehend_language.py", ["--in", vision_path, "--out", lang_path])
+        run_step("07_translate_titles.py", ["--in", lang_path, "--titles", ids_path, "--out", out("translated_titles")])
+        run_step("08_dedupe_tmdb_metadata.py", ["--in", ids_path, "--out", out("duplicate_resolution"),
                                                  "--cache", str(out_dir / ".tmdb_dedupe_cache.csv")])
-        run_step("08_dedupe_poster_md5.py", ["--in", ids_path, "--out", out("poster_md5_duplicates"),
+        run_step("09_dedupe_poster_md5.py", ["--in", ids_path, "--out", out("poster_md5_duplicates"),
                                               "--cache", str(out_dir / ".poster_md5_cache.csv"), "--verified", ver_path])
-        run_step("09_collapse_compilations.py", ["--in", vision_path, "--out", out("compilation_groups"),
+        run_step("10_collapse_compilations.py", ["--in", vision_path, "--out", out("compilation_groups"),
                                                   "--cache", str(out_dir / ".compilation_search_cache.csv")])
     else:
         log.info("--assemble-only: skipping 01-09, reading their outputs directly")

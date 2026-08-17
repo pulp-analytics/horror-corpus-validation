@@ -44,7 +44,7 @@ a spec someone wrote down. Two rules keep that honest:
 
 Any defensive logic that isn't driven by an actual bug or an actual
 real-data test case is a guess, and guesses in this codebase have
-shipped backwards more than once. Real example: `09_collapse_compilations.py`
+shipped backwards more than once. Real example: `10_collapse_compilations.py`
 once excluded any TMDB search candidate whose id matched one of the
 segment ids being resolved, reasoning that would prevent a "self-match."
 Untested. The first time it was checked against real data, it excluded
@@ -76,11 +76,11 @@ fixture that no longer reflects reality uncommented.
 Several gates in this pipeline (currently 7, 8, 9) can independently
 reach a verdict on the same catalog id. If you add a new one, decide and
 document its precedence against the existing ones in
-`10_validate_corpus.py`'s `compute_dedup_exclusions()` and
+`11_validate_corpus.py`'s `compute_dedup_exclusions()` and
 `docs/VALIDATION_LOGIC.md` — don't let it silently win or lose based on
 which order scripts happen to run in. That's exactly the bug fixed in
-the commit that added `compute_dedup_exclusions()`: gate 8 ran before
-gate 9 purely by code order, and on a real case that made it produce the
+the commit that added `compute_dedup_exclusions()`: gate 9 ran before
+gate 10 purely by code order, and on a real case that made it produce the
 wrong answer.
 
 ## Docstrings describe stable behavior, not point-in-time findings

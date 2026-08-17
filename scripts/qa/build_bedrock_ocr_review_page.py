@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Builds a local, self-contained HTML page for blind human review of
 data/ground_truth/bedrock_ocr_sample.csv -- the 100-poster stratified
-sample used to ground-truth 04_bedrock_ocr.py's match/mismatch/
+sample used to ground-truth 05_bedrock_ocr.py's match/mismatch/
 no_title_on_poster verdict (see docs/MODELS.md, "Building a human
 ground-truth set" for how that sample was drawn and why).
 
@@ -11,7 +11,7 @@ isn't anchored by what the model already said. Review state autosaves to
 the browser's localStorage (safe to close the tab and resume later); an
 Export CSV button writes id/title/original_title/original_language/
 poster_path/stratum/human_verdict/human_note once you're done, which
-04_bedrock_ocr.py's --validate mode (once built) will compare against a
+05_bedrock_ocr.py's --validate mode (once built) will compare against a
 live run. human_verdict is one of match/mismatch/no_title_on_poster/
 unjudgeable -- see the "non-English posters" note below for why
 unjudgeable exists and how it should be handled (excluded from

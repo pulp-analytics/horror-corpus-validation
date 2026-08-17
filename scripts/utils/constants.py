@@ -15,7 +15,7 @@ SUSPECT_BELOW = 0.35
 # "mismatch" verdict is treated as unexplained (see docs/VALIDATION_LOGIC.md)
 ALT_TITLE_OVERLAP_THRESHOLD = 0.5
 
-# 09_collapse_compilations.py: minimum overlap/fuzzy title-match score to
+# 10_collapse_compilations.py: minimum overlap/fuzzy title-match score to
 # accept a TMDB search result as the real compilation/anthology entry
 # (see docs/VALIDATION_LOGIC.md, "Deciding whether a shared poster is a
 # compilation")

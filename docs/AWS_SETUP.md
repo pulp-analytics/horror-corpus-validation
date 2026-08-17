@@ -30,7 +30,7 @@
 These are all pay-per-request services with no idle cost — a 100-row
 sample run (on your own laptop, no AWS compute needed) costs well under $1.
 Nova Pro vision calls are the largest single cost per call; Comprehend/
-Translate are negligible at this scale. `04_bedrock_ocr.py --model` accepts
+Translate are negligible at this scale. `05_bedrock_ocr.py --model` accepts
 any Bedrock model id that supports image input, so swapping in Nova Lite
 (~18x cheaper, less precise) for a large run is a one-flag change, not a
 code change. See "Running at scale" below for
@@ -65,7 +65,7 @@ detection, a pre-flight account check) lives in the sibling
 specifically because it's easy to point a batch job at the wrong AWS
 account by accident.
 
-## Optional: IMDb dataset for `03_fetch_alt_titles.py`
+## Optional: IMDb dataset for `04_fetch_alt_titles.py`
 
 The IMDb non-commercial datasets (not an AWS resource) add a second,
 independent source of alternate titles beyond TMDB's own

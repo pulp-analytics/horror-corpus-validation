@@ -26,7 +26,7 @@ docs/VALIDATION_LOGIC.md's "Deciding whether a shared poster is a
 compilation" for the full story and why an earlier, untested version of
 this function got that backwards).
 
-  TMDB_API_KEY=... python3 09_collapse_compilations.py --in data/sample_output/vision_title_check.csv
+  TMDB_API_KEY=... python3 10_collapse_compilations.py --in data/sample_output/vision_title_check.csv
 
 Resumable: the TMDB search per shared-poster group is cached in --cache
 (poster_path -> canonical_id/title/resolution), appended to on each run, so

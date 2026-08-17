@@ -21,7 +21,7 @@ docs/RESULTS.md, "Language detection & translation (gates 5-6),
 live-verified."
 
   export AWS_PROFILE=your-translate-profile
-  python3 06_translate_titles.py --in data/sample_output/language_detection.csv
+  python3 07_translate_titles.py --in data/sample_output/language_detection.csv
 
 Resumable: re-running with the same --out skips ids already processed.
 
@@ -65,7 +65,7 @@ def main():
     ap.add_argument("--min-chars", type=int, default=TRANSLATE_MIN_CHARS,
                      help=f"override TRANSLATE_MIN_CHARS (default {TRANSLATE_MIN_CHARS}, calibrated "
                           "for the real project's long multi-field full_ocr text -- a short "
-                          "title-only OCR source like 04_bedrock_ocr.py's text_you_read never "
+                          "title-only OCR source like 05_bedrock_ocr.py's text_you_read never "
                           "reaches it, so 0 rows ever qualify chained from that input. Pass a "
                           "small value (e.g. 1) when --in's text is just a title.")
     args = ap.parse_args()

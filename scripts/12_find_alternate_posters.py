@@ -12,7 +12,7 @@ list, ranked by vote_average/vote_count/height (the real project's own
 ranking), capped at --max-per-id. No AWS involved.
 
   export TMDB_API_KEY=...
-  python3 11_find_alternate_posters.py --in data/sample_output/vision_title_check.csv
+  python3 12_find_alternate_posters.py --in data/sample_output/vision_title_check.csv
 
 Resumable: skips ids whose variant directory already has files.
 """

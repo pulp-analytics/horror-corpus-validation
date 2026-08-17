@@ -21,8 +21,8 @@ so there's no cross-row state that sharding could break. Each shard needs
 its own --out (they're separate files to merge afterward, not something
 safe to have N processes append to concurrently).
 
-  TMDB_API_KEY=... python3 02_verify_poster_exists.py --in data/sample_output/tmdb_horror_ids.csv
-  python3 02_verify_poster_exists.py --shard-index 0 --shard-count 4 --out .../shard_0.csv
+  TMDB_API_KEY=... python3 03_verify_poster_exists.py --in data/sample_output/tmdb_horror_ids.csv
+  python3 03_verify_poster_exists.py --shard-index 0 --shard-count 4 --out .../shard_0.csv
 """
 from __future__ import annotations
 

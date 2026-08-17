@@ -19,12 +19,12 @@ between shells/terminals.
 
 **Nova Pro returns text that isn't valid JSON**
 The prompt asks for JSON-only output but models occasionally wrap it in a
-sentence or code fence. `04_bedrock_ocr.py` strips common
+sentence or code fence. `05_bedrock_ocr.py` strips common
 ```` ```json ```` fences before parsing; if you still see failures on your
 data, log the raw `result` before the `json.loads()` call to see what
 came back.
 
-**TMDB search (`09_collapse_compilations.py`) finds nothing for a known
+**TMDB search (`10_collapse_compilations.py`) finds nothing for a known
 compilation**
 TMDB doesn't have every VHS/DVD compilation or TV anthology as its own
 entry — this is expected for a meaningful minority of cases. See
@@ -34,4 +34,4 @@ for how to handle that.
 **Rate limiting / `429` from TMDB**
 The scripts already sleep between calls, but if you're running several at
 once against the same API key, space out `--delay` further or run scripts
-sequentially (which `10_validate_corpus.py` already does).
+sequentially (which `11_validate_corpus.py` already does).

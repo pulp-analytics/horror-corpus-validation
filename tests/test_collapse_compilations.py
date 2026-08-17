@@ -1,4 +1,4 @@
-"""Pure-function tests for scripts/09_collapse_compilations.py's
+"""Pure-function tests for scripts/10_collapse_compilations.py's
 best_compilation_match() -- picks the best-scoring TMDB search result for
 a shared-poster compilation. No network needed.
 
@@ -14,7 +14,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 _spec = importlib.util.spec_from_file_location(
-    "collapse_compilations", Path(__file__).resolve().parents[1] / "scripts" / "09_collapse_compilations.py")
+    "collapse_compilations", Path(__file__).resolve().parents[1] / "scripts" / "10_collapse_compilations.py")
 mod = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(mod)
 

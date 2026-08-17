@@ -1,4 +1,4 @@
-"""Pure-function tests for scripts/12_score_alternate_posters.py's
+"""Pure-function tests for scripts/13_score_alternate_posters.py's
 propose_swap() -- the real project's 3-rule swap decision, ported as-is
 from score_multi_poster_variants_ocr.py. No AWS/network needed."""
 import importlib.util
@@ -7,7 +7,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 _spec = importlib.util.spec_from_file_location(
-    "score_alternate_posters", Path(__file__).resolve().parents[1] / "scripts" / "12_score_alternate_posters.py")
+    "score_alternate_posters", Path(__file__).resolve().parents[1] / "scripts" / "13_score_alternate_posters.py")
 mod = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(mod)
 

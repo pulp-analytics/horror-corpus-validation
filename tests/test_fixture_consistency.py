@@ -1,6 +1,6 @@
 """Guards against the exact class of bug found live 2026-08-16:
 sample_100_ids.csv's second Omegle row had an empty `overview` cell,
-silently breaking 07_dedupe_tmdb_metadata.py's exact-match grouping key.
+silently breaking 08_dedupe_tmdb_metadata.py's exact-match grouping key.
 The pair never even became a "candidate group" -- 07 logged "0 candidate
 groups" and moved on, no error, nothing to catch except running it by
 hand against a real TMDB key and noticing the count looked wrong.
@@ -19,7 +19,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 
-_spec = importlib.util.spec_from_file_location("dedupe_tmdb_metadata", SCRIPTS / "07_dedupe_tmdb_metadata.py")
+_spec = importlib.util.spec_from_file_location("dedupe_tmdb_metadata", SCRIPTS / "08_dedupe_tmdb_metadata.py")
 _dedupe = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(_dedupe)
 norm = _dedupe.norm
@@ -53,7 +53,7 @@ def test_real_omegle_pair_still_groups_under_gate7():
 
 def test_real_sheets_of_gore_pair_shares_a_poster_path():
     """The real compilation example (data/excluded_compilation.csv,
-    docs/VALIDATION_LOGIC.md) -- 09_collapse_compilations.py only ever
+    docs/VALIDATION_LOGIC.md) -- 10_collapse_compilations.py only ever
     considers a group of 2+ ids sharing the exact same poster_path, so if
     this fixture's two poster_path cells ever drift apart, the group
     stops existing and the whole test case silently goes untested."""

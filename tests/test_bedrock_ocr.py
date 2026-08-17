@@ -1,4 +1,4 @@
-"""Unit tests for 04_bedrock_ocr.py's Converse response parsing, using
+"""Unit tests for 05_bedrock_ocr.py's Converse response parsing, using
 botocore.stub.Stubber so no real AWS credentials or network calls are
 needed -- Stubber intercepts the boto3 client before any HTTP request is
 made and hands back a response we control. The image download itself
@@ -24,7 +24,7 @@ from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 
-bedrock_ocr = importlib.import_module("04_bedrock_ocr")
+bedrock_ocr = importlib.import_module("05_bedrock_ocr")
 
 
 def converse_response(text: str) -> dict:

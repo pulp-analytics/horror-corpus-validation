@@ -13,13 +13,13 @@ column, in which case that's used instead and no extra call is made).
 
 This script only collects candidates -- it does not itself decide whether a
 poster's visible title matches one of them. That comparison happens when
-reviewing 04_bedrock_ocr.py's mismatch verdicts against this output (see
+reviewing 05_bedrock_ocr.py's mismatch verdicts against this output (see
 docs/RESULTS.md for the concrete case: a poster reading "World of the Living
 Dead" that turned out to be a real AKA of the catalog title, not a mismatch,
 once checked against what this script fetched).
 
-  TMDB_API_KEY=... python3 03_fetch_alt_titles.py --in data/sample_output/tmdb_horror_ids.csv
-  python3 03_fetch_alt_titles.py --akas /path/to/title.akas.tsv.gz --in ...
+  TMDB_API_KEY=... python3 04_fetch_alt_titles.py --in data/sample_output/tmdb_horror_ids.csv
+  python3 04_fetch_alt_titles.py --akas /path/to/title.akas.tsv.gz --in ...
 
 Resumable: --out is a JSON object keyed by id, loaded first if it already
 exists, so an interrupted run only re-fetches TMDB alt titles for ids not
