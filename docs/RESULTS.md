@@ -488,3 +488,79 @@ Two real gaps found and fixed getting a clean result from this chain:
 
 Final result on the full 2,539-row set: **245 real translations, 2
 real Translate-side errors (recorded, not crashes), 0 script errors.**
+
+## Poster MD5 dedup at real full-corpus scale — 113 groups, 366 ids
+
+Live-verified 2026-08-16: `08_dedupe_poster_md5.py` (given `--shard-index`/
+`--shard-count`, added this session) run against all 131,644
+`master_dataset.csv` rows with a `poster_path`, 20 parallel shards for the
+download+hash phase, merged, then a single final group-by-md5 pass.
+**Definitive result: 113 exact-duplicate-poster groups, 366 ids.**
+
+That's close to, but not identical to, the 113-group/372-id count a
+cheap `poster_path` exact-string-match found first (no downloads, just
+comparing the column) — and the 6-id gap is two genuinely different real
+findings, not noise:
+
+- **4 ids the string-match structurally cannot find**: "Behind The
+  Screen" (1456954), "untitled" (1192817), "Godspeed" (1258187), "Scent"
+  (1449322) — four different `poster_path` values, but the exact same
+  real image bytes (md5 `f01e49ef...`) once actually downloaded. This is
+  the reason to hash bytes instead of trusting the path string: TMDB can
+  serve the same image asset from more than one path.
+- **10 ids the string-match wrongly grouped**: e.g. "The Midnight
+  Express" (954359) and "The Menace" (954363) share the *exact same*
+  `poster_path` string in `master_dataset.csv`
+  (`/qqUnO5D9ZJi0w2GYRYKvfYYyXJ2.jpg`) but hash to two different real
+  MD5s once downloaded live. Not a download failure (both cached
+  successfully with a real, non-empty hash) — the path stored in the
+  historical corpus no longer serves the same bytes TMDB's CDN returns
+  today. A real case of the historical snapshot drifting from current
+  CDN state, not a bug in either script.
+
+Confirms the specific case that started this check: ids 1548140, 1548141,
+1548185 ("Fake Documentary Q" franchise entries) all hash to the same
+real MD5, `keep=1` correctly assigned to 1548141 via the completeness
+cascade (imdb_id > credits > trailer > popularity).
+
+Two real bugs found and fixed getting a clean run at this scale (both
+also fixed this session, see git log for `08_dedupe_poster_md5.py` and
+`utils/tmdb_client.py`): `tmdb_get()` had no retry and crashed the whole
+run on one transient TMDB timeout; an errored poster-hash row was
+silently treated as "done" forever on resume instead of being retried,
+permanently under-counting whatever group that id belonged to.
+
+## IMDb `isAdult` — real signal, unlike TMDB's, but measuring something different
+
+TMDB's own `adult` field (checked earlier) has essentially no variance
+(99.9% `False` across the full corpus) and isn't usable. IMDb's
+`isAdult`, cross-referenced live 2026-08-16 against the free
+`title.basics.tsv.gz` bulk dataset (225MB, all of IMDb, not a per-request
+API) for all 103,625 `master_dataset.csv` rows with a real `imdb_id`:
+**160 real hits (0.155%)** — genuine exploitation/erotic-horror titles
+(the *Emanuelle* series, *Urotsukidōji*, *La Blue Girl*), not noise.
+
+Cross-checked against gate 13's content-moderation flags as they became
+available (60/160 processed at check time): **22/60 (36.7%) were also
+flagged** by gate 13's own visual poster analysis — meaningfully above
+the corpus's overall flag rate (~20%), a real ~1.8x lift. But most
+(63%) weren't caught visually at all: `isAdult` is a *film-level* flag
+(explicit content in the actual runtime), not a *poster* one — plenty of
+exploitation films use suggestive-but-not-explicit poster art. The two
+signals are complementary, not redundant; neither should stand in for
+the other.
+
+## OMDb enrichment — a new, independent data source (not a re-port)
+
+Unlike the gates above, OMDb was never part of the real project's
+methodology — this is new work. Added `enrich_omdb.py` (in the real
+pipeline, not this repo, since it needs `master_dataset.csv`'s
+`imdb_id`) to pull `Rated` (MPAA), Rotten Tomatoes score, Metacritic
+score, IMDb rating/votes, genre, plot, and an independent poster URL for
+all 103,625 rows with a real `imdb_id`, via OMDb's real API
+(`omdbapi.com`, a paid $1/month Patreon tier unlocking 100k req/day --
+the free 1k/day tier is impractical at this corpus's scale). Live-tested
+against real titles (e.g. *Star Wars*: Rated PG, RT 93%, Metacritic
+90/100, imdbRating 8.6) before running at full scale. Results pending as
+of this write-up; see `pipeline/data/qa/omdb_enrichment.csv` once the
+background run completes.
