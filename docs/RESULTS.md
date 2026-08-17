@@ -410,3 +410,81 @@ cross-check signal for this corpus. IMDb's `isAdult` field wasn't
 checked this session; a live cross-reference (same free `title.basics.tsv.gz`
 dataset gates 5-6's genre classifier validation already uses) is a
 reasonable next step if TMDB's flag being empty turns out to matter.
+
+## Why Rekognition misses text that's really there — and what reads it correctly
+
+Live-verified 2026-08-16 against 5 real posters from the poster-type
+review's `has_text=si` group (real text a human confirmed, that
+Rekognition's `detect_text` still scored `ocr_chars==0` on): two distinct,
+separate failure modes, not one.
+
+**Non-Latin script — Rekognition sees nothing at all.** Tamil
+("Chandramukhi", id 53122) and Chinese ("A Dead Man Visits the Living",
+id 285981) returned **zero** `TextDetections`, not even low-confidence
+noise. `detect_text` is tuned for Latin script and doesn't attempt these.
+
+**Stylized fonts — Rekognition reads something, wrong, at low confidence.**
+"Mary Reilly" (id 9095, English, gothic title treatment) → *"Mery Radly"*
+at 14.9% confidence. "Ringu 2" (id 9669, Japanese poster with a Latin
+sub-title) → *"INC,"* at 47.5%. "Cadaver" (id 55142, Thai) → a stray *"@"*
+at 15.4%. Any real confidence-threshold filter discards these the same as
+a true miss.
+
+**A general vision-LLM (Nova, via this repo's own `04_bedrock_ocr.py`,
+already built for gate 4) reads 4 of these 5 correctly**, live-verified
+against the identical images: "Mary Reilly" exact match; "Chandramukhi"
+transliterated correctly (`text_you_read: "chandramukhi"`); "Ringu 2" read
+the real printed Latin sub-title "RING" (a legitimate catalog-vs-poster
+title difference, not an OCR failure); "Cadaver" read real Thai
+characters (didn't match the English catalog title, but it was real Thai
+text, not noise). Only the Chinese poster came back empty for Nova too.
+Nova's own `verdict` field measures title-*match*, not text-*presence* —
+for a "does Rekognition's zero-OCR mean this genuinely has no text"
+check, read `text_you_read != ""`, not `verdict`.
+
+## Gate 4 (Nova OCR) and gate 13 (moderation), run live at full corpus scale
+
+Both gates were re-run against all 131,644 `master_dataset.csv` rows with
+a `poster_path` (not just samples), 20-40 parallel workers,
+`sandbox_bedrock` profile, 2026-08-16. Also added the same treatment to
+**Pixtral Large** (`us.mistral.pixtral-large-2502-v1:0`) via gate 4's
+`--model` override — this repo's own OCR bake-off (in the real project's
+`pipeline/` root: `pilot_ocr_*.py`, `ocr_metrics.py`,
+`summarize_ocr_pilot_v2.py`) had already declared Pixtral the real winner
+(0.939 general / 0.801 hard-set title-overlap score vs Rekognition's
+0.849 / 0.454) but that winner had *never* been run past a ~100-poster
+pilot sample before this. Full numbers pending completion (all three were
+still running in background as of this write-up); see the repo's
+background-task history for final counts.
+
+## Chaining gates 4→5→6 for a real English translation of what Nova reads
+
+`04_bedrock_ocr.py`'s `text_you_read` is a raw visual reading, not a
+translation — live-verified across the 2,539 `poster_type_sample.csv` set
+that this genuinely varies by case: Tamil got phonetically transliterated
+("chandramukhi"), a Japanese poster's real printed Latin sub-title got
+read as-is ("RING"), and Thai got transcribed in the original script
+verbatim. None of that is English *meaning*. Chaining `05_comprehend_language.py`
+(language ID) → `06_translate_titles.py` (Amazon Translate, real machine
+translation, not an LLM guessing) onto Nova's output gets real English
+translations: e.g. `淫屍戲血` → "Zombie Bloods" (id 40351), `鬼見你` →
+"Ghost See You" (id 145996), `سفير الجحيم` → "The Ambassador of Hell"
+(id 514101), `목두기 비디오` → "Neckline video" (id 450934).
+
+Two real gaps found and fixed getting a clean result from this chain:
+
+1. `06_translate_titles.py`'s `TRANSLATE_MIN_CHARS=60` gate is calibrated
+   for the real project's long multi-field `full_ocr` text. Chained onto
+   Nova's short title-only `text_you_read` instead, it's not just "fewer
+   rows qualify" as the module's own docstring anticipated — it's **zero**
+   (no movie title reaches 60 characters). Added an opt-in `--min-chars`
+   override; default behavior for the real `full_ocr` use case is
+   unchanged.
+2. `translate_text` crashed the whole run on
+   `UnsupportedLanguagePairException` (Odia "or" and Malagasy "mg" aren't
+   translatable-from pairs Amazon Translate supports) — 31 real
+   translations in, no cached progress lost, but a manual restart
+   required. Now caught and recorded in a new `error` column instead.
+
+Final result on the full 2,539-row set: **245 real translations, 2
+real Translate-side errors (recorded, not crashes), 0 script errors.**
