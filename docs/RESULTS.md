@@ -1021,3 +1021,109 @@ LLM call entirely on posters with no small bottom-clustered text at all)
 or a second-opinion cross-check, not a replacement for the LLM leg.
 Built with `detect_credits_block_deterministic.py` (scratchpad); not yet
 wired into any gate.
+
+## CLIP same-artwork, complete: all three legs on the exact same 85 pairs
+
+The CLIP threshold section above had deterministic (cosine sim) and
+human ground truth (85 pairs), but the LLM leg that exists
+(`same_artwork` from the alt-poster classifier) had only ever been
+scored on a *different* 100-pair sample -- never compared apples-to-
+apples against CLIP's own recommendation. Closed live 2026-08-17: ran
+Nova's isolated `same_artwork` question on the identical 85 pairs
+already used for the CLIP human review (same cached images, same human
+verdicts), giving one dataset with all three signals.
+
+| signal | accuracy | precision | recall | FP | FN |
+|---|---|---|---|---|---|
+| CLIP cosine sim @ 0.90 (deterministic) | 91.7% | **100%** | 87.9% | **0** | 7 |
+| Nova `same_artwork` (LLM) | **95.2%** | 93.5% | **100%** | 4 | **0** |
+
+The two signals are cleanly complementary, not redundant: CLIP@0.90
+never produces a false positive but misses 7 real matches; Nova catches
+every real match (100% recall) but calls 4 non-matches "same" that
+aren't. All 4 of Nova's false positives are exactly the pairs CLIP's 0.90
+threshold correctly rejects, and all 7 of CLIP's false negatives are
+pairs Nova correctly catches -- the two error sets don't overlap on this
+sample. A combined rule (flag `same_artwork` if EITHER signal says yes,
+which only costs the false-positive rate) or (both agree = high
+confidence, disagreement = route to a human) is a real, better-than-
+either-alone option for a future canonical-poster-selection gate. Built
+with `nova_same_artwork_on_clip_sample.py` (scratchpad).
+
+## Poster-type's missing LLM leg, closed: Nova asked directly, not repurposed
+
+The `painted` classifier cross-check in the poster-type section above
+(no discriminative value, ~74.7% precision vs. ~73.1% base rate) was a
+zero-shot classifier repurposed from an unrelated task (illustrated vs.
+photographic), not a direct question. Built and ran the direct question
+live 2026-08-17 -- Nova Pro shown each of the 2,528 usable human-labeled
+posters (`es_poster`/`no_es_poster`, excluding `no_seguro`/blank),
+asked plainly whether the image is real poster key art or not (a plain
+still, generic/stock image, blank/placeholder, or non-poster image).
+2,527/2,528 scored (1 TMDB image served as `.webp`, rejected by
+Bedrock's MIME check -- not investigated further given n=1).
+
+| signal | accuracy | precision | recall |
+|---|---|---|---|
+| zero-OCR alone (trivial baseline -- this is the sampling criterion itself) | 73.1% | 73.1% | 100% |
+| CLIP `painted` classifier (repurposed, not a direct question) | ~74.7% | -- | -- |
+| **Nova, asked directly (LLM)** | **91.6%** | **85.5%** | **82.4%** |
+
+Asking the direct question does what repurposing an unrelated classifier
+couldn't: **91.6% accuracy**, an 18.5-point jump over the sampling
+baseline and a real discriminator, unlike `painted`. This closes
+poster-type's LLM leg for real -- all three legs now exist and were
+scored on the same 2,528-row ground truth. Precision (85.5%) and recall
+(82.4%) are both solid but not perfect -- combining with the
+deterministic zero-OCR signal (which is 100% recall on this sample by
+construction) as a first-pass filter, with Nova as the actual decision
+signal, is the likely design for an eventual gate: cheap OCR check
+routes candidates to Nova, Nova's direct answer decides. Built with
+`nova_poster_type_classify.py` (scratchpad); not yet a numbered gate.
+
+## Gate 10's "43 unresolved" closed: they're not compilations, and don't need a human call
+
+The compilation-collapse finding above left 43/110 shared-poster groups
+"unresolved -- needs a human call" because no TMDB compilation entry
+existed to collapse them into. Checked live 2026-08-17 whether that
+framing was even right: for each of the 43 groups, pulled every
+segment id's real catalog title from `master_dataset.csv` and measured
+title diversity within the group -- the same "cross-check against real
+catalog data instead of asking a human or an LLM" pattern used above
+for the Nova-mismatch/IMDb-AKA check, applied to a different problem:
+there, real AKA titles independently confirmed a translated OCR match;
+here, real per-segment titles independently confirm a shared poster
+ISN'T a compilation.
+
+**42 of 43 groups have segments with clearly distinct, real titles** --
+these are not mis-split compilations at all, they're real film/TV
+series or franchises that happen to share one generic piece of stock
+art because per-entry poster art was never made. The two biggest: **106
+segment ids** for *The Hazards of Helen* (a real 1915-1916 silent
+railway-adventure serial, confirmed via each id's own real, distinct
+episode title -- e.g. "Episode 13, The Escape on the Fast Freight",
+"Ep26: The Wild Engine") and 12 for "Nick Carter Is Coming To Your
+Cinema" (a real serial-detective franchise). These should simply stay as
+separate catalog entries -- gate 10's own documented behavior (report,
+don't auto-resolve) was already correct not to touch them, they just
+never got reclassified as "confirmed NOT a compilation" instead of
+sitting in an ambiguous "unresolved" bucket implying pending human work.
+
+The remaining 1 group (`Kamen Rider BiBiBi no Bibill Geiz` / `...
+BibillGeiz`, 2 ids) isn't a compilation case either -- it's the exact
+same title with a spacing difference, a title-normalization duplicate
+gate 10 was never meant to catch (that's a dedup problem, not a
+compilation one).
+
+**Net result: zero of the 43 actually need an editorial "collapse vs.
+leave" judgment call.** The real, closeable gap wasn't a backlog of
+human decisions -- it was that gate 10's `no_compilation_entry_found`
+resolution didn't distinguish "no TMDB entry because this really is an
+unlisted compilation" from "no TMDB entry because this was never a
+compilation in the first place." A cheap deterministic follow-up
+(title-diversity within a shared-poster group) resolves that
+distinction with no LLM call and no human review needed. Worth folding
+into `10_collapse_compilations.py` itself as a second resolution label
+(e.g. `confirmed_not_compilation` vs. a real remaining
+`ambiguous_needs_review`) rather than leaving everything under one
+`no_compilation_entry_found` bucket.
