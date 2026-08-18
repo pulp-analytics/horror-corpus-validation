@@ -99,13 +99,18 @@ def main():
             if year in years_done:
                 continue
             log.info(f"year {year} (genre={args.genre})...")
+            limit_hit = False
             for m in enumerate_year(session, api_key, args.genre, year):
+                if args.limit and len(seen_ids) >= args.limit:
+                    limit_hit = True
+                    break
                 if m["id"] not in seen_ids:
                     seen_ids.add(m["id"])
                     w.writerow({k: m.get(k, "") for k in FIELDS})
             f.flush()
-            years_done.add(year)
-            years_done_path.write_text(" ".join(str(y) for y in sorted(years_done)))
+            if not limit_hit:
+                years_done.add(year)
+                years_done_path.write_text(" ".join(str(y) for y in sorted(years_done)))
             log.info(f"  running total: {len(seen_ids):,}")
     finally:
         f.close()
