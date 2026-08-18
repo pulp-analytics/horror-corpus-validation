@@ -71,12 +71,24 @@ running each script as its own step in an external orchestrator (e.g. AWS
 Step Functions driving Fargate tasks -- see the sibling
 poster-analysis-infrastructure repo), that orchestrator runs those steps
 itself; this script's only job at that point is the assembly logic, which
-is exactly what --assemble-only gives you. NOTE (2026-08-18): the deployed
-state machine in that sibling repo predates gates 2, 4, and 13-14's rescue
-being wired in here -- it only runs the original 9-script DAG (now gates
-1/3/5/6/7/8/9/10/11 under current numbering) and needs a matching update
-before --assemble-only's inputs there will be complete. Not yet done --
-flagged here rather than silently left inconsistent.
+is exactly what --assemble-only gives you.
+
+Every input this reads and every deliverable it writes defaults to a fixed
+data/sample_output/<name>[_genre<id>].<ext> path, which only lines up with
+where an external orchestrator's gates actually wrote their outputs if that
+orchestrator also used that exact convention. The --*-path/--*-out flags
+above override each of those individually, so an orchestrator using a
+run-specific output prefix (e.g. Step Functions, so concurrent/successive
+executions don't clobber each other's intermediates or -- worse -- silently
+assemble one run's catalog against a *different* run's stale leftovers
+sitting at the default path) can point every one of them at its own
+per-execution paths. See docs/RESULTS.md, "Assemble path overrides," for
+the real incident this fixes: a Step Functions execution's Assemble step
+had no way to tell this script where that execution's own gate outputs
+lived, so it silently read whatever gate outputs happened to already exist
+at the hardcoded default (an earlier, unrelated execution's), producing a
+validated_corpus.csv that never reflected that run's real exclusions --
+while the execution itself still reported SUCCEEDED, since no task errored.
 """
 from __future__ import annotations
 
@@ -159,6 +171,19 @@ def main():
                      help="skip running 02-11 (+13-14's gate 4 rescue) (assume something else "
                           "already ran them, e.g. Step Functions/Fargate tasks) and just read "
                           "their outputs to assemble the three deliverables")
+    ap.add_argument("--isadult-path", default=None, help="override gate 2's --out path (default: data/sample_output/isadult_filter*.csv)")
+    ap.add_argument("--verified-path", default=None, help="override gate 3's --out path (default: data/sample_output/poster_verification*.csv)")
+    ap.add_argument("--vision-path", default=None, help="override gate 6's --out path (default: data/sample_output/vision_title_check*.csv)")
+    ap.add_argument("--dup-path", default=None, help="override gate 9's --out path (default: data/sample_output/duplicate_resolution*.csv)")
+    ap.add_argument("--md5-path", default=None, help="override gate 10's --out path (default: data/sample_output/poster_md5_duplicates*.csv)")
+    ap.add_argument("--comp-path", default=None, help="override gate 11's --out path (default: data/sample_output/compilation_groups*.csv)")
+    ap.add_argument("--alt-titles-path", default=None, help="override gate 5's --out path (default: data/sample_output/alt_titles*.json)")
+    ap.add_argument("--translated-path", default=None, help="override gate 8's --out path (default: data/sample_output/translated_titles*.csv)")
+    ap.add_argument("--poster-type-path", default=None, help="override gate 4's --out path (default: data/sample_output/poster_type_filter*.csv)")
+    ap.add_argument("--rescue-swaps-path", default=None, help="override gate 14's --swaps-out path (default: data/sample_output/poster_type_rescue_swaps*.csv)")
+    ap.add_argument("--validated-out", default=None, help="override validated_corpus.csv's path (default: data/sample_output/validated_corpus*.csv)")
+    ap.add_argument("--excluded-out", default=None, help="override excluded_ids.csv's path (default: data/sample_output/excluded_ids*.csv)")
+    ap.add_argument("--qa-report-out", default=None, help="override qa_report.json's path (default: data/sample_output/qa_report*.json)")
     args = ap.parse_args()
 
     t0 = time.time()
@@ -175,16 +200,27 @@ def main():
     else:
         ids_path = "data/sample_input/sample_100_ids.csv"
 
-    isadult_path = out("isadult_filter")
+    # Every one of these defaults to a fixed data/sample_output path, which is
+    # only right when this run's gates also wrote there (true for a local/
+    # direct run of this script, and for an external orchestrator's first-ever
+    # execution using that same convention). Any run whose gates wrote
+    # elsewhere -- e.g. Step Functions with a run-specific output prefix, so
+    # concurrent/successive executions don't clobber each other's
+    # intermediates -- MUST pass the matching --*-path override, or
+    # --assemble-only will silently find nothing at the default path
+    # (or, worse, find a *different* run's stale leftovers there) and
+    # produce a validated_corpus.csv with zero real exclusions instead of
+    # erroring. See docs/RESULTS.md, "Assemble path overrides."
+    isadult_path = args.isadult_path or out("isadult_filter")
     pruned_ids_path = out("sample_ids_post_isadult")
-    ver_path = out("poster_verification")
-    vision_path = out("vision_title_check")
+    ver_path = args.verified_path or out("poster_verification")
+    vision_path = args.vision_path or out("vision_title_check")
     lang_path = out("language_detection")
-    poster_type_path = out("poster_type_filter")
+    poster_type_path = args.poster_type_path or out("poster_type_filter")
     rescue_candidates_path = out("poster_type_rescue_candidates")
     rescue_variants_dir = str(Path("data") / f"posters_multi_poster_type{suffix}")
     rescue_scores_path = out("poster_type_rescue_scores")
-    rescue_swaps_path = out("poster_type_rescue_swaps")
+    rescue_swaps_path = args.rescue_swaps_path or out("poster_type_rescue_swaps")
 
     if not args.assemble_only:
         if not args.skip_enumerate:
@@ -279,19 +315,19 @@ def main():
                 if r["id"] in catalog and r["verified"] != "1":
                     excluded[r["id"]] = f"no_verifiable_poster:{r['reason']}"
 
-    dup_path = out("duplicate_resolution")
+    dup_path = args.dup_path or out("duplicate_resolution")
     dup_rows = []
     if Path(dup_path).exists():
         with open(dup_path, newline="", encoding="utf-8") as f:
             dup_rows = [r for r in csv.DictReader(f) if r["id"] in catalog]
 
-    md5_path = out("poster_md5_duplicates")
+    md5_path = args.md5_path or out("poster_md5_duplicates")
     md5_rows = []
     if Path(md5_path).exists():
         with open(md5_path, newline="", encoding="utf-8") as f:
             md5_rows = [r for r in csv.DictReader(f) if r["id"] in catalog]
 
-    comp_path = out("compilation_groups")
+    comp_path = args.comp_path or out("compilation_groups")
     comp_rows = []
     if Path(comp_path).exists():
         with open(comp_path, newline="", encoding="utf-8") as f:
@@ -312,12 +348,12 @@ def main():
     # ("no_title_on_poster" verdicts are untouched -- absence of text isn't
     # evidence of a wrong poster.)
     alt_titles: dict[str, dict] = {}
-    alt_path = Path(out("alt_titles", "json"))
+    alt_path = Path(args.alt_titles_path or out("alt_titles", "json"))
     if alt_path.exists():
         alt_titles = json.loads(alt_path.read_text(encoding="utf-8"))
 
     translated: dict[str, str] = {}
-    trans_path = out("translated_titles")
+    trans_path = args.translated_path or out("translated_titles")
     if Path(trans_path).exists():
         with open(trans_path, newline="", encoding="utf-8") as f:
             translated = {r["id"]: r.get("translated", "") for r in csv.DictReader(f)}
@@ -359,12 +395,16 @@ def main():
 
     validated = [row for mid, row in catalog.items() if mid not in excluded]
 
-    with open(out("validated_corpus"), "w", newline="", encoding="utf-8") as f:
+    validated_out_path = Path(args.validated_out or out("validated_corpus"))
+    validated_out_path.parent.mkdir(parents=True, exist_ok=True)
+    with validated_out_path.open("w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=list(catalog[next(iter(catalog))].keys()) if catalog else [])
         w.writeheader()
         w.writerows(validated)
 
-    with open(out("excluded_ids"), "w", newline="", encoding="utf-8") as f:
+    excluded_out_path = Path(args.excluded_out or out("excluded_ids"))
+    excluded_out_path.parent.mkdir(parents=True, exist_ok=True)
+    with excluded_out_path.open("w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
         w.writerow(["id", "title", "reason"])
         for mid, reason in excluded.items():
@@ -377,7 +417,9 @@ def main():
         "validated": len(validated),
         "elapsed_seconds": round(time.time() - t0, 1),
     }
-    Path(out("qa_report", "json")).write_text(json.dumps(report, indent=2), encoding="utf-8")
+    qa_report_out_path = Path(args.qa_report_out or out("qa_report", "json"))
+    qa_report_out_path.parent.mkdir(parents=True, exist_ok=True)
+    qa_report_out_path.write_text(json.dumps(report, indent=2), encoding="utf-8")
 
     log.info(f"done: {report}")
 
