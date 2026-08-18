@@ -1367,3 +1367,74 @@ confirm the 91.5% accuracy carries over exactly -- flagged as a real
 follow-up, not silently assumed.
 
 Built with `gate4_multigenre.py` (scratchpad).
+
+## Gate 4's alternate-poster rescue: closing the documented gap (2026-08-18)
+
+Gate 4's own docstring flagged this from the start: "Deliberately NOT
+included in this gate: checking every alternate TMDB poster variant
+before a final reject (proven live to rescue 8.9% of zero-OCR
+candidates...) -- Recommended as a follow-up before permanently
+excluding anything this gate rejects." That follow-up was never wired
+up -- worse, **gate 4 itself was never called by gate 12
+(`12_validate_corpus.py`)** at all; it only ever ran as a standalone
+script. Its `is_movie_poster=False` verdict didn't exclude anything,
+because nothing downstream ever read it.
+
+**The fix, in two parts:**
+
+1. `12_validate_corpus.py` now runs `04_filter_poster_type.py` as a real
+   step (right after gate 3), same as every other gate.
+2. Gate 4's `is_movie_poster=False` ids get the same rescue gates 13-14
+   already give gate 6's title-mismatch verdicts, before excluding
+   anything: `13_find_alternate_posters.py` fetches every other poster
+   TMDB has for that id; `14_score_alternate_posters.py --mode
+   poster-type` (new) asks gate 4's own question of each variant --
+   "is this real poster art" -- instead of title-overlap scoring, since
+   a not-a-poster verdict has no title text to compare against in the
+   first place. Only excluded as `unresolved_not_a_poster` if TMDB has
+   no other images at all, or none of them pass either; a rescued id is
+   kept, unchanged.
+
+This directly implements a real design question raised in review: *if
+the current image isn't a poster, is that always the movie's fault, or
+just this one image's?* The answer built here: check TMDB for another
+image before giving up on the film -- exactly the same principle gates
+13-14 already apply to a wrong title on the poster, just extended to
+apply to "this isn't poster art at all" too, since both are really the
+same underlying question (is there a *better available image* for this
+id) with a different first symptom.
+
+**Why `--mode poster-type` couldn't reuse gate 14's existing scoring
+as-is:** the existing `propose_swap()` logic proposes a swap when a
+variant's OCR'd text reads the catalog title *better* than the current
+poster does -- a best-of-N ranking by overlap/fuzzy gain. That question
+doesn't apply here: gate 4 already confirmed the current image
+is_movie_poster=False, so there's no "current" text-match score to
+gain against, and the real question isn't "which variant reads best,"
+it's "does *any* variant look like real poster art at all." So
+`--mode poster-type` uses a separate decision function,
+`propose_swap_poster_type()`: propose the *first* variant (TMDB's own
+vote_average/vote_count/height rank order, same order gate 13
+downloaded them in) that scores `is_movie_poster=True` -- a rescue
+question, not a ranking one.
+
+**Status:** implemented and unit-tested (13 new tests on
+`propose_swap_poster_type`'s pure decision logic, all passing; full
+87+13=100-test suite passes clean). Not yet run live at corpus scale --
+the number to watch for is whether it lands near the 8.9% rescue rate
+the earlier live spot-check found, on the real `is_movie_poster=False`
+population (1,856 of 2,538 human-reviewed zero-OCR candidates in
+horror alone, before this repo's poster-type ground truth existed for
+the other 3 genres -- see "Gate 4 on scifi/mystery/thriller" above).
+
+Also fixed in passing: two stale in-code comments in
+`12_validate_corpus.py` still said "a 04 'mismatch' verdict" /
+"03's alt titles" -- leftover from before gates 4 (poster-type) and
+5 (alt titles) existed under those numbers; both referred correctly to
+gates 6 and 5 in every other place (docstrings, arg help, file
+references) except these two comments. Same renumbering-regex blind
+spot documented earlier in this project's history (identifiers and
+prose get updated, but a comment phrased as "gate N" in the *old*
+scheme that happens to still parse as valid English doesn't always get
+caught) -- corrected here (06/05), not previously caught because these
+two lines were never executed code, just comments a human reads.

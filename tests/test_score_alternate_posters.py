@@ -13,6 +13,7 @@ _spec.loader.exec_module(mod)
 
 propose_swap = mod.propose_swap
 score_text = mod.score_text
+propose_swap_poster_type = mod.propose_swap_poster_type
 
 
 def variant(overlap_max, fuzzy_max, ocr_chars=20, file_path="/v.jpg"):
@@ -93,3 +94,44 @@ def test_score_text_empty_text_is_zero_not_error():
     assert result["overlap_max"] == 0.0
     assert result["fuzzy_max"] == 0.0
     assert result["ocr_chars"] == 0
+
+
+# -- --mode poster-type: propose_swap_poster_type() (gate 4's rescue) --
+
+def poster_type_variant(is_poster, file_path="/v.jpg"):
+    return variant(overlap_max=1.0 if is_poster else 0.0, fuzzy_max=0.0, ocr_chars=0, file_path=file_path)
+
+
+def test_poster_type_rescue_fires_when_a_real_poster_variant_exists():
+    variants = [poster_type_variant(False, "/not_a_poster.jpg"), poster_type_variant(True, "/real_poster.jpg")]
+    d = propose_swap_poster_type(variants)
+    assert d["propose"] == 1
+    assert d["reason"] == "poster_type_rescue"
+    assert d["best"]["file_path"] == "/real_poster.jpg"
+
+
+def test_poster_type_rescue_picks_first_real_poster_not_highest_score():
+    # both variants score the same (is_movie_poster=True) -- rescue picks
+    # the first one in TMDB's own rank order, not a "best of N" comparison
+    # the way title-match mode's overlap/fuzzy gain does.
+    variants = [poster_type_variant(True, "/first.jpg"), poster_type_variant(True, "/second.jpg")]
+    d = propose_swap_poster_type(variants)
+    assert d["best"]["file_path"] == "/first.jpg"
+
+
+def test_poster_type_no_rescue_when_no_variant_is_a_real_poster():
+    variants = [poster_type_variant(False, "/still_not_a_poster.jpg")]
+    d = propose_swap_poster_type(variants)
+    assert d["propose"] == 0
+    assert d["reason"] == "no_real_poster_alternative"
+
+
+def test_poster_type_no_current_concept_zeroed():
+    # gate 4 already confirmed the current poster is_movie_poster=False --
+    # there's no "current" baseline to compute a gain against.
+    variants = [poster_type_variant(True)]
+    d = propose_swap_poster_type(variants)
+    assert d["current_overlap"] == 0.0
+    assert d["current_fuzzy"] == 0.0
+    assert d["gain_overlap"] == 0.0
+    assert d["gain_fuzzy"] == 0.0

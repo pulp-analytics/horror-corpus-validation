@@ -10,9 +10,9 @@ results -- e.g. running --genre 878 after the default horror run produces
 vision_title_check_genre878.csv alongside vision_title_check.csv, not on
 top of it.
 
-Fully programmatic: nothing here is left for a human to decide. Two cases
-used to require manual review; both are now auto-excluded if the tools we
-already ran can't resolve them --
+Fully programmatic: nothing here is left for a human to decide. Three cases
+used to require manual review (or, for the third, weren't acted on at all);
+all are now auto-excluded if the tools we already ran can't resolve them --
   - a 06_bedrock_ocr.py "mismatch" verdict is kept only if the poster's OCR'd
     text (raw, or translated by 06) overlaps a candidate title -- the
     catalog title itself, or an alt title from 05_fetch_alt_titles.py --
@@ -22,6 +22,18 @@ already ran can't resolve them --
   - a 11_collapse_compilations.py group with no rescuable canonical TMDB
     entry is excluded as unresolved_shared_poster, instead of being left
     unresolved.
+  - a 04_filter_poster_type.py is_movie_poster=False verdict now runs the
+    same alternate-poster rescue gates 13-14 already do for title
+    mismatches, before excluding: 13_find_alternate_posters.py fetches
+    every other poster TMDB has for that id, then 14_score_alternate_
+    posters.py --mode poster-type asks gate 4's own question of each one
+    ("is this real poster art") instead of scoring title overlap. No TMDB
+    alternates at all, or none that pass, both exclude as
+    unresolved_not_a_poster; a rescued id is kept. This closes a gap this
+    repo's own docs/RESULTS.md flagged and quantified but never wired up
+    (an earlier live test found this rescues ~8.9% of zero-OCR-text
+    "not a poster" candidates) -- see docs/RESULTS.md, "Gate 4's
+    alternate-poster rescue."
 
 Gates 7 (same film, different id), 8 (exact same poster image, different
 id), and 9 (poster shared by 2+ ids -- is it a compilation) can all reach a
@@ -142,6 +154,11 @@ def main():
     ver_path = out("poster_verification")
     vision_path = out("vision_title_check")
     lang_path = out("language_detection")
+    poster_type_path = out("poster_type_filter")
+    rescue_candidates_path = out("poster_type_rescue_candidates")
+    rescue_variants_dir = str(Path("data") / f"posters_multi_poster_type{suffix}")
+    rescue_scores_path = out("poster_type_rescue_scores")
+    rescue_swaps_path = out("poster_type_rescue_swaps")
 
     if not args.assemble_only:
         if not args.skip_enumerate:
@@ -151,6 +168,7 @@ def main():
             ])
 
         run_step("03_verify_poster_exists.py", ["--in", ids_path, "--out", ver_path])
+        run_step("04_filter_poster_type.py", ["--in", ids_path, "--out", poster_type_path])
         run_step("05_fetch_alt_titles.py", ["--in", ids_path, "--out", out("alt_titles", "json"),
                                        *(["--akas", args.akas] if args.akas else [])])
         run_step("06_bedrock_ocr.py", ["--in", ids_path, "--out", vision_path, "--verified", ver_path])
@@ -162,8 +180,35 @@ def main():
                                               "--cache", str(out_dir / ".poster_md5_cache.csv"), "--verified", ver_path])
         run_step("11_collapse_compilations.py", ["--in", vision_path, "--out", out("compilation_groups"),
                                                   "--cache", str(out_dir / ".compilation_search_cache.csv")])
+
+        # Gate 4's alternate-poster rescue: build the not-a-poster candidate
+        # list from gate 4's own output, then run gates 13-14 in poster-type
+        # mode against just that set -- a separate --variants-dir from
+        # title-mismatch's rescue keeps the two id populations' downloaded
+        # variant files from colliding if a run ever needed both (it
+        # currently doesn't -- gate 6 mismatches and gate 4 not-a-poster
+        # verdicts are disjoint id sets by construction).
+        rescue_rows = []
+        if Path(poster_type_path).exists():
+            with open(poster_type_path, newline="", encoding="utf-8") as f:
+                for r in csv.DictReader(f):
+                    if not r.get("error") and r.get("is_movie_poster") == "False":
+                        rescue_rows.append({"id": r["id"], "title": r.get("title", ""), "poster_path": r.get("poster_path", "")})
+        with open(rescue_candidates_path, "w", newline="", encoding="utf-8") as f:
+            w = csv.writer(f)
+            w.writerow(["id", "title", "poster_path"])
+            for r in rescue_rows:
+                w.writerow([r["id"], r["title"], r["poster_path"]])
+        log.info(f"gate 4 rescue candidates (is_movie_poster=False): {len(rescue_rows)}")
+
+        if rescue_rows:
+            run_step("13_find_alternate_posters.py", ["--in", rescue_candidates_path, "--variants-dir", rescue_variants_dir,
+                                                        "--catalog-out", out("poster_type_rescue_catalog")])
+            run_step("14_score_alternate_posters.py", ["--in", rescue_candidates_path, "--variants-dir", rescue_variants_dir,
+                                                         "--mode", "poster-type",
+                                                         "--scores-out", rescue_scores_path, "--swaps-out", rescue_swaps_path])
     else:
-        log.info("--assemble-only: skipping 01-09, reading their outputs directly")
+        log.info("--assemble-only: skipping 01-09 (+ gate 4 rescue), reading their outputs directly")
 
     # -- assemble final outputs --
     with open(ids_path, newline="", encoding="utf-8") as f:
@@ -210,9 +255,9 @@ def main():
     for id_, reason in dedup_excluded.items():
         excluded.setdefault(id_, reason)
 
-    # unresolved title mismatches: a 04 "mismatch" verdict is only kept if the
+    # unresolved title mismatches: a 06 "mismatch" verdict is only kept if the
     # poster's OCR'd text (raw or translated) overlaps the catalog title or one
-    # of 03's alt titles above threshold -- otherwise we can't confirm the
+    # of 05's alt titles above threshold -- otherwise we can't confirm the
     # poster is right, so it's excluded rather than left for manual review.
     # ("no_title_on_poster" verdicts are untouched -- absence of text isn't
     # evidence of a wrong poster.)
@@ -239,6 +284,28 @@ def main():
                 texts = [r.get("text_you_read", ""), translated.get(mid, "")]
                 if best_overlap(texts, candidates) <= ALT_TITLE_OVERLAP_THRESHOLD:
                     excluded[mid] = f"unresolved_title_mismatch:{r.get('reason', '')[:80]}"
+
+    # unresolved not-a-poster verdicts: a 04 is_movie_poster=False verdict is
+    # rescued (kept) only if the alternate-poster gates found at least one
+    # other TMDB image for that id that scores is_movie_poster=True; no
+    # alternates found at all, or none that pass, both exclude -- see the
+    # module docstring and docs/RESULTS.md, "Gate 4's alternate-poster
+    # rescue."
+    rescued: set[str] = set()
+    if Path(rescue_swaps_path).exists():
+        with open(rescue_swaps_path, newline="", encoding="utf-8") as f:
+            for r in csv.DictReader(f):
+                if r["id"] in catalog and r.get("propose") == "1":
+                    rescued.add(r["id"])
+
+    if Path(poster_type_path).exists():
+        with open(poster_type_path, newline="", encoding="utf-8") as f:
+            for r in csv.DictReader(f):
+                mid = r["id"]
+                if (mid not in catalog or r.get("error") or r.get("is_movie_poster") != "False"
+                        or mid in excluded or mid in rescued):
+                    continue
+                excluded[mid] = f"unresolved_not_a_poster:{r.get('method', '')}"
 
     validated = [row for mid, row in catalog.items() if mid not in excluded]
 

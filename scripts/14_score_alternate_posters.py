@@ -4,6 +4,22 @@ against the catalog title via Bedrock/Nova Pro OCR, and propose swapping
 the primary poster when a variant reads noticeably better -- gate 8-9's
 second half.
 
+--mode controls what "score" means:
+  title-match  (default) the original behavior described below: does a
+               variant's OCR'd text read the catalog title better than
+               the current poster does.
+  poster-type  for candidates gate 4 flagged is_movie_poster=False (not
+               title-mismatch): does ANY variant actually look like real
+               poster art at all? Reuses gate 4's own classify_poster_type
+               two-stage logic (Rekognition text pre-filter + Nova direct
+               question) on each variant instead of scoring title overlap
+               -- a "not a poster" verdict has no title text to compare in
+               the first place, so title-match scoring can't answer this.
+               Proposes a swap to the first variant (TMDB's own
+               vote_average/vote_count/height ranking, same order gate 13
+               downloaded them in) that scores is_movie_poster=True.
+               See docs/RESULTS.md, "Gate 4's alternate-poster rescue."
+
 The real project's own version of this gate, score_multi_poster_
 variants_ocr.py, uses Amazon Rekognition's DetectText -- confirmed by
 matching its output counts (806 rows / 262 candidates / 78 proposed
@@ -57,6 +73,13 @@ import importlib.util
 _spec = importlib.util.spec_from_file_location("bedrock_ocr", Path(__file__).parent / "06_bedrock_ocr.py")
 _bedrock_ocr = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(_bedrock_ocr)
+
+# --mode poster-type reuses gate 4's own classify_poster_type two-stage
+# logic on each variant, instead of this gate's own title-overlap scoring
+# -- see module docstring.
+_spec4 = importlib.util.spec_from_file_location("filter_poster_type", Path(__file__).parent / "04_filter_poster_type.py")
+_filter_poster_type = importlib.util.module_from_spec(_spec4)
+_spec4.loader.exec_module(_filter_poster_type)
 
 log = get_logger("score_alternate_posters")
 TMDB_IMG = f"{IMAGE_BASE_URL}w500"
@@ -153,6 +176,42 @@ def score_text(text: str, title: str, original_title: str) -> dict:
             "fuzzy_title": f1, "fuzzy_original": f2, "fuzzy_max": max(f1, f2), "ocr_chars": len(text or "")}
 
 
+def score_poster_type(bedrock, rekognition, image_bytes: bytes, model_id: str) -> dict:
+    """poster-type mode's per-variant score: reuses gate 4's exact two-stage
+    check (Rekognition text pre-filter, then Nova only for zero-OCR images)
+    instead of title-overlap scoring. Mapped onto this gate's existing
+    overlap_max/fuzzy_max/ocr_chars fields so propose_swap_poster_type and
+    the CSV schema don't need their own separate shape: overlap_max is
+    1.0/0.0 for is_movie_poster true/false (fuzzy_max, ocr_chars unused,
+    kept 0 for schema compatibility)."""
+    text_present = _filter_poster_type.has_real_text(rekognition, image_bytes)
+    if text_present:
+        is_poster = True
+    else:
+        result = _filter_poster_type.classify_poster_type(bedrock, image_bytes, model_id)
+        is_poster = result["is_movie_poster"]
+    return {"overlap_title": 0.0, "overlap_original": 0.0, "overlap_max": 1.0 if is_poster else 0.0,
+            "fuzzy_title": 0.0, "fuzzy_original": 0.0, "fuzzy_max": 0.0, "ocr_chars": 0}
+
+
+def propose_swap_poster_type(variants: list[dict]) -> dict:
+    """poster-type mode's decision: propose the FIRST variant (already in
+    TMDB's own vote_average/vote_count/height rank order, same order gate
+    13 downloaded them in) that scored is_movie_poster=True (overlap_max
+    == 1.0 per score_poster_type's mapping) -- not the highest-scoring one,
+    since this is a boolean rescue question ("does anything real exist"),
+    not a best-of-N ranking the way title-match mode's overlap/fuzzy gain
+    is. No current/gain concept applies here (gate 4 already confirmed the
+    current image is_movie_poster=False), so those fields are zeroed."""
+    best = next((v for v in variants if v["overlap_max"] == 1.0), variants[0])
+    propose = 1 if best["overlap_max"] == 1.0 else 0
+    reason = "poster_type_rescue" if propose else "no_real_poster_alternative"
+    return {"current_overlap": 0.0, "current_fuzzy": 0.0, "best": best,
+            "best_overlap": best["overlap_max"], "best_fuzzy": 0.0,
+            "gain_overlap": 0.0, "gain_fuzzy": 0.0,
+            "propose": propose, "reason": reason}
+
+
 def propose_swap(current: dict | None, variants: list[dict], min_best: float, min_gain: float,
                   min_fuzzy_best: float) -> dict:
     """Pure function: the real project's exact 3-rule decision, given a
@@ -187,13 +246,21 @@ def main():
     ap.add_argument("--engine", choices=["bedrock", "rekognition"], default="bedrock",
                      help="bedrock (default, this repo's own gate-5 engine) or rekognition "
                           "(faithful to the real project's score_multi_poster_variants_ocr.py)")
-    ap.add_argument("--model", default=_bedrock_ocr.DEFAULT_MODEL_ID, help="bedrock engine only")
+    ap.add_argument("--mode", choices=["title-match", "poster-type"], default="title-match",
+                     help="title-match (default): score by OCR'd-text overlap against the "
+                          "catalog title, for gate 6 mismatch candidates. poster-type: score by "
+                          "whether a variant is real poster art at all, for gate 4 "
+                          "is_movie_poster=False candidates -- see module docstring.")
+    ap.add_argument("--model", default=_bedrock_ocr.DEFAULT_MODEL_ID, help="bedrock engine only, and poster-type mode's Nova leg")
     ap.add_argument("--min-best", type=float, default=0.40)
     ap.add_argument("--min-gain", type=float, default=0.25)
     ap.add_argument("--min-fuzzy-best", type=float, default=0.55)
     args = ap.parse_args()
 
-    if args.engine == "rekognition":
+    if args.mode == "poster-type":
+        bedrock = get_client("bedrock-runtime")
+        rekognition = get_client("rekognition")
+    elif args.engine == "rekognition":
         client = get_client("rekognition")
         ocr_fn = lambda image_bytes, title: ocr_text_via_rekognition(client, image_bytes)
     else:
@@ -228,7 +295,10 @@ def main():
                 continue
 
             current = None
-            if row.get("poster_path"):
+            # poster-type mode skips scoring the current poster -- gate 4
+            # already confirmed it is_movie_poster=False, there's nothing
+            # to compute a "current" baseline for.
+            if args.mode == "title-match" and row.get("poster_path"):
                 resp = session.get(f"{TMDB_IMG}{row['poster_path']}", timeout=20)
                 if resp.status_code == 200:
                     try:
@@ -245,9 +315,14 @@ def main():
             variants = []
             for vf in variant_files:
                 try:
-                    text = ocr_fn(vf.read_bytes(), title)
-                    v = {"id": pid, "title": title, "original_title": original_title, "source": "variant",
-                         "file_path": f"/{vf.name}", "error": "", **score_text(text, title, original_title)}
+                    if args.mode == "poster-type":
+                        v = {"id": pid, "title": title, "original_title": original_title, "source": "variant",
+                             "file_path": f"/{vf.name}", "error": "",
+                             **score_poster_type(bedrock, rekognition, vf.read_bytes(), args.model)}
+                    else:
+                        text = ocr_fn(vf.read_bytes(), title)
+                        v = {"id": pid, "title": title, "original_title": original_title, "source": "variant",
+                             "file_path": f"/{vf.name}", "error": "", **score_text(text, title, original_title)}
                 except Exception as e:
                     v = {"id": pid, "title": title, "original_title": original_title, "source": "variant",
                          "file_path": f"/{vf.name}", "overlap_max": 0.0, "fuzzy_max": 0.0, "ocr_chars": 0,
@@ -257,7 +332,10 @@ def main():
                     variants.append(v)
 
             if variants:
-                decision = propose_swap(current, variants, args.min_best, args.min_gain, args.min_fuzzy_best)
+                if args.mode == "poster-type":
+                    decision = propose_swap_poster_type(variants)
+                else:
+                    decision = propose_swap(current, variants, args.min_best, args.min_gain, args.min_fuzzy_best)
                 swaps_w.writerow({
                     "id": pid, "title": title,
                     "current_file_path": (current or {}).get("file_path", ""),
