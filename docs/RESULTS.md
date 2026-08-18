@@ -1438,3 +1438,57 @@ prose get updated, but a comment phrased as "gate N" in the *old*
 scheme that happens to still parse as valid English doesn't always get
 caught) -- corrected here (06/05), not previously caught because these
 two lines were never executed code, just comments a human reads.
+
+## Gate 2, 9/10/11 sequencing (2026-08-18)
+
+Two more real gaps found while reviewing gate 4's rescue wiring above:
+
+**Gate 2 (isAdult) was also never called by `12_validate_corpus.py`** --
+same class of bug as gate 4 before this session's fix: it existed as a
+working, tested standalone script, but the orchestrator never ran it, so
+its verdict excluded nothing. Fixed the same way: gate 2 now runs right
+after gate 1, and -- unlike gates 9/10 below -- its exclusion IS pruned
+out of every downstream `--in` list before gates 3-11 spend any real
+budget on those ids. Safe to prune early because isAdult has no
+interaction with gate 11's compilation-protection override (next
+paragraph); there's no equivalent risk to preserve.
+
+**Gates 9 (TMDB metadata duplicate) and 10 (poster MD5 duplicate) have no
+real dependency on gates 3-8** -- 9 only needs gate 1's catalog columns,
+10 only needs gate 3 (verified) + gate 9's cache. Raised as a review
+question: since a TMDB-duplicate or MD5-duplicate id is usually excluded
+anyway, why run gates 3-8's real per-poster budget on it first? Moved
+both earlier in *execution order* (9 right after gate 2, 10 right after
+gate 3) for that reason -- but deliberately did NOT prune their exclusion
+out of what feeds gates 4-8/11, unlike gate 2. Reason: gate 11 can
+override a gate 9/10 exclusion for an id that turns out to be a
+compilation's real canonical entry (`compute_dedup_exclusions()`'s
+existing precedence rule, added after the real "Sheets of Gore" bug --
+see docs/VALIDATION_LOGIC.md), but gate 11 can only do that for an id
+that already has real OCR text in `vision_path` -- which only exists if
+gate 6 ran on it. Pruning gates 4-8's input by gate 9/10's verdict would
+silently make that override impossible again, for the exact same reason
+the original bug happened. So the real, safe savings here are execution-
+order tidiness (9/10 no longer implicitly "wait" for 3-8 to finish before
+they could, in a parallelized runner like Step Functions), not skipped
+per-poster spend -- smaller than it first looked, and worth stating
+plainly rather than overselling.
+
+**Also found and fixed while wiring gate 4's rescue:**
+`06_bedrock_ocr.py`'s output never carried `poster_path` through, even
+though `11_collapse_compilations.py`'s whole shared-poster grouping keys
+on that exact column when chained straight off gate 6's output. This
+silently made gate 11 find "0 groups, 0 ids" every time it ran inside the
+real orchestrator (as opposed to the one live test above, which worked
+around it with a manual external merge, never fixing gate 6 itself).
+Fixed at the source: gate 6 now writes `poster_path` in its own output.
+
+**Known follow-up, not done in this pass:** the deployed Step Functions
+state machine (sibling `poster-analysis-infrastructure` repo) predates
+all of the above -- it only orchestrates the original 9-script DAG (now
+gates 1/3/5/6/7/8/9/10/11 under current numbering) and has no branches for
+gates 2, 4, or 13-14's rescue. `--assemble-only` there will read
+incomplete inputs until that state machine gets a matching update. Not
+fixed here given time -- flagged plainly rather than left silently
+inconsistent (see the NOTE added to `12_validate_corpus.py`'s own
+docstring).

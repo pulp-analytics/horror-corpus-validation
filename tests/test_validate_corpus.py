@@ -56,7 +56,7 @@ def test_best_overlap_empty_inputs():
     assert best_overlap([""], [""]) == 0.0
 
 
-# 12_validate_corpus.py auto-excludes an unresolved 04 "mismatch" verdict
+# 12_validate_corpus.py auto-excludes an unresolved 06 "mismatch" verdict
 # when best_overlap(poster texts, [catalog title, *alt titles]) doesn't clear
 # ALT_TITLE_OVERLAP_THRESHOLD. These pin the real cases that decision covers.
 
@@ -100,15 +100,15 @@ def test_shard_rows_rejects_out_of_range_index():
         shard_rows([{"id": "1"}], shard_index=4, shard_count=4)
 
 
-# compute_dedup_exclusions -- merges gates 7/8/9's independent verdicts,
-# gate 11 (compilation, TMDB-search-confirmed) taking precedence over 7/8
-# (generic completeness proxies). test_gate9_overrides_gate8_on_the_real_case
+# compute_dedup_exclusions -- merges gates 9/10/11's independent verdicts,
+# gate 11 (compilation, TMDB-search-confirmed) taking precedence over 9/10
+# (generic completeness proxies). test_gate11_overrides_gate10_on_the_real_case
 # pins the real bug found live 2026-08-16: on the real Sheets of Gore pair,
 # gate 10 alone kept the wrong id (749611, a segment) over the correct one
 # (934611, the canonical compilation entry) because 749611 happens to have
 # an imdb_id and 934611 doesn't -- backwards from data/excluded_compilation.csv.
 
-def test_gate9_overrides_gate8_on_the_real_case():
+def test_gate11_overrides_gate10_on_the_real_case():
     comp_rows = [
         {"segment_id": "749611", "canonical_id": "934611", "canonical_title": "Sheets of Gore",
          "resolution": "compilation_entry_found"},
@@ -125,7 +125,7 @@ def test_gate9_overrides_gate8_on_the_real_case():
     assert "934611" not in excluded  # protected: it's the canonical entry, gate 10 doesn't get a say
 
 
-def test_gate8_still_applies_when_gate9_has_no_opinion():
+def test_gate10_still_applies_when_gate11_has_no_opinion():
     md5_rows = [
         {"id": "1", "keep": "1", "reason": "exact_poster_md5_dup"},
         {"id": "2", "keep": "0", "reason": "exact_poster_md5_dup"},
@@ -134,7 +134,7 @@ def test_gate8_still_applies_when_gate9_has_no_opinion():
     assert excluded == {"2": "poster_md5_dup:exact_poster_md5_dup"}
 
 
-def test_gate7_still_applies_when_gates_8_and_9_have_no_opinion():
+def test_gate9_still_applies_when_gates_10_and_11_have_no_opinion():
     dup_rows = [
         {"id": "1", "keep": "1", "resolution": "duplicate_resolved_by_completeness_cascade"},
         {"id": "2", "keep": "0", "resolution": "duplicate_resolved_by_completeness_cascade"},
@@ -155,8 +155,8 @@ def test_unresolved_compilation_group_excluded_as_before():
     }
 
 
-def test_gate9_silent_on_ids_it_never_saw():
-    # a poster no gate 11 group even covers -- gates 7/8 decide normally
+def test_gate11_silent_on_ids_it_never_saw():
+    # a poster no gate 11 group even covers -- gates 9/10 decide normally
     dup_rows = [{"id": "5", "keep": "0", "resolution": "duplicate_resolved_by_completeness_cascade"}]
     excluded = compute_dedup_exclusions([], dup_rows, [])
     assert excluded == {"5": "tmdb_duplicate:duplicate_resolved_by_completeness_cascade"}

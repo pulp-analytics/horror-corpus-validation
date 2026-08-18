@@ -287,7 +287,13 @@ def main():
         log.info(f"no --verified file at {args.verified!r}, falling back to a bare poster_path check")
 
     out_path = Path(args.out)
-    fields = ["id", "title", "model", "text_you_read", "verdict", "reason", "error"]
+    # poster_path carried through so 11_collapse_compilations.py's shared-
+    # poster grouping works when chained straight off this gate's output --
+    # its absence used to make gate 11 silently find 0 groups every time
+    # (a real bug, caught live and worked around with a manual merge once,
+    # never fixed at the source -- see docs/RESULTS.md, "Gate 11 (compilation
+    # collapse) at real scale").
+    fields = ["id", "title", "poster_path", "model", "text_you_read", "verdict", "reason", "error"]
 
     done = load_done_ids(out_path, args.retry_errors)
     todo = [row for row in rows if row["id"] not in done]
@@ -299,8 +305,8 @@ def main():
     f, w = open_for_append(out_path, fields)
     try:
         for i, row in enumerate(todo, 1):
-            out = {"id": row["id"], "title": row.get("title", ""), "model": args.model,
-                   "text_you_read": "", "verdict": "", "reason": "", "error": ""}
+            out = {"id": row["id"], "title": row.get("title", ""), "poster_path": row.get("poster_path", ""),
+                   "model": args.model, "text_you_read": "", "verdict": "", "reason": "", "error": ""}
             if not row.get("poster_path"):
                 out["error"] = "no poster_path"
             else:

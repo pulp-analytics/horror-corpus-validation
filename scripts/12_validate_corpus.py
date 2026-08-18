@@ -1,6 +1,22 @@
 #!/usr/bin/env python3
-"""Orchestrates scripts 01-09 end to end and produces the three deliverables:
-data/sample_output/validated_corpus.csv, excluded_ids.csv, qa_report.json.
+"""Orchestrates scripts 01-11 (plus 13-14's gate 4 rescue) end to end and
+produces the three deliverables: data/sample_output/validated_corpus.csv,
+excluded_ids.csv, qa_report.json.
+
+Sequencing (2026-08-18): gate 2 (isAdult) runs right after gate 1 -- the
+cheapest possible cut, and pruned out of every downstream --in list before
+gates 3-11 ever see those ids (real savings, no correctness risk -- isAdult
+has no interaction with gate 11's compilation-protection override below).
+Gates 9 (TMDB metadata duplicate) and 10 (poster MD5 duplicate) also moved
+earlier in *execution order* (9 needs only gate 1's catalog columns; 10
+needs gate 3 + gate 9's cache, not gates 4-8) -- but their exclusions are
+still decided only at final assembly, same as before, NOT pruned out of
+gates 3-8's --in: gate 11 needs to see every id gate 6 ran on to be able to
+override a gate 9/10 exclusion for an id that turns out to be a
+compilation's real canonical entry (the exact bug class
+docs/VALIDATION_LOGIC.md already documents once -- pruning gates 3-8 by
+gate 9/10's verdict would silently reintroduce it). See docs/RESULTS.md,
+"Gate 9/10/11 sequencing and gate 4's rescue."
 
 Not locked to horror: --genre/--start-year/--end-year pass straight through
 to 01_tmdb_enumerate.py, and every intermediate/output file (not just the
@@ -35,13 +51,13 @@ all are now auto-excluded if the tools we already ran can't resolve them --
     "not a poster" candidates) -- see docs/RESULTS.md, "Gate 4's
     alternate-poster rescue."
 
-Gates 7 (same film, different id), 8 (exact same poster image, different
-id), and 9 (poster shared by 2+ ids -- is it a compilation) can all reach a
+Gates 9 (same film, different id), 10 (exact same poster image, different
+id), and 11 (poster shared by 2+ ids -- is it a compilation) can all reach a
 verdict on the same id, and their verdicts can disagree: gate 11's
-TMDB-search-confirmed answer is strictly more informed than gates 7/8's
+TMDB-search-confirmed answer is strictly more informed than gates 9/10's
 generic completeness proxies whenever it applies. compute_dedup_exclusions()
 below gives gate 11 first say and protects any id it confirms as a
-compilation's canonical entry from being excluded by gates 7/8. This
+compilation's canonical entry from being excluded by gates 9/10. This
 precedence was added after a real bug -- see docs/VALIDATION_LOGIC.md
 ("Deciding whether a shared poster is a compilation") for the full story
 and the exact ids involved.
@@ -49,12 +65,18 @@ and the exact ids involved.
   TMDB_API_KEY=... AWS_PROFILE=your-profile python3 12_validate_corpus.py --limit 100
   python3 12_validate_corpus.py --genre 878 --limit 100
 
---assemble-only skips running 01-09 and jumps straight to reading their
-outputs and writing the three deliverables. For running each script as its
-own step in an external orchestrator (e.g. AWS Step Functions driving
-Fargate tasks -- see the sibling poster-analysis-infrastructure repo), that
-orchestrator runs 01-09 itself; this script's only job at that point is the
-assembly logic, which is exactly what --assemble-only gives you.
+--assemble-only skips running 02-11 (+13-14's gate 4 rescue) and jumps
+straight to reading their outputs and writing the three deliverables. For
+running each script as its own step in an external orchestrator (e.g. AWS
+Step Functions driving Fargate tasks -- see the sibling
+poster-analysis-infrastructure repo), that orchestrator runs those steps
+itself; this script's only job at that point is the assembly logic, which
+is exactly what --assemble-only gives you. NOTE (2026-08-18): the deployed
+state machine in that sibling repo predates gates 2, 4, and 13-14's rescue
+being wired in here -- it only runs the original 9-script DAG (now gates
+1/3/5/6/7/8/9/10/11 under current numbering) and needs a matching update
+before --assemble-only's inputs there will be complete. Not yet done --
+flagged here rather than silently left inconsistent.
 """
 from __future__ import annotations
 
@@ -131,10 +153,12 @@ def main():
                           "for the default horror genre, sample_100_ids_genre<id>.csv otherwise)")
     ap.add_argument("--skip-enumerate", action="store_true", help="use an existing --ids-path file instead of re-fetching")
     ap.add_argument("--akas", default=None, help="path to IMDb title.akas.tsv.gz (optional)")
+    ap.add_argument("--basics", default=None, help="path to IMDb title.basics.tsv.gz for gate 2's isAdult "
+                     "check (optional -- without it every row passes through unfiltered, see 02_filter_isadult.py)")
     ap.add_argument("--assemble-only", action="store_true",
-                     help="skip running 01-09 (assume something else already ran them, e.g. Step "
-                          "Functions/Fargate tasks) and just read their outputs to assemble the "
-                          "three deliverables")
+                     help="skip running 02-11 (+13-14's gate 4 rescue) (assume something else "
+                          "already ran them, e.g. Step Functions/Fargate tasks) and just read "
+                          "their outputs to assemble the three deliverables")
     args = ap.parse_args()
 
     t0 = time.time()
@@ -151,6 +175,8 @@ def main():
     else:
         ids_path = "data/sample_input/sample_100_ids.csv"
 
+    isadult_path = out("isadult_filter")
+    pruned_ids_path = out("sample_ids_post_isadult")
     ver_path = out("poster_verification")
     vision_path = out("vision_title_check")
     lang_path = out("language_detection")
@@ -167,17 +193,51 @@ def main():
                 "--limit", str(args.limit), "--out", ids_path,
             ])
 
-        run_step("03_verify_poster_exists.py", ["--in", ids_path, "--out", ver_path])
-        run_step("04_filter_poster_type.py", ["--in", ids_path, "--out", poster_type_path])
-        run_step("05_fetch_alt_titles.py", ["--in", ids_path, "--out", out("alt_titles", "json"),
-                                       *(["--akas", args.akas] if args.akas else [])])
-        run_step("06_bedrock_ocr.py", ["--in", ids_path, "--out", vision_path, "--verified", ver_path])
-        run_step("07_comprehend_language.py", ["--in", vision_path, "--out", lang_path])
-        run_step("08_translate_titles.py", ["--in", lang_path, "--titles", ids_path, "--out", out("translated_titles")])
-        run_step("09_dedupe_tmdb_metadata.py", ["--in", ids_path, "--out", out("duplicate_resolution"),
+        # Gate 2 (isAdult) first -- the cheapest possible cut, and the only
+        # dedup/filter gate whose exclusion is safe to prune out of every
+        # downstream --in list. Unlike gates 9/10 (below), isAdult has no
+        # interaction with gate 11's compilation-protection override, so
+        # there's no equivalent of the "a gate 9-flagged id might actually
+        # be a compilation's rescuable canonical entry" risk to preserve.
+        run_step("02_filter_isadult.py", ["--in", ids_path, "--out", isadult_path,
+                                           *(["--basics", args.basics] if args.basics else [])])
+        adult_ids: set[str] = set()
+        if Path(isadult_path).exists():
+            with open(isadult_path, newline="", encoding="utf-8") as f:
+                adult_ids = {r["id"] for r in csv.DictReader(f) if r.get("is_adult") == "1"}
+        with open(ids_path, newline="", encoding="utf-8") as f:
+            all_rows = list(csv.DictReader(f))
+            fieldnames = list(all_rows[0].keys()) if all_rows else []
+        with open(pruned_ids_path, "w", newline="", encoding="utf-8") as f:
+            w = csv.DictWriter(f, fieldnames=fieldnames)
+            w.writeheader()
+            w.writerows(row for row in all_rows if row["id"] not in adult_ids)
+        log.info(f"gate 2 pruned {len(adult_ids)} isAdult id(s); {len(all_rows) - len(adult_ids)} remain for gates 3+")
+
+        # Gate 9 has no dependency on gates 3-8 (only needs title/year/
+        # overview, already in ids_path) -- runs here for clarity of
+        # sequence, NOT to prune pruned_ids_path: its exclusion is decided
+        # only at final assembly (below), same as before, so gate 11 can
+        # still override it for a duplicate-flagged id that turns out to be
+        # a compilation's real canonical entry. See docs/RESULTS.md, "Gate
+        # 9/10 sequencing."
+        run_step("09_dedupe_tmdb_metadata.py", ["--in", pruned_ids_path, "--out", out("duplicate_resolution"),
                                                  "--cache", str(out_dir / ".tmdb_dedupe_cache.csv")])
-        run_step("10_dedupe_poster_md5.py", ["--in", ids_path, "--out", out("poster_md5_duplicates"),
+
+        run_step("03_verify_poster_exists.py", ["--in", pruned_ids_path, "--out", ver_path])
+
+        # Gate 10 only needs gate 3 (verified) + gate 9's cache, not gates
+        # 4-8 -- same "runs here for sequence clarity, not pruning" reasoning
+        # as gate 9 above.
+        run_step("10_dedupe_poster_md5.py", ["--in", pruned_ids_path, "--out", out("poster_md5_duplicates"),
                                               "--cache", str(out_dir / ".poster_md5_cache.csv"), "--verified", ver_path])
+
+        run_step("04_filter_poster_type.py", ["--in", pruned_ids_path, "--out", poster_type_path])
+        run_step("05_fetch_alt_titles.py", ["--in", pruned_ids_path, "--out", out("alt_titles", "json"),
+                                       *(["--akas", args.akas] if args.akas else [])])
+        run_step("06_bedrock_ocr.py", ["--in", pruned_ids_path, "--out", vision_path, "--verified", ver_path])
+        run_step("07_comprehend_language.py", ["--in", vision_path, "--out", lang_path])
+        run_step("08_translate_titles.py", ["--in", lang_path, "--titles", pruned_ids_path, "--out", out("translated_titles")])
         run_step("11_collapse_compilations.py", ["--in", vision_path, "--out", out("compilation_groups"),
                                                   "--cache", str(out_dir / ".compilation_search_cache.csv")])
 
@@ -208,7 +268,7 @@ def main():
                                                          "--mode", "poster-type",
                                                          "--scores-out", rescue_scores_path, "--swaps-out", rescue_swaps_path])
     else:
-        log.info("--assemble-only: skipping 01-09 (+ gate 4 rescue), reading their outputs directly")
+        log.info("--assemble-only: skipping 02-11 (+ gate 4 rescue), reading their outputs directly")
 
     # -- assemble final outputs --
     with open(ids_path, newline="", encoding="utf-8") as f:
@@ -222,6 +282,12 @@ def main():
     # larger --in) -- without this guard those ids leak into excluded_ids.csv
     # with a blank title and inflate qa_report.json's count, even though
     # validated_corpus.csv (built by iterating `catalog`) was never affected.
+
+    if Path(isadult_path).exists():
+        with open(isadult_path, newline="", encoding="utf-8") as f:
+            for r in csv.DictReader(f):
+                if r["id"] in catalog and r.get("is_adult") == "1":
+                    excluded[r["id"]] = f"isadult:{r.get('reason', '')}"
 
     if Path(ver_path).exists():
         with open(ver_path, newline="", encoding="utf-8") as f:
