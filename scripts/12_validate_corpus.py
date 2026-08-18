@@ -199,20 +199,11 @@ def main():
         # interaction with gate 11's compilation-protection override, so
         # there's no equivalent of the "a gate 9-flagged id might actually
         # be a compilation's rescuable canonical entry" risk to preserve.
-        run_step("02_filter_isadult.py", ["--in", ids_path, "--out", isadult_path,
+        # --prune-out does the filtering (same flag the Step Functions
+        # version of this pipeline uses, so the two orchestrators share one
+        # implementation instead of two).
+        run_step("02_filter_isadult.py", ["--in", ids_path, "--out", isadult_path, "--prune-out", pruned_ids_path,
                                            *(["--basics", args.basics] if args.basics else [])])
-        adult_ids: set[str] = set()
-        if Path(isadult_path).exists():
-            with open(isadult_path, newline="", encoding="utf-8") as f:
-                adult_ids = {r["id"] for r in csv.DictReader(f) if r.get("is_adult") == "1"}
-        with open(ids_path, newline="", encoding="utf-8") as f:
-            all_rows = list(csv.DictReader(f))
-            fieldnames = list(all_rows[0].keys()) if all_rows else []
-        with open(pruned_ids_path, "w", newline="", encoding="utf-8") as f:
-            w = csv.DictWriter(f, fieldnames=fieldnames)
-            w.writeheader()
-            w.writerows(row for row in all_rows if row["id"] not in adult_ids)
-        log.info(f"gate 2 pruned {len(adult_ids)} isAdult id(s); {len(all_rows) - len(adult_ids)} remain for gates 3+")
 
         # Gate 9 has no dependency on gates 3-8 (only needs title/year/
         # overview, already in ids_path) -- runs here for clarity of
@@ -232,7 +223,8 @@ def main():
         run_step("10_dedupe_poster_md5.py", ["--in", pruned_ids_path, "--out", out("poster_md5_duplicates"),
                                               "--cache", str(out_dir / ".poster_md5_cache.csv"), "--verified", ver_path])
 
-        run_step("04_filter_poster_type.py", ["--in", pruned_ids_path, "--out", poster_type_path])
+        run_step("04_filter_poster_type.py", ["--in", pruned_ids_path, "--out", poster_type_path,
+                                               "--rescue-out", rescue_candidates_path])
         run_step("05_fetch_alt_titles.py", ["--in", pruned_ids_path, "--out", out("alt_titles", "json"),
                                        *(["--akas", args.akas] if args.akas else [])])
         run_step("06_bedrock_ocr.py", ["--in", pruned_ids_path, "--out", vision_path, "--verified", ver_path])
@@ -241,25 +233,17 @@ def main():
         run_step("11_collapse_compilations.py", ["--in", vision_path, "--out", out("compilation_groups"),
                                                   "--cache", str(out_dir / ".compilation_search_cache.csv")])
 
-        # Gate 4's alternate-poster rescue: build the not-a-poster candidate
-        # list from gate 4's own output, then run gates 13-14 in poster-type
-        # mode against just that set -- a separate --variants-dir from
-        # title-mismatch's rescue keeps the two id populations' downloaded
-        # variant files from colliding if a run ever needed both (it
-        # currently doesn't -- gate 6 mismatches and gate 4 not-a-poster
+        # Gate 4's alternate-poster rescue: gate 4's own --rescue-out already
+        # wrote the not-a-poster candidate list above; run gates 13-14 in
+        # poster-type mode against just that set. A separate --variants-dir
+        # from title-mismatch's rescue keeps the two id populations'
+        # downloaded variant files from colliding if a run ever needed both
+        # (it currently doesn't -- gate 6 mismatches and gate 4 not-a-poster
         # verdicts are disjoint id sets by construction).
         rescue_rows = []
-        if Path(poster_type_path).exists():
-            with open(poster_type_path, newline="", encoding="utf-8") as f:
-                for r in csv.DictReader(f):
-                    if not r.get("error") and r.get("is_movie_poster") == "False":
-                        rescue_rows.append({"id": r["id"], "title": r.get("title", ""), "poster_path": r.get("poster_path", "")})
-        with open(rescue_candidates_path, "w", newline="", encoding="utf-8") as f:
-            w = csv.writer(f)
-            w.writerow(["id", "title", "poster_path"])
-            for r in rescue_rows:
-                w.writerow([r["id"], r["title"], r["poster_path"]])
-        log.info(f"gate 4 rescue candidates (is_movie_poster=False): {len(rescue_rows)}")
+        if Path(rescue_candidates_path).exists():
+            with open(rescue_candidates_path, newline="", encoding="utf-8") as f:
+                rescue_rows = list(csv.DictReader(f))
 
         if rescue_rows:
             run_step("13_find_alternate_posters.py", ["--in", rescue_candidates_path, "--variants-dir", rescue_variants_dir,

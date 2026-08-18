@@ -245,6 +245,11 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--in", dest="in_path", default="data/sample_input/sample_100_ids.csv")
     ap.add_argument("--out", default="data/sample_output/poster_type_filter.csv")
+    ap.add_argument("--rescue-out", default=None,
+                     help="if given, write just the is_movie_poster=False rows (id/title/poster_path) to this "
+                          "path -- gate 13/14's rescue --in, so they don't spend real budget on candidates "
+                          "that don't need rescuing. See 12_validate_corpus.py and docs/RESULTS.md, 'Gate 4's "
+                          "alternate-poster rescue.'")
     ap.add_argument("--model", default=DEFAULT_MODEL_ID)
     ap.add_argument("--workers", type=int, default=16)
     ap.add_argument("--retry-errors", action="store_true")
@@ -290,6 +295,22 @@ def main():
         f.close()
 
     log.info(f"wrote {out_path}")
+
+    if args.rescue_out:
+        # Full, resumed --out (not just this run's todo) -- a rescue list
+        # should reflect every is_movie_poster=False verdict gate 4 has
+        # ever reached, not just this invocation's slice.
+        with out_path.open(newline="", encoding="utf-8") as f:
+            rescue_rows = [r for r in csv.DictReader(f)
+                           if not r.get("error") and r.get("is_movie_poster") == "False"]
+        rescue_path = Path(args.rescue_out)
+        rescue_path.parent.mkdir(parents=True, exist_ok=True)
+        with rescue_path.open("w", newline="", encoding="utf-8") as f:
+            w2 = csv.DictWriter(f, fieldnames=["id", "title", "poster_path"])
+            w2.writeheader()
+            for r in rescue_rows:
+                w2.writerow({"id": r["id"], "title": r.get("title", ""), "poster_path": r.get("poster_path", "")})
+        log.info(f"wrote {rescue_path}: {len(rescue_rows)} is_movie_poster=False id(s) to rescue")
 
 
 if __name__ == "__main__":
