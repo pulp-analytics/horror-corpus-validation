@@ -64,7 +64,16 @@ def fetch_imdb_id(session: requests.Session, api_key: str, movie_id: str) -> str
 
 def load_adult_tconsts(basics_path: Path, tconsts: set[str]) -> set[str]:
     """One streaming pass over title.basics.tsv.gz, keeping only the
-    tconsts we actually need that are flagged isAdult=1."""
+    tconsts we actually need that are flagged isAdult=1.
+
+    Only ~3.3% of title.basics.tsv.gz's ~12.7M rows are isAdult=1 (a real
+    corpus's --in is a few thousand ids at most), so this is a lot of
+    decompression/parsing for a small answer -- fine for a single local
+    run, but wasteful for --shard-count > 1 doing this same full pass
+    once per shard. --adult-tconsts below is the sharded-friendly
+    alternative: pre-extract the isAdult=1 tconsts once (see
+    scripts/prep_adult_tconsts.py) and every shard just loads that small
+    list instead of re-scanning the ~200MB original file each time."""
     out: set[str] = set()
     with gzip.open(basics_path, "rt", encoding="utf-8", errors="replace") as f:
         header = f.readline().rstrip("\n").split("\t")
@@ -79,6 +88,16 @@ def load_adult_tconsts(basics_path: Path, tconsts: set[str]) -> set[str]:
     return out
 
 
+def load_adult_tconsts_prefiltered(path: Path) -> set[str]:
+    """Loads a plain list of isAdult=1 tconsts (one per line, optionally
+    gzipped), already filtered down from title.basics.tsv.gz by
+    scripts/prep_adult_tconsts.py -- no --in-specific filtering needed
+    since the list is already just the ones that matter."""
+    opener = gzip.open if str(path).endswith(".gz") else open
+    with opener(path, "rt", encoding="utf-8", errors="replace") as f:
+        return {line.strip() for line in f if line.strip()}
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--in", dest="in_path", default="data/sample_input/sample_100_ids.csv")
@@ -89,6 +108,10 @@ def main():
                           "budget on an id gate 2 already excluded. See 12_validate_corpus.py and "
                           "docs/RESULTS.md, 'Gate 9/10/11 sequencing.'")
     ap.add_argument("--basics", type=Path, default=None, help="path to IMDb title.basics.tsv.gz (optional)")
+    ap.add_argument("--adult-tconsts", type=Path, default=None,
+                     help="path to a pre-filtered list of isAdult=1 tconsts (see "
+                          "scripts/prep_adult_tconsts.py) -- takes priority over --basics, "
+                          "and avoids each shard re-scanning the full ~200MB basics file")
     ap.add_argument("--imdb-id-col", default="imdb_id", help="column with tt... ids, if --in already has one")
     ap.add_argument("--shard-index", type=int, default=0)
     ap.add_argument("--shard-count", type=int, default=1, help="split --in across N parallel shards (default 1: no sharding)")
@@ -123,12 +146,17 @@ def main():
 
     adult_tconsts: set[str] = set()
     tconsts = {tt for tt in imdb_ids.values() if tt}
-    if args.basics and args.basics.exists() and tconsts:
+    if args.adult_tconsts and args.adult_tconsts.exists():
+        log.info(f"loading pre-filtered isAdult=1 tconsts from {args.adult_tconsts}...")
+        all_adult = load_adult_tconsts_prefiltered(args.adult_tconsts)
+        adult_tconsts = tconsts & all_adult
+        log.info(f"isAdult=1 matches: {len(adult_tconsts)} (of {len(all_adult):,} known isAdult=1 titles)")
+    elif args.basics and args.basics.exists() and tconsts:
         log.info(f"scanning {args.basics} for {len(tconsts):,} tconsts...")
         adult_tconsts = load_adult_tconsts(args.basics, tconsts)
         log.info(f"isAdult=1 matches: {len(adult_tconsts)}")
     else:
-        log.info("no --basics file given -- every row passes through unfiltered (see docs/AWS_SETUP.md)")
+        log.info("no --basics/--adult-tconsts file given -- every row passes through unfiltered (see docs/AWS_SETUP.md)")
 
     n_adult = n_no_signal = n_clean = 0
     f, w = open_for_append(out_path, fields)
