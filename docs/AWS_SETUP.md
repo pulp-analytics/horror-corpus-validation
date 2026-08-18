@@ -65,6 +65,43 @@ detection, a pre-flight account check) lives in the sibling
 specifically because it's easy to point a batch job at the wrong AWS
 account by accident.
 
+## Optional: IMDb dataset for `02_filter_isadult.py`
+
+Gate 2's real signal is IMDb's own `isAdult` column, from the same
+[datasets.imdbws.com](https://datasets.imdbws.com/) non-commercial datasets
+as below -- this time `title.basics.tsv.gz` (~200MB compressed). Without
+it (no `--basics`/`--adult-tconsts`), every row passes through unfiltered
+-- the script still runs, it just doesn't filter anything, silently. This
+isn't hypothetical: it's exactly what happened across most of this
+project's own Step Functions runs before anyone thought to check.
+
+Two ways to point the script at it:
+
+- **`--basics /path/to/title.basics.tsv.gz`** -- works, but decompresses
+  and scans the full ~12.7M-row file every single invocation, regardless
+  of `--in`'s size. Fine for a one-off local run; expensive if you're
+  running this as a sharded Batch array job (N shards = N full scans).
+- **`--adult-tconsts /path/to/adult_tconsts_isadult1.csv.gz`** (preferred
+  for anything sharded) -- a pre-filtered list of just the isAdult=1
+  tconsts (~400k of the ~12.7M rows, ~1MB gzipped), built once with:
+  ```bash
+  python3 scripts/prep_adult_tconsts.py \
+      --basics /path/to/title.basics.tsv.gz \
+      --out data/adult_tconsts_isadult1.csv.gz
+  ```
+  Re-run this whenever you refresh the IMDb snapshot; it's static
+  reference data, not something the validation pipeline regenerates
+  per-run.
+
+**If you're running this via the sibling `poster-analysis-infrastructure`
+state machine**: the pre-filtered file isn't bundled in the Docker image or
+either repo (per-account S3, not a build artifact) -- upload your own copy
+to an S3 bucket your Fargate/Batch task role can read, then pass its
+location as `adultTconstsBucket`/`adultTconstsKey` in the state machine's
+input JSON (see that repo's README). Every deployment publishes and points
+at its own copy; there's no shared/public bucket a fresh clone can read
+out of the box.
+
 ## Optional: IMDb dataset for `05_fetch_alt_titles.py`
 
 The IMDb non-commercial datasets (not an AWS resource) add a second,
