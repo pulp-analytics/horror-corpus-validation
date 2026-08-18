@@ -64,7 +64,7 @@ from PIL import Image
 sys.path.insert(0, str(Path(__file__).parent))
 from utils.aws_config import get_client
 from utils.logging_setup import get_logger
-from utils.resumable import load_done_ids, open_for_append, write_csv_rows
+from utils.resumable import load_done_ids, open_for_append, shard_rows, write_csv_rows
 from utils.tmdb_client import IMAGE_BASE_URL
 
 log = get_logger("filter_poster_type")
@@ -253,6 +253,8 @@ def main():
     ap.add_argument("--model", default=DEFAULT_MODEL_ID)
     ap.add_argument("--workers", type=int, default=16)
     ap.add_argument("--retry-errors", action="store_true")
+    ap.add_argument("--shard-index", type=int, default=0)
+    ap.add_argument("--shard-count", type=int, default=1, help="split --in across N parallel shards (default 1: no sharding)")
     ap.add_argument("--validate", action="store_true",
                      help="score this gate's live two-stage logic against --ground-truth "
                           "and report accuracy/precision/recall instead of the normal --in run")
@@ -271,6 +273,7 @@ def main():
 
     with open(args.in_path, newline="", encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
+    rows = shard_rows(rows, args.shard_index, args.shard_count)
 
     out_path = Path(args.out)
     done = load_done_ids(out_path, args.retry_errors)
