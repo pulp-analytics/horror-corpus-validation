@@ -76,6 +76,24 @@ that cover exists in TMDB. If no such entry exists, this gate does **not**
 auto-resolve — it reports the group and leaves it for a human decision
 (see `docs/RESULTS.md` for the two real cases we left un-collapsed).
 
+## Gate 16 — `16_verify_celebrities.py`
+
+**Flag condition** (doesn't hard-exclude, matches gate 15's `flagged`
+pattern): Rekognition's `RecognizeCelebrities` finds a real, identifiable
+person on the poster who isn't in that film's TMDB cast/crew, AND a Nova
+plausibility check judges the mismatch `clearly_wrong` (not `plausible` or
+`uncertain`) — see the script's own docstring for why only that verdict
+flags. A celebrity match that fails the cast cross-check is a *candidate*
+signal the poster art was recycled from an unrelated photo, not proof by
+itself; the plausibility layer exists because the real project's own run
+found a cast mismatch alone is right well under half the time. Not yet
+live-verified on this repo's own corpus — see the script's docstring.
+`scripts/qa/build_celebrity_review_page.py` builds the blind human-review
+page for that once AWS credentials are available. See
+`docs/RESULTS.md`, "Gate 16: celebrity verification," for the real
+numbers this design is based on (across all four genres, with real
+examples) and exactly what's still pending a live run.
+
 ## `12_validate_corpus.py`
 
 Not a gate itself — runs gates 1-9 in order and merges every rejection

@@ -97,13 +97,18 @@ scripts/
                                 Rekognition-based version. --engine rekognition        [needs AWS]
                                 is also available and needs no Bedrock.
   15_content_moderation.py   Gore/violence/sexual-content flag, Nova + Rekognition cross-check [needs AWS]
+  16_verify_celebrities.py   Flags a poster if Rekognition finds a real celebrity who isn't in
+                              the film's TMDB cast and Nova judges the mismatch implausible --
+                              a signal the poster art was recycled. Not yet live-verified on
+                              this repo's own corpus -- see the script's own docstring.  [needs AWS]
   prep_adult_tconsts.py      One-time: extract isAdult=1 tconsts from IMDb title.basics.tsv   [local]
   utils/                     Shared AWS clients, constants, text matching
   qa/                        Not pipeline stages -- tooling that produced this repo's own
                               ground truth: build_poster_type_review_page.py,
                               build_bedrock_ocr_review_page.py,
-                              build_mega_prompt_review_page.py (self-contained HTML pages
-                              for blind human review), nova_mega_prompt_comparison.py,
+                              build_mega_prompt_review_page.py, build_celebrity_review_page.py
+                              (self-contained HTML pages for blind human review),
+                              nova_mega_prompt_comparison.py,
                               check_live_drift.py (live-checks docs' cited real examples
                               against TMDB today). See "Validation methodology" above.
 

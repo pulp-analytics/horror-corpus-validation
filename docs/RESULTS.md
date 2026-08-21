@@ -1492,3 +1492,103 @@ incomplete inputs until that state machine gets a matching update. Not
 fixed here given time -- flagged plainly rather than left silently
 inconsistent (see the NOTE added to `12_validate_corpus.py`'s own
 docstring).
+
+## Gate 16: celebrity verification — what it is, real numbers, this port's status
+
+**What this gate catches**: a poster can pass every other check in this
+repo (real image, real title match, not a duplicate, not a compilation)
+and still be *wrong art* -- the actual photo attached to a catalog entry
+recycled from an unrelated shoot, stock photo, or another film entirely.
+One way to catch that: if a real, identifiable celebrity appears on the
+poster who has nothing to do with that film, the poster art is probably
+not what it claims to be. `16_verify_celebrities.py` checks this in three
+layers, same discipline as every other gate in this repo (see the
+README's "Validation methodology"):
+
+1. **Detect** -- AWS Rekognition's `RecognizeCelebrities` API looks at
+   the poster and returns any real, named public figures it recognizes.
+2. **Deterministic cross-check** -- is that name in the film's actual
+   TMDB cast/crew list? Fuzzy name matching (handles "Robert De Niro" vs
+   "Robert DeNiro"-style formatting differences) so this doesn't
+   over-flag on trivial spelling differences.
+3. **LLM plausibility, only for names that fail step 2** -- a name not
+   being in TMDB's cast list is not proof the poster is wrong: TMDB's
+   cast data is often incomplete (extras, uncredited actors, alternate
+   spellings never get added), and Rekognition itself sometimes
+   recognizes the wrong person entirely (a historical figure who died
+   decades before the film, an athlete or musician with zero connection
+   to cinema). A vision-LLM (Nova) judges each unmatched name as
+   `clearly_wrong` (Rekognition is mistaken), `plausible` (a real
+   industry person who could genuinely be on this poster, just missing
+   from TMDB's list), or `uncertain`.
+
+**This port's status: written and unit-tested, not yet run against real
+AWS.** `16_verify_celebrities.py` and its review page
+(`scripts/qa/build_celebrity_review_page.py`) exist in this repo and pass
+`pytest tests/test_verify_celebrities.py` (pure fuzzy-matching logic, no
+network calls), but AWS credentials were unavailable for this session, so
+there is no live run of this specific script yet. What follows below are
+**real numbers from the private project's own prior run** of the
+equivalent methodology (`recognize_celebrities.py` ->
+`verify_celebrities_vs_cast.py` -> `verify_celebrities_claude.py`) --
+cited as the evidence this gate's design is based on, not a claim that
+this repo has reproduced them. Running `16_verify_celebrities.py` against
+this repo's own sample once AWS access exists is the open item that would
+turn these into a live-verified number the way gate 15's are above.
+
+**Scale, across all four genres this project covers** (a poster needs a
+detected face before celebrity recognition is even attempted --
+`n_faces > 0` from the face-detection gate):
+
+| genre | posters with a detected face | of those, ≥1 celebrity recognized |
+|---|---:|---:|
+| horror | 34,039 | 20,181 (59.3%) |
+| scifi + mystery + thriller (combined) | 45,477 | 35,783 (78.7%) |
+
+Most detected faces don't match a known celebrity at all -- expected,
+since most poster faces are the actual (often non-famous) cast, models,
+or illustrated figures, not real-world public figures Rekognition's
+celebrity database would recognize.
+
+**Layer 2 (cast cross-check), horror**: of 20,181 posters with a
+recognized celebrity, only 6,702 (33.2%) had that name land a match
+against the film's real TMDB cast/crew. A full match example, all five
+names confirmed real cast: *Anaconda* (2025, id 1234731) -- Rekognition
+recognized Jack Black, Paul Rudd, Steve Zahn, Selton Mello, and Thandie
+Newton, and all five are genuinely in that film's real TMDB credits.
+
+**Layer 3 (Nova plausibility on the unmatched names), all four genres
+combined** -- 92,726 individual (poster, name) pairs judged:
+
+| verdict | n | % |
+|---|---:|---:|
+| `plausible` | 45,243 | 48.8% |
+| `clearly_wrong` | 31,563 | 34.0% |
+| `uncertain` | 15,920 | 17.2% |
+
+Real `clearly_wrong` examples (Rekognition recognized someone with no
+plausible connection to the film): *White-haired Demon* (1978) ->
+"Allauddin Khan," who died in 1972, before the film existed; *City of
+Demons* (2025) -> "La Parka," a Mexican professional wrestler with no
+film connection; *Homecoming* (2005) -> "Freddie Williams II," a comic
+book artist, not an actor. Real `plausible` examples (a name TMDB's cast
+list is simply missing, per Nova's judgment): *Travels of Lord Mito
+Pt.9* (1956) -> "Ishirō Honda," a real film director who could plausibly
+appear on the poster even if not in TMDB's cast data; *Operation:
+Sunrise* (2025) -> "Kaan Aydogdu," a real Turkish actor who could have an
+uncredited or minor role.
+
+**`16_verify_celebrities.py`'s flag rule only trusts `clearly_wrong`**
+(see the script's own docstring) -- treating every cast mismatch as
+recycled art would be wrong given `plausible` is the single largest
+category (48.8%) of what looked like a mismatch at layer 2. That design
+choice is what these real numbers justify: a naive "celebrity not in
+cast = wrong poster" rule would be wrong on roughly half its flags.
+
+**To close this out**: get real AWS access, run
+`python3 scripts/16_verify_celebrities.py --in <a real posters CSV>` end
+to end, then `scripts/qa/build_celebrity_review_page.py` to generate a
+blind human-review page and score `clearly_wrong` against real human
+judgment the same way gates 4/6/15 already have. Until then, this gate's
+own accuracy on *this repo's* corpus is inherited from the private
+project's numbers above, not independently confirmed.

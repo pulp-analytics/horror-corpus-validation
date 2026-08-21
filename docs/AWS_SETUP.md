@@ -3,9 +3,14 @@
 ## Services used
 
 - **Amazon Bedrock** (Nova Pro model) — vision QA of poster title text
+  (gate 6), poster-type classification (gate 4), content moderation
+  (gate 15), celebrity-mismatch plausibility (gate 16)
 - **Amazon Comprehend** — language detection
 - **Amazon Translate** — translating non-English poster text before
   re-scoring against the catalog title
+- **Amazon Rekognition** — `DetectText` (gate 4's `--engine rekognition`
+  option, gate 14), `DetectModerationLabels` (gate 15),
+  `RecognizeCelebrities` (gate 16)
 
 ## One-time setup
 
@@ -18,6 +23,8 @@
      tight)
    - `comprehend:DetectDominantLanguage`
    - `translate:TranslateText`
+   - `rekognition:DetectText`, `rekognition:DetectModerationLabels`,
+     `rekognition:RecognizeCelebrities`
 3. Configure a named profile locally:
    ```bash
    aws configure --profile horror-validation
